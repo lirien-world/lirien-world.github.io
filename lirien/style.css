@@ -448,6 +448,7 @@ html, body {
  * the cap, so the Text size buttons remain meaningful. */
 
 @media (max-width: 700px), (max-height: 500px) {
+	/* In-game prose panel + chrome */
 	.prose {
 		left: 14px;
 		right: 14px;
@@ -479,5 +480,38 @@ html, body {
 	}
 	.chapter-name {
 		font-size: 38px;
+	}
+
+	/* Title screen — desktop sizing assumes 1000px+ horizontal room
+	 * and >700px vertical. On landscape phones (iPhone Pro Max ≈
+	 * 932×430) the eyebrow letter-spacing eats the line, the 74px
+	 * Cormorant title pushes to both edges, and there's no vertical
+	 * room for the tagline. Tighter scale all around, with a
+	 * narrower content column so the layout still feels composed. */
+	.title-screen {
+		padding: clamp(18px, 5vh, 48px) 1rem 1rem 1rem;
+	}
+	.title-content {
+		max-width: min(440px, 92vw);
+	}
+	.title-eyebrow {
+		font-size: 11px;
+		letter-spacing: 0.28em;
+		margin-bottom: 0.7rem;
+	}
+	.title-main {
+		font-size: clamp(28px, 6.5vw, 52px);
+		margin-bottom: 0.8rem;
+	}
+	.title-tagline {
+		font-size: clamp(13px, 1.7vw, 16px);
+		line-height: 1.5;
+	}
+	.title-hint {
+		bottom: 6%;
+	}
+	.title-hint-text {
+		font-size: 13px;
+		letter-spacing: 0.42em;
 	}
 }

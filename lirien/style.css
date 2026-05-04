@@ -59,16 +59,17 @@ html, body {
 .chapter-title.visible { opacity: 1; }
 
 .chapter-number {
-	font-size: 13px;
-	letter-spacing: 0.15em;
-	color: rgba(240, 230, 200, 0.85);
-	text-shadow: 0 0 4px rgba(0,0,0,0.7);
-	margin-bottom: 6px;
+	font-size: 22px;
+	letter-spacing: 0.18em;
+	color: rgba(240, 230, 200, 0.9);
+	text-shadow: 0 0 6px rgba(0,0,0,0.8);
+	margin-bottom: 12px;
 }
 .chapter-name {
-	font-size: 30px;
+	font-size: 56px;
+	line-height: 1.05;
 	color: #f7eed1;
-	text-shadow: 0 0 5px rgba(0,0,0,0.85);
+	text-shadow: 0 0 8px rgba(0,0,0,0.85);
 }
 
 /* ----- game layer (prose + choices) ----- */

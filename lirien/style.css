@@ -289,6 +289,12 @@ html, body {
 	0%, 100% { transform: translate(-50%, 0);   opacity: 0.6; }
 	50%      { transform: translate(-50%, 7px); opacity: 1;    }
 }
+/* Mobile variant — chevron is right-anchored inside the prose corner,
+ * so no translateX(-50%) baseline; just bob the Y value. */
+@keyframes hint-float-corner {
+	0%, 100% { transform: translateY(0);   opacity: 0.6; }
+	50%      { transform: translateY(5px); opacity: 1;    }
+}
 
 /* ----- choice panel: upper-third, centered ----- */
 
@@ -449,22 +455,38 @@ html, body {
  * the cap, so the Text size buttons remain meaningful. */
 
 @media (max-width: 700px), (max-height: 500px) {
-	/* In-game prose panel + chrome */
+	/* In-game prose panel + chrome.
+	 *
+	 * env(safe-area-inset-*) keeps the panel clear of the iPhone
+	 * camera island / notch in landscape (where the island sits on
+	 * one side, depending on rotation). The chevron moves into the
+	 * bottom-right corner so the panel itself can be ~46px taller. */
 	.prose {
-		left: 14px;
-		right: 14px;
-		bottom: 60px;
-		top: 42%;
-		padding: 22px 18px 18px 18px;
+		left: max(14px, env(safe-area-inset-left));
+		right: max(14px, env(safe-area-inset-right));
+		bottom: 14px;
+		top: 32%;
+		padding: 22px 18px 28px 18px;
 		border-radius: 8px;
 	}
 	.prose-content {
 		font-size: min(var(--prose-font-size, 36px), 22px);
 		line-height: 1.4;
 	}
+	.continue-hint {
+		left: auto;
+		right: max(24px, calc(env(safe-area-inset-right) + 10px));
+		bottom: 18px;
+		width: 36px;
+		height: 18px;
+		transform: none;
+	}
+	.continue-hint.visible {
+		animation: hint-float-corner 2.4s ease-in-out infinite;
+	}
 	.choices {
-		left: 12px;
-		right: 12px;
+		left: max(12px, env(safe-area-inset-left));
+		right: max(12px, env(safe-area-inset-right));
 		transform: none;
 		min-width: 0;
 		max-width: none;

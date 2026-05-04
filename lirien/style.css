@@ -75,17 +75,20 @@ html, body {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: center;
+	/* flex-start + top padding sits the title in the upper third so
+	   the figure on the ash plain remains the visual anchor, not
+	   something the tagline lies on top of. */
+	justify-content: flex-start;
+	padding: clamp(80px, 12vh, 160px) 2rem 2rem 2rem;
 	text-align: center;
-	padding: 2rem;
 	font-family: 'Cormorant Garamond', 'Vollkorn', Georgia, serif;
 	color: var(--parchment);
 	background:
 		linear-gradient(to bottom,
-			rgba(8, 6, 15, 0.45) 0%,
-			rgba(8, 6, 15, 0.18) 35%,
-			rgba(8, 6, 15, 0.18) 60%,
-			rgba(8, 6, 15, 0.85) 100%),
+			rgba(8, 6, 15, 0.55) 0%,
+			rgba(8, 6, 15, 0.25) 30%,
+			rgba(8, 6, 15, 0.10) 55%,
+			rgba(8, 6, 15, 0.55) 100%),
 		url("../spiral_stone.png") center/cover no-repeat,
 		var(--void);
 	opacity: 0;
@@ -263,21 +266,23 @@ html, body {
 
 /* Down-chevron that pulses + floats whenever the runtime is waiting
  * for a tap. Centered along the prose panel's bottom edge so it reads
- * as "more below — go on". Glows in the gold accent. */
+ * as "more below — go on". Glows in the gold accent. The SVG path
+ * fills the 24×12 viewBox so the chevron looks proportionate to its
+ * 56×28 container; a thicker stroke makes it readable at glance. */
 .continue-hint {
 	position: absolute;
 	left: 50%;
-	bottom: 12px;
-	width: 34px;
-	height: 34px;
+	bottom: 14px;
+	width: 56px;
+	height: 28px;
 	color: var(--gold-bright, #e0b070);
 	opacity: 0;
 	pointer-events: none;
 	transform: translateX(-50%);
 	transition: opacity 0.6s ease-in-out;
 	filter:
-		drop-shadow(0 0 6px rgba(224, 176, 112, 0.65))
-		drop-shadow(0 0 18px rgba(224, 176, 112, 0.35));
+		drop-shadow(0 0 8px rgba(224, 176, 112, 0.7))
+		drop-shadow(0 0 22px rgba(224, 176, 112, 0.4));
 }
 .continue-hint svg { display: block; width: 100%; height: 100%; }
 .continue-hint.visible {
@@ -285,8 +290,8 @@ html, body {
 	animation: hint-float 2.4s ease-in-out infinite;
 }
 @keyframes hint-float {
-	0%, 100% { transform: translate(-50%, 0);   opacity: 0.55; }
-	50%      { transform: translate(-50%, 6px); opacity: 1;     }
+	0%, 100% { transform: translate(-50%, 0);   opacity: 0.6; }
+	50%      { transform: translate(-50%, 7px); opacity: 1;    }
 }
 
 /* ----- choice panel: upper-third, centered ----- */

@@ -4,7 +4,22 @@
  * body text. Dark translucent panels float over a full-bleed AI
  * atmosphere image. The prose is the surface; everything else gets
  * out of the way.
+ *
+ * Title screen + chrome share the landing page's palette so the
+ * front-cover-then-page-turn experience reads as one piece of work:
+ *   void/parchment/cream typography, gold accents, lavender italics.
  */
+
+:root {
+	--void:         #08060f;
+	--mist:         #a89ec0;
+	--ash:          #7a7090;
+	--lavender:     #b8a8cc;
+	--cream:        #ede5d4;
+	--parchment:    #f5eed8;
+	--gold:         #c4935a;
+	--gold-bright:  #e0b070;
+}
 
 @font-face {
 	font-family: 'Vollkorn';
@@ -44,7 +59,14 @@ html, body {
 	z-index: 0;
 }
 
-/* ----- title screen (front cover) ----- */
+/* ----- title screen (front cover) -----
+ *
+ * Mirrors the landing page hero: Cormorant Garamond at 300 weight,
+ * gold eyebrow, parchment title with lavender italic accent, lavender
+ * tagline, and a vertical-line + "Enter" hint at the bottom. The
+ * full-bleed art is the user-supplied wide ash-plain shot at
+ * /spiral_stone.png (one level up from this stylesheet).
+ */
 
 .title-screen {
 	position: fixed;
@@ -56,11 +78,16 @@ html, body {
 	justify-content: center;
 	text-align: center;
 	padding: 2rem;
-	color: #f5ebd2;
+	font-family: 'Cormorant Garamond', 'Vollkorn', Georgia, serif;
+	color: var(--parchment);
 	background:
-		radial-gradient(ellipse at 50% 40%, rgba(8, 8, 12, 0.45) 0%, rgba(8, 8, 12, 0.92) 75%),
-		url("atmosphere/ash_plain_keyart.png") center/cover no-repeat,
-		#08080c;
+		linear-gradient(to bottom,
+			rgba(8, 6, 15, 0.45) 0%,
+			rgba(8, 6, 15, 0.18) 35%,
+			rgba(8, 6, 15, 0.18) 60%,
+			rgba(8, 6, 15, 0.85) 100%),
+		url("../spiral_stone.png") center/cover no-repeat,
+		var(--void);
 	opacity: 0;
 	transition: opacity 1.6s ease-in;
 }
@@ -68,34 +95,87 @@ html, body {
 .title-screen.dismissed  { opacity: 0; transition: opacity 1.4s ease-out; pointer-events: none; }
 .title-screen[hidden]    { display: none; }
 
-.title-stack {
-	max-width: min(900px, 90vw);
+.title-content {
+	max-width: min(960px, 92vw);
+}
+.title-eyebrow {
+	font-size: clamp(13px, 1.4vw, 17px);
+	font-weight: 400;
+	letter-spacing: 0.4em;
+	text-transform: uppercase;
+	color: var(--gold-bright);
+	margin-bottom: 1.6rem;
+	text-shadow:
+		0 0 10px rgba(196, 147, 90, 0.85),
+		0 0 24px rgba(196, 147, 90, 0.5),
+		0 0 0 rgba(0, 0, 0, 0.8);
 }
 .title-main {
-	font-size: clamp(40px, 7vw, 84px);
+	font-family: inherit;
+	font-size: clamp(44px, 8vw, 96px);
+	font-weight: 300;
 	line-height: 1.05;
-	letter-spacing: 0.01em;
-	margin-bottom: 18px;
-	text-shadow: 0 0 24px rgba(0, 0, 0, 0.85);
+	letter-spacing: 0.005em;
+	margin: 0 0 1.5rem 0;
+	color: var(--parchment);
+	text-shadow: 0 0 26px rgba(0, 0, 0, 0.9);
 }
-.title-sub {
-	font-size: clamp(15px, 1.7vw, 22px);
-	letter-spacing: 0.08em;
-	color: rgba(245, 235, 210, 0.78);
-	text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+.title-main em {
+	font-style: italic;
+	color: var(--lavender);
 }
+.title-tagline {
+	font-style: italic;
+	font-weight: 400;
+	font-size: clamp(15px, 1.7vw, 21px);
+	line-height: 1.55;
+	color: var(--lavender);
+	margin: 0;
+	text-shadow: 0 0 10px rgba(0, 0, 0, 0.85);
+}
+
 .title-hint {
 	position: absolute;
-	bottom: 12%;
-	font-size: clamp(13px, 1.2vw, 17px);
-	letter-spacing: 0.18em;
-	color: rgba(245, 235, 210, 0.55);
+	bottom: 7%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+}
+.title-hint-loading {
 	font-style: italic;
+	font-size: clamp(13px, 1.2vw, 16px);
+	letter-spacing: 0.18em;
+	color: var(--mist);
+	opacity: 0.5;
+	animation: title-hint-pulse 2.6s ease-in-out infinite;
+}
+.title-hint-ready {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+}
+.title-hint-line {
+	width: 1px;
+	height: 48px;
+	background: linear-gradient(to bottom, var(--gold), transparent);
+	animation: title-hint-line 2.5s ease-in-out infinite;
+}
+.title-hint-text {
+	font-size: clamp(12px, 1.1vw, 15px);
+	letter-spacing: 0.4em;
+	text-transform: uppercase;
+	color: var(--mist);
 	animation: title-hint-pulse 2.6s ease-in-out infinite;
 }
 @keyframes title-hint-pulse {
 	0%, 100% { opacity: 0.35; }
-	50%      { opacity: 0.85; }
+	50%      { opacity: 0.9; }
+}
+@keyframes title-hint-line {
+	0%, 100% { opacity: 0.3; transform: scaleY(1); }
+	50%      { opacity: 1;   transform: scaleY(1.2); }
 }
 
 /* ----- chapter title overlay ----- */
@@ -181,17 +261,33 @@ html, body {
 	to   { opacity: 1; }
 }
 
+/* Down-chevron that pulses + floats whenever the runtime is waiting
+ * for a tap. Centered along the prose panel's bottom edge so it reads
+ * as "more below — go on". Glows in the gold accent. */
 .continue-hint {
 	position: absolute;
-	right: 36px;
-	bottom: 26px;
-	font-size: 18px;
-	color: rgba(240, 225, 195, 0.75);
+	left: 50%;
+	bottom: 12px;
+	width: 34px;
+	height: 34px;
+	color: var(--gold-bright, #e0b070);
 	opacity: 0;
-	transition: opacity 0.6s ease-in-out;
 	pointer-events: none;
+	transform: translateX(-50%);
+	transition: opacity 0.6s ease-in-out;
+	filter:
+		drop-shadow(0 0 6px rgba(224, 176, 112, 0.65))
+		drop-shadow(0 0 18px rgba(224, 176, 112, 0.35));
 }
-.continue-hint.visible { opacity: 0.9; }
+.continue-hint svg { display: block; width: 100%; height: 100%; }
+.continue-hint.visible {
+	opacity: 1;
+	animation: hint-float 2.4s ease-in-out infinite;
+}
+@keyframes hint-float {
+	0%, 100% { transform: translate(-50%, 0);   opacity: 0.55; }
+	50%      { transform: translate(-50%, 6px); opacity: 1;     }
+}
 
 /* ----- choice panel: upper-third, centered ----- */
 

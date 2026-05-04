@@ -7,16 +7,26 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<title>Chronicles of Lirien</title>
 	<link rel="apple-touch-icon" href="../aerin_portrait.png">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
 	<div id="bg" class="bg"></div>
 	<div id="title-screen" class="title-screen">
-		<div class="title-stack">
-			<div class="title-main">Chronicles of Lirien</div>
-			<div class="title-sub">Book One &mdash; The Spiral That Remembers</div>
+		<div class="title-content">
+			<div class="title-eyebrow">Book One &mdash; Chronicles of Lirien</div>
+			<h1 class="title-main">The Spiral That <em>Remembers</em></h1>
+			<p class="title-tagline">The world forgot itself.<br>One man is walking forward into what remains.</p>
 		</div>
-		<div id="title-hint" class="title-hint">loading&hellip;</div>
+		<div id="title-hint" class="title-hint">
+			<span class="title-hint-loading">loading&hellip;</span>
+			<span class="title-hint-ready" hidden>
+				<span class="title-hint-line"></span>
+				<span class="title-hint-text">Enter</span>
+			</span>
+		</div>
 	</div>
 	<div id="chapter-title" class="chapter-title">
 		<div class="chapter-number"></div>
@@ -25,7 +35,11 @@
 	<div id="game" class="game">
 		<div id="prose" class="prose">
 			<div id="prose-content" class="prose-content"></div>
-			<div id="continue-hint" class="continue-hint">›</div>
+			<div id="continue-hint" class="continue-hint" aria-hidden="true">
+				<svg viewBox="0 0 24 24" width="34" height="34">
+					<path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
 		</div>
 		<div id="choices" class="choices"></div>
 	</div>

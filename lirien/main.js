@@ -83,7 +83,11 @@ let chapterTimer = null;
 		const json = await fetch("story.json").then(r => r.text());
 		story = new inkjs.Story(json);
 		state = "title";
-		$titleHint.textContent = "tap to begin";
+		// Swap the "loading…" text for the gold-line + "Enter" hint.
+		const loadingEl = $titleHint.querySelector(".title-hint-loading");
+		const readyEl = $titleHint.querySelector(".title-hint-ready");
+		if (loadingEl) loadingEl.hidden = true;
+		if (readyEl) readyEl.hidden = false;
 	} catch (e) {
 		showFatalError(e);
 	}

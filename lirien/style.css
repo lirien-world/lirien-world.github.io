@@ -470,7 +470,13 @@ html, body {
 		border-radius: 8px;
 	}
 	.prose-content {
-		font-size: min(var(--prose-font-size, 36px), 22px);
+		/* Scale the user's chosen size proportionally instead of
+		   capping. min(..., 22px) flattened all four presets on phones
+		   to the same 22px, so the Text size buttons did nothing. At
+		   0.6× the four desktop presets (28/32/36/42) become
+		   ~17/19/22/25 on mobile — meaningful range, default still
+		   reads at the previous cap. */
+		font-size: calc(var(--prose-font-size, 36px) * 0.6);
 		line-height: 1.4;
 	}
 	.continue-hint {

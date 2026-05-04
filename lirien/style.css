@@ -505,11 +505,25 @@ html, body {
 		max-width: calc(100vw - 16px);
 		min-width: 0;
 	}
+	/* Chapter title eyebrow — keep clear of the iPhone camera island
+	 * (left or right depending on landscape rotation) and the top
+	 * notch in portrait, plus scale down so it doesn't dominate the
+	 * smaller viewport. */
 	.chapter-title {
-		padding: 24px 28px;
+		padding:
+			max(18px, env(safe-area-inset-top))
+			max(28px, calc(env(safe-area-inset-right) + 20px))
+			18px
+			max(28px, calc(env(safe-area-inset-left) + 20px));
+	}
+	.chapter-number {
+		font-size: 13px;
+		letter-spacing: 0.18em;
+		margin-bottom: 6px;
 	}
 	.chapter-name {
-		font-size: 38px;
+		font-size: 24px;
+		line-height: 1.1;
 	}
 
 	/* Title screen — desktop sizing assumes 1000px+ horizontal room

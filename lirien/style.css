@@ -125,16 +125,20 @@ html, body {
 }
 .title-main em {
 	font-style: italic;
-	color: var(--lavender);
+	/* Lavender works on the landing page's near-black void; the title
+	   screen sits on a much lighter purple sky, so the italic accent
+	   needs to go darker for contrast — same family, deeper value. */
+	color: #1c1828;
+	text-shadow: 0 0 14px rgba(245, 238, 216, 0.45);
 }
 .title-tagline {
 	font-style: italic;
 	font-weight: 400;
 	font-size: clamp(15px, 1.7vw, 21px);
 	line-height: 1.55;
-	color: var(--lavender);
+	color: #1c1828;
 	margin: 0;
-	text-shadow: 0 0 10px rgba(0, 0, 0, 0.85);
+	text-shadow: 0 0 14px rgba(245, 238, 216, 0.55);
 }
 
 .title-hint {
@@ -265,14 +269,16 @@ html, body {
 }
 
 /* Down-chevron that pulses + floats whenever the runtime is waiting
- * for a tap. Centered along the prose panel's bottom edge so it reads
- * as "more below — go on". Glows in the gold accent. The SVG path
- * fills the 24×12 viewBox so the chevron looks proportionate to its
- * 56×28 container; a thicker stroke makes it readable at glance. */
+ * for a tap. Lives in .game (NOT inside .prose) so it anchors to the
+ * viewport edge instead of scrolling with the prose content. Sits in
+ * the 56px gap between the prose panel's bottom and the viewport
+ * bottom, so it never overlaps the last line of text. The SVG path
+ * fills its 24×12 viewBox; thicker stroke + stronger glow reads at
+ * a glance. */
 .continue-hint {
 	position: absolute;
 	left: 50%;
-	bottom: 14px;
+	bottom: 18px;
 	width: 56px;
 	height: 28px;
 	color: var(--gold-bright, #e0b070);
@@ -280,6 +286,7 @@ html, body {
 	pointer-events: none;
 	transform: translateX(-50%);
 	transition: opacity 0.6s ease-in-out;
+	z-index: 20;
 	filter:
 		drop-shadow(0 0 8px rgba(224, 176, 112, 0.7))
 		drop-shadow(0 0 22px rgba(224, 176, 112, 0.4));

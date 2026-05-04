@@ -4,3 +4,8 @@ interactive_book/
 
 # macOS metadata
 .DS_Store
+
+# Editor swap files
+*.swp
+*.swo
+*~

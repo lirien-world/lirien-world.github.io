@@ -33,6 +33,8 @@ const $choices = document.getElementById("choices");
 const $chapterTitle = document.getElementById("chapter-title");
 const $settingsBtn = document.getElementById("settings-btn");
 const $settingsPanel = document.getElementById("settings-panel");
+const $titleScreen = document.getElementById("title-screen");
+const $titleHint = document.getElementById("title-hint");
 
 // ----- settings (persisted to localStorage) -----
 
@@ -62,7 +64,7 @@ function applyFontSize() {
 // ----- state -----
 
 let story = null;
-let state = "loading";   // loading | typing | waiting | choosing | ended
+let state = "loading";   // loading | title-loading | title | typing | waiting | choosing | ended
 let currentReveal = null; // { skipFn } so input handler can complete a reveal
 let chapterTimer = null;
 
@@ -71,15 +73,29 @@ let chapterTimer = null;
 (async function init() {
 	bindSettingsMenu();
 	bindAdvanceInput();
+	// Show the title screen immediately. The story.json fetch happens
+	// in the background; until it resolves, the hint says "loading".
+	// The first tap on the title screen unlocks audio and starts the
+	// first chunk — which is also when any music tag finally sounds.
+	state = "title-loading";
+	requestAnimationFrame(() => $titleScreen.classList.add("visible"));
 	try {
 		const json = await fetch("story.json").then(r => r.text());
 		story = new inkjs.Story(json);
-		state = "idle";
-		advance();
+		state = "title";
+		$titleHint.textContent = "tap to begin";
 	} catch (e) {
 		showFatalError(e);
 	}
 })();
+
+function dismissTitleScreen() {
+	$titleScreen.classList.add("dismissed");
+	setTimeout(() => {
+		$titleScreen.hidden = true;
+		$titleScreen.classList.remove("visible", "dismissed");
+	}, 1500);
+}
 
 function showFatalError(err) {
 	$proseContent.innerHTML = "";
@@ -503,6 +519,17 @@ function bindAdvanceInput() {
 		// click events.
 		if (ev.target.closest(".choice")) return;
 		if (ev.target.closest(".settings-btn") || ev.target.closest(".settings-panel")) return;
+
+		// Title screen: first tap dismisses + starts the story. Taps
+		// during "title-loading" are ignored (story.json not parsed
+		// yet); they still unlock audio via onFirstUserGesture above.
+		if (state === "title") {
+			state = "idle";
+			dismissTitleScreen();
+			advance();
+			return;
+		}
+		if (state === "title-loading") return;
 
 		if (state === "typing" && currentReveal) {
 			currentReveal.skipFn();

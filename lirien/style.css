@@ -44,6 +44,60 @@ html, body {
 	z-index: 0;
 }
 
+/* ----- title screen (front cover) ----- */
+
+.title-screen {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	padding: 2rem;
+	color: #f5ebd2;
+	background:
+		radial-gradient(ellipse at 50% 40%, rgba(8, 8, 12, 0.45) 0%, rgba(8, 8, 12, 0.92) 75%),
+		url("atmosphere/ash_plain_keyart.png") center/cover no-repeat,
+		#08080c;
+	opacity: 0;
+	transition: opacity 1.6s ease-in;
+}
+.title-screen.visible    { opacity: 1; }
+.title-screen.dismissed  { opacity: 0; transition: opacity 1.4s ease-out; pointer-events: none; }
+.title-screen[hidden]    { display: none; }
+
+.title-stack {
+	max-width: min(900px, 90vw);
+}
+.title-main {
+	font-size: clamp(40px, 7vw, 84px);
+	line-height: 1.05;
+	letter-spacing: 0.01em;
+	margin-bottom: 18px;
+	text-shadow: 0 0 24px rgba(0, 0, 0, 0.85);
+}
+.title-sub {
+	font-size: clamp(15px, 1.7vw, 22px);
+	letter-spacing: 0.08em;
+	color: rgba(245, 235, 210, 0.78);
+	text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+}
+.title-hint {
+	position: absolute;
+	bottom: 12%;
+	font-size: clamp(13px, 1.2vw, 17px);
+	letter-spacing: 0.18em;
+	color: rgba(245, 235, 210, 0.55);
+	font-style: italic;
+	animation: title-hint-pulse 2.6s ease-in-out infinite;
+}
+@keyframes title-hint-pulse {
+	0%, 100% { opacity: 0.35; }
+	50%      { opacity: 0.85; }
+}
+
 /* ----- chapter title overlay ----- */
 
 .chapter-title {

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<title>Chronicles of Lirien</title>
+	<link rel="apple-touch-icon" href="../aerin_portrait.png">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div id="bg" class="bg"></div>
+	<div id="chapter-title" class="chapter-title">
+		<div class="chapter-number"></div>
+		<div class="chapter-name"></div>
+	</div>
+	<div id="game" class="game">
+		<div id="prose" class="prose">
+			<div id="prose-content" class="prose-content"></div>
+			<div id="continue-hint" class="continue-hint">›</div>
+		</div>
+		<div id="choices" class="choices"></div>
+	</div>
+	<button id="settings-btn" class="settings-btn" aria-label="Settings"></button>
+	<div id="settings-panel" class="settings-panel" hidden>
+		<div class="settings-heading">Reading speed</div>
+		<button class="speed-btn" data-multiplier="0.2">Very slow</button>
+		<button class="speed-btn" data-multiplier="0.3">Slow</button>
+		<button class="speed-btn" data-multiplier="0.4">Normal</button>
+		<button class="speed-btn" data-multiplier="0.7">Fast</button>
+		<button class="speed-btn" data-multiplier="1.0">Very fast</button>
+		<div class="settings-divider"></div>
+		<div class="settings-heading">Text size</div>
+		<button class="size-btn" data-size="28">Small</button>
+		<button class="size-btn" data-size="32">Medium</button>
+		<button class="size-btn" data-size="36">Large</button>
+		<button class="size-btn" data-size="42">Very large</button>
+		<div class="settings-divider"></div>
+		<div class="settings-heading">Music</div>
+		<button class="music-btn" data-music="on">On</button>
+		<button class="music-btn" data-music="off">Off</button>
+	</div>
+	<div id="rotate-prompt" class="rotate-prompt">Please rotate your device to landscape</div>
+	<script src="ink.js"></script>
+	<script src="main.js"></script>
+</body>
+</html>

@@ -374,6 +374,7 @@ html, body {
 	min-width: 220px;
 	max-height: 85vh;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 	z-index: 50;
 }
@@ -470,8 +471,15 @@ html, body {
 		top: 8%;
 	}
 	.settings-panel {
+		/* Anchor both top AND bottom so the panel's height is fully
+		   constrained inside the viewport. Without a hard bottom edge,
+		   iOS rubber-bands past the screen and snaps back, which is
+		   why the Music section was unreachable: it was visible during
+		   the drag but settled off-screen on release. */
 		top: 50px;
 		right: 8px;
+		bottom: 8px;
+		max-height: none;
 		max-width: calc(100vw - 16px);
 		min-width: 0;
 	}

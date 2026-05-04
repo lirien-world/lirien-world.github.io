@@ -157,32 +157,21 @@ html, body {
 	opacity: 0.5;
 	animation: title-hint-pulse 2.6s ease-in-out infinite;
 }
-.title-hint-ready {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 14px;
-}
-.title-hint-line {
-	width: 1px;
-	height: 48px;
-	background: linear-gradient(to bottom, var(--gold), transparent);
-	animation: title-hint-line 2.5s ease-in-out infinite;
-}
 .title-hint-text {
-	font-size: clamp(12px, 1.1vw, 15px);
-	letter-spacing: 0.4em;
+	font-size: clamp(16px, 1.9vw, 24px);
+	font-weight: 500;
+	letter-spacing: 0.5em;
 	text-transform: uppercase;
-	color: var(--mist);
+	color: var(--gold-bright);
+	text-shadow:
+		0 0 14px rgba(196, 147, 90, 0.85),
+		0 0 32px rgba(196, 147, 90, 0.5),
+		0 0 60px rgba(196, 147, 90, 0.3);
 	animation: title-hint-pulse 2.6s ease-in-out infinite;
 }
 @keyframes title-hint-pulse {
-	0%, 100% { opacity: 0.35; }
-	50%      { opacity: 0.9; }
-}
-@keyframes title-hint-line {
-	0%, 100% { opacity: 0.3; transform: scaleY(1); }
-	50%      { opacity: 1;   transform: scaleY(1.2); }
+	0%, 100% { opacity: 0.55; }
+	50%      { opacity: 1;    }
 }
 
 /* ----- chapter title overlay ----- */
@@ -376,13 +365,16 @@ html, body {
 	position: fixed;
 	top: 56px;
 	right: 12px;
-	background: rgba(11, 11, 18, 0.86);
+	background: rgba(11, 11, 18, 0.92);
 	border-radius: 12px;
 	padding: 18px;
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	min-width: 220px;
+	max-height: 85vh;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 	z-index: 50;
 }
 .settings-panel[hidden] { display: none; }
@@ -443,4 +435,49 @@ html, body {
 }
 @media (orientation: portrait) and (max-aspect-ratio: 1/1) {
 	.rotate-prompt { display: flex; }
+}
+
+/* ----- mobile / small-screen layout -----
+ *
+ * The desktop layout assumes ~1000px+ horizontal room; on phones (in
+ * landscape too — iPhone Pro Max landscape is ~932×430) the panel
+ * margins waste real estate and the user-chosen font sizes (28–42)
+ * get visually huge. Tighten margins, cap the rendered font size at
+ * something readable, and make the settings panel reachable inside
+ * a small viewport. The user's chosen size is still respected up to
+ * the cap, so the Text size buttons remain meaningful. */
+
+@media (max-width: 700px), (max-height: 500px) {
+	.prose {
+		left: 14px;
+		right: 14px;
+		bottom: 60px;
+		top: 42%;
+		padding: 22px 18px 18px 18px;
+		border-radius: 8px;
+	}
+	.prose-content {
+		font-size: min(var(--prose-font-size, 36px), 22px);
+		line-height: 1.4;
+	}
+	.choices {
+		left: 12px;
+		right: 12px;
+		transform: none;
+		min-width: 0;
+		max-width: none;
+		top: 8%;
+	}
+	.settings-panel {
+		top: 50px;
+		right: 8px;
+		max-width: calc(100vw - 16px);
+		min-width: 0;
+	}
+	.chapter-title {
+		padding: 24px 28px;
+	}
+	.chapter-name {
+		font-size: 38px;
+	}
 }

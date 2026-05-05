@@ -92,7 +92,12 @@ function saveSettings() {
 // than text instructions). Browsers that don't fire it (Firefox,
 // Samsung Internet, etc.) fall back to text instructions.
 
-const INSTALL_SPLASH_KEY = "lirien.installSplashDismissed";
+// Splash shows on every page load (no persisted dismissal). The
+// mobile-browser-without-install experience is degraded enough — leak,
+// double-tap zoom, choice cramping — that we'd rather nudge users
+// toward Add-to-Home-Screen each visit than respect a one-time skip
+// and quietly let them have a worse session. "Maybe later" still
+// works fine in-tab; reload re-shows it.
 let deferredInstallPrompt = null;
 
 window.addEventListener("beforeinstallprompt", (ev) => {
@@ -141,7 +146,9 @@ function maybeShowInstallSplash() {
 	if (!forceShow) {
 		if (isStandaloneMode()) return;
 		if (!isMobileDevice()) return;
-		try { if (localStorage.getItem(INSTALL_SPLASH_KEY)) return; } catch (e) { /* private mode — show splash */ }
+		// No localStorage check — splash should re-appear on every
+		// page load. Within-page dismissal is in-memory only via the
+		// hidden attribute; reload re-renders the splash.
 	}
 
 	renderSplashPlatformSection(forceMode);
@@ -186,12 +193,11 @@ async function triggerNativeInstall() {
 }
 
 function dismissInstallSplash() {
+	// In-memory only — reload re-shows the splash. We deliberately
+	// don't persist a "dismissed forever" flag, since the install
+	// path materially improves the mobile experience (no leaks, no
+	// double-tap-zoom, no nav chrome) and we want to keep nudging.
 	$installSplash.hidden = true;
-	// In ?show-splash dev mode, don't persist dismissal — the whole
-	// point is to be able to re-trigger the splash on the next reload.
-	const params = new URLSearchParams(window.location.search);
-	if (params.has("show-splash")) return;
-	try { localStorage.setItem(INSTALL_SPLASH_KEY, "1"); } catch (e) { /* drop */ }
 }
 
 function applyFontSize() {

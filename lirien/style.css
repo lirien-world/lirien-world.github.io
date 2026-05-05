@@ -606,7 +606,9 @@ html, body {
 
 /* ----- install-to-home-screen splash (mobile-only, first-visit) -----
  * Shown once on mobile in browser mode (not standalone). Persists
- * dismissal in localStorage so we don't nag returning visitors. */
+ * dismissal in localStorage so we don't nag returning visitors.
+ * The hero is the actual apple-touch-icon — what they'll see on
+ * their home screen if they install — to set expectations visually. */
 .install-splash {
 	position: fixed;
 	inset: 0;
@@ -614,77 +616,170 @@ html, body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(8, 6, 15, 0.97);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	background:
+		radial-gradient(ellipse at 50% 30%, rgba(28, 18, 40, 0.96) 0%, rgba(8, 6, 15, 0.99) 70%);
 	padding:
 		max(24px, env(safe-area-inset-top))
-		max(24px, env(safe-area-inset-right))
+		max(20px, env(safe-area-inset-right))
 		max(24px, env(safe-area-inset-bottom))
-		max(24px, env(safe-area-inset-left));
+		max(20px, env(safe-area-inset-left));
 }
 .install-splash[hidden] { display: none; }
+
 .install-splash-content {
 	max-width: 380px;
 	width: 100%;
 	color: #f5ebd2;
 	text-align: center;
 }
+
+.install-splash-icon {
+	width: 96px;
+	height: 96px;
+	border-radius: 22px;          /* matches iOS app-icon roundness */
+	margin: 0 auto 22px auto;
+	display: block;
+	box-shadow:
+		0 10px 28px rgba(0, 0, 0, 0.55),
+		0 0 60px rgba(196, 147, 90, 0.22);
+}
+
 .install-splash-title {
 	font-family: 'Cormorant Garamond', serif;
-	font-size: 32px;
-	font-weight: 300;
-	margin: 0 0 18px 0;
+	font-size: 30px;
+	font-weight: 400;
+	margin: 0 0 12px 0;
 	color: var(--gold-bright);
-	letter-spacing: 0.02em;
+	letter-spacing: 0.005em;
+	line-height: 1.15;
 }
+
 .install-splash-body {
 	font-size: 15px;
 	line-height: 1.55;
-	margin: 0 0 22px 0;
-	opacity: 0.85;
+	margin: 0 0 26px 0;
+	color: rgba(245, 235, 210, 0.82);
 }
-.install-splash-instructions {
-	margin-bottom: 26px;
+
+/* Per-platform section — only one is shown at a time. */
+.install-splash-platform {
+	margin-bottom: 22px;
+}
+
+/* Numbered steps — used for both iOS and Android-text instructions. */
+.install-splash-steps {
+	list-style: none;
+	padding: 0;
+	margin: 0;
 	text-align: left;
 }
-.install-splash-instructions ol {
-	padding-left: 22px;
-	margin: 0;
-	line-height: 1.65;
+.install-splash-steps li {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 14px;
 	font-size: 15px;
-	color: rgba(245, 235, 210, 0.88);
+	line-height: 1.5;
+	color: rgba(245, 235, 210, 0.92);
 }
-.install-splash-instructions ol li { margin-bottom: 6px; }
-.install-splash-instructions strong {
+.install-splash-steps li:last-child { margin-bottom: 0; }
+.install-splash-steps strong {
 	color: var(--gold-bright);
 	font-weight: 500;
 }
-.install-splash-instructions p {
+.step-num {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: rgba(196, 147, 90, 0.15);
+	border: 1px solid rgba(196, 147, 90, 0.45);
+	color: var(--gold-bright);
+	font-size: 13px;
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 1px;
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Inline SVG glyph (share icon, plus icon) — sits inside the step
+ * text so users can recognize the actual button in their toolbar. */
+.step-glyph {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	vertical-align: -4px;
+	color: var(--gold-bright);
+	margin: 0 1px;
+}
+
+/* Android native install button — only rendered when the browser
+ * has fired beforeinstallprompt and we have a saved event to .prompt() */
+.install-splash-prompt-btn {
+	font-family: inherit;
+	font-size: 17px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	padding: 14px 32px;
+	background: var(--gold-bright);
+	color: #1a1410;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	box-shadow: 0 4px 18px rgba(196, 147, 90, 0.4);
+	transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.install-splash-prompt-btn:hover,
+.install-splash-prompt-btn:focus {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 22px rgba(196, 147, 90, 0.55);
+	outline: none;
+}
+.install-splash-prompt-sub {
+	font-size: 13px;
+	margin: 12px 0 0 0;
+	color: rgba(245, 235, 210, 0.6);
+	font-style: italic;
+}
+
+.install-splash-generic-msg {
 	font-size: 14px;
 	line-height: 1.5;
 	color: rgba(245, 235, 210, 0.75);
 	margin: 0;
 }
+
+/* "Maybe later" — soft underline link rather than a competing button
+ * so the install path stays primary. */
 .install-splash-continue {
 	font-family: inherit;
-	font-size: 16px;
-	padding: 10px 22px;
+	font-size: 14px;
+	color: rgba(245, 235, 210, 0.7);
 	background: transparent;
-	border: 1px solid rgba(245, 235, 210, 0.4);
-	border-radius: 6px;
-	color: #f5ebd2;
+	border: none;
 	cursor: pointer;
-	transition: background 0.2s ease, border-color 0.2s ease;
+	padding: 6px 12px;
+	text-decoration: underline;
+	text-underline-offset: 4px;
+	text-decoration-color: rgba(245, 235, 210, 0.3);
+	letter-spacing: 0.02em;
 }
 .install-splash-continue:hover,
 .install-splash-continue:focus {
-	background: rgba(245, 235, 210, 0.08);
-	border-color: rgba(245, 235, 210, 0.65);
+	color: #fbf2d4;
+	text-decoration-color: rgba(245, 235, 210, 0.6);
 	outline: none;
 }
+
 .install-splash-note {
 	font-size: 12px;
-	margin: 14px 0 0 0;
-	opacity: 0.55;
+	margin: 6px 0 0 0;
+	color: rgba(245, 235, 210, 0.5);
 	font-style: italic;
 }
 
@@ -883,6 +978,14 @@ html, body {
 		top: 32%;
 		padding: 22px 18px 28px 18px;
 		border-radius: 8px;
+	}
+	/* Standalone (Add to Home Screen) gets the full viewport with no
+	 * browser chrome eating space, so the prose panel can shrink and
+	 * still hold a comfortable amount of text per chunk — letting the
+	 * scene art breathe more behind it. Mobile-browser stays at 32%
+	 * because the URL bar already eats the top of the viewport. */
+	body.is-standalone .prose {
+		top: 55%;
 	}
 	.prose-content {
 		/* Scale the user's chosen size proportionally instead of

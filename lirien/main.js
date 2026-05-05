@@ -46,8 +46,8 @@ const $confirmMessage = document.getElementById("confirm-message");
 const $confirmOk = document.getElementById("confirm-ok");
 const $confirmCancel = document.getElementById("confirm-cancel");
 const $installSplash = document.getElementById("install-splash");
-const $installSplashInstructions = document.getElementById("install-splash-instructions");
 const $installSplashContinue = document.getElementById("install-splash-continue");
+const $installSplashAndroidPrompt = document.getElementById("install-splash-android-prompt");
 const $titleScreen = document.getElementById("title-screen");
 const $titleHint = document.getElementById("title-hint");
 const $devPanel = document.getElementById("dev-panel");
@@ -80,12 +80,30 @@ function saveSettings() {
 //
 // PWA-style "Add to Home Screen" gives users a chrome-less full-screen
 // experience and noticeably smoother performance — we detect mobile
-// browser users and prompt them once. iOS Safari has no programmatic
-// install API, so the prompt is text instructions; Android Chrome
-// has them too (the native beforeinstallprompt is browser-discretion
-// and unreliable, so we use the text instructions for both).
+// browser users and prompt them once.
+//
+// iOS has no programmatic install API; we show the share-button +
+// add-to-home-screen text instructions with inline SVG glyphs so users
+// recognize the actual buttons in Safari's toolbar.
+//
+// Android Chrome (and Chromium-based browsers) fire `beforeinstallprompt`
+// when the manifest meets PWA criteria — we capture it and call
+// .prompt() to show the native install dialog (much higher conversion
+// than text instructions). Browsers that don't fire it (Firefox,
+// Samsung Internet, etc.) fall back to text instructions.
 
 const INSTALL_SPLASH_KEY = "lirien.installSplashDismissed";
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (ev) => {
+	// Stop the browser from showing its own auto-banner so we can
+	// surface the prompt at our chosen moment (the splash button).
+	ev.preventDefault();
+	deferredInstallPrompt = ev;
+	// If the splash is already up showing the text-fallback section,
+	// upgrade it in-place to show the native button instead.
+	if ($installSplash && !$installSplash.hidden) renderSplashPlatformSection();
+});
 
 function isStandaloneMode() {
 	return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
@@ -111,39 +129,69 @@ function isAndroidDevice() {
 }
 
 function maybeShowInstallSplash() {
-	// Skip if: already a standalone PWA, not a mobile device, or the
-	// user previously dismissed the splash.
-	if (isStandaloneMode()) return;
-	if (!isMobileDevice()) return;
-	try { if (localStorage.getItem(INSTALL_SPLASH_KEY)) return; } catch (e) { /* private mode — show splash */ }
+	// Dev escape: ?show-splash forces the splash open regardless of
+	// platform / standalone / dismissal state, so testing doesn't
+	// require clearing localStorage. Optional value picks which
+	// per-platform section to render: ?show-splash=ios|android|
+	// android-text|generic. Bare ?show-splash auto-detects.
+	const params = new URLSearchParams(window.location.search);
+	const forceShow = params.has("show-splash");
+	const forceMode = forceShow ? params.get("show-splash") : null;
 
-	// Per-platform instructions. iOS users need to find the Share
-	// button (bottom toolbar in portrait, top in some landscape modes);
-	// Android users get the kebab menu's Install option.
-	if (isIOSDevice()) {
-		$installSplashInstructions.innerHTML =
-			"<ol>" +
-			"<li>Tap the <strong>Share</strong> button at the bottom of Safari</li>" +
-			"<li>Scroll down and tap <strong>Add to Home Screen</strong></li>" +
-			"<li>Tap <strong>Add</strong> in the top corner</li>" +
-			"</ol>";
-	} else if (isAndroidDevice()) {
-		$installSplashInstructions.innerHTML =
-			"<ol>" +
-			"<li>Tap the <strong>menu</strong> (three dots) in the corner</li>" +
-			"<li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong></li>" +
-			"</ol>";
-	} else {
-		$installSplashInstructions.innerHTML =
-			"<p>Look for an &ldquo;Add to Home Screen&rdquo; or &ldquo;Install&rdquo; option in your browser menu.</p>";
+	if (!forceShow) {
+		if (isStandaloneMode()) return;
+		if (!isMobileDevice()) return;
+		try { if (localStorage.getItem(INSTALL_SPLASH_KEY)) return; } catch (e) { /* private mode — show splash */ }
 	}
 
+	renderSplashPlatformSection(forceMode);
 	$installSplash.hidden = false;
 
-	$installSplashContinue.addEventListener("click", () => {
-		$installSplash.hidden = true;
-		try { localStorage.setItem(INSTALL_SPLASH_KEY, "1"); } catch (e) { /* drop */ }
-	}, { once: true });
+	$installSplashContinue.addEventListener("click", dismissInstallSplash);
+	$installSplashAndroidPrompt.addEventListener("click", triggerNativeInstall);
+}
+
+// Reveals the right per-platform section and hides the others. Called
+// at splash open AND when beforeinstallprompt fires later (Android
+// users who tapped through quickly may see the text fallback first
+// then the native button appear once the browser fires the event).
+function renderSplashPlatformSection(forceMode) {
+	const sections = document.querySelectorAll(".install-splash-platform");
+	for (const s of sections) s.hidden = true;
+
+	let target;
+	if (forceMode === "ios")               target = "install-splash-ios";
+	else if (forceMode === "android")      target = "install-splash-android-native";
+	else if (forceMode === "android-text") target = "install-splash-android-text";
+	else if (forceMode === "generic")      target = "install-splash-generic";
+	else if (isIOSDevice())                target = "install-splash-ios";
+	else if (isAndroidDevice())            target = deferredInstallPrompt ? "install-splash-android-native" : "install-splash-android-text";
+	else                                   target = "install-splash-generic";
+
+	const el = document.getElementById(target);
+	if (el) el.hidden = false;
+}
+
+async function triggerNativeInstall() {
+	if (!deferredInstallPrompt) return;
+	const ev = deferredInstallPrompt;
+	deferredInstallPrompt = null;
+	try {
+		ev.prompt();
+		await ev.userChoice;
+	} catch (e) { /* user dismissed or browser declined */ }
+	// Hide the splash whether they accepted or dismissed — they've
+	// engaged with the install path either way, no need to re-prompt.
+	dismissInstallSplash();
+}
+
+function dismissInstallSplash() {
+	$installSplash.hidden = true;
+	// In ?show-splash dev mode, don't persist dismissal — the whole
+	// point is to be able to re-trigger the splash on the next reload.
+	const params = new URLSearchParams(window.location.search);
+	if (params.has("show-splash")) return;
+	try { localStorage.setItem(INSTALL_SPLASH_KEY, "1"); } catch (e) { /* drop */ }
 }
 
 function applyFontSize() {

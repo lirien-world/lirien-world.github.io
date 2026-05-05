@@ -6,14 +6,16 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<title>Chronicles of Lirien</title>
-	<link rel="apple-touch-icon" href="../aerin_portrait.png">
+	<link rel="icon" type="image/x-icon" href="../favicon.ico">
+	<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="../favicon-180.png">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
-	<div id="bg" class="bg"></div>
+	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
 	<div id="title-screen" class="title-screen">
 		<div class="title-content">
 			<div class="title-eyebrow">Book One &mdash; Chronicles of Lirien</div>
@@ -22,6 +24,7 @@
 		</div>
 		<div id="title-hint" class="title-hint">
 			<span class="title-hint-loading">loading&hellip;</span>
+			<button id="title-continue" class="title-continue" hidden>Continue</button>
 			<span class="title-hint-ready title-hint-text" hidden>Enter</span>
 		</div>
 	</div>
@@ -39,6 +42,16 @@
 			</svg>
 		</div>
 		<div id="choices" class="choices"></div>
+	</div>
+	<button id="chapters-btn" class="chapters-btn" aria-label="Chapters"></button>
+	<div id="chapters-panel" class="chapters-panel" hidden>
+		<div class="settings-heading">Chapters</div>
+		<div id="chapter-list" class="chapter-list">
+			<div class="chapter-empty">Chapter list will appear here as you read.</div>
+		</div>
+		<button id="return-recent-btn" class="return-recent-btn" hidden>Return to most recent point</button>
+		<div class="settings-divider"></div>
+		<button id="restart-btn" class="restart-btn">Restart from beginning</button>
 	</div>
 	<button id="settings-btn" class="settings-btn" aria-label="Settings"></button>
 	<div id="settings-panel" class="settings-panel" hidden>
@@ -60,14 +73,25 @@
 		<button class="music-btn" data-music="off">Off</button>
 	</div>
 	<div id="rotate-prompt" class="rotate-prompt">Please rotate your device to landscape</div>
+	<div id="confirm-dialog" class="confirm-dialog" hidden>
+		<div class="confirm-card">
+			<div id="confirm-title" class="confirm-title"></div>
+			<div id="confirm-message" class="confirm-message"></div>
+			<div class="confirm-actions">
+				<button id="confirm-cancel" class="confirm-cancel">Cancel</button>
+				<button id="confirm-ok" class="confirm-ok">Confirm</button>
+			</div>
+		</div>
+	</div>
 	<div id="dev-panel" class="dev-panel" hidden>
 		<div class="dev-header">
 			<span>Jump to bg</span>
 			<button id="dev-close" class="dev-close" aria-label="Close">&times;</button>
 		</div>
+		<div id="dev-current" class="dev-current" hidden></div>
 		<input id="dev-search" class="dev-search" placeholder="filter&hellip;" type="text" autocomplete="off" spellcheck="false">
 		<div id="dev-list" class="dev-list"></div>
-		<div class="dev-footer">backtick (<code>`</code>) toggles &middot; esc closes &middot; auto-picks choice 0 at branches</div>
+		<div class="dev-footer">backtick (<code>`</code>) toggles &middot; esc closes &middot; depth-first across branches</div>
 	</div>
 	<script src="ink.js"></script>
 	<script src="main.js"></script>

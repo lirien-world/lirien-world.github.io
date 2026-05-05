@@ -52,12 +52,30 @@ html, body {
 	position: fixed;
 	inset: 0;
 	background-color: #0d0e10;
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
-	transition: background-image 0.8s ease;
 	z-index: 0;
+	overflow: hidden;
 }
+/* The bg is now an actual <img> rather than a CSS background-image on
+ * the wrapper div. Two reasons:
+ *  1. Memory lifecycle is cleaner — Safari's CSS background-image
+ *     cache held decoded bitmaps long after the URL was swapped,
+ *     causing "Safari Graphics and Media" to balloon at ~1 GB/sec
+ *     during rapid scene changes. Setting img.src triggers a clean
+ *     release-then-decode cycle.
+ *  2. Same-URL preloads via `new Image()` share the decoded bitmap
+ *     with an <img> that gets that src, where CSS background-image
+ *     wasn't guaranteed to. */
+.bg-image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	user-select: none;
+	-webkit-user-drag: none;
+}
+.bg-image:not([src]),
+.bg-image[src=""] { visibility: hidden; }
 
 /* ----- title screen (front cover) -----
  *
@@ -157,6 +175,10 @@ html, body {
 	opacity: 0.5;
 	animation: title-hint-pulse 2.6s ease-in-out infinite;
 }
+/* Enter — gold + amber glow by default (no Continue offered). When a
+ * Continue label sits above, .has-continue gets set on the parent and
+ * Enter recedes to dark ink so the gold Continue stays the primary
+ * call to action. */
 .title-hint-text {
 	font-size: clamp(16px, 1.9vw, 24px);
 	font-weight: 500;
@@ -169,9 +191,36 @@ html, body {
 		0 0 60px rgba(196, 147, 90, 0.3);
 	animation: title-hint-pulse 2.6s ease-in-out infinite;
 }
+/* When Continue is offered, Enter is suppressed entirely — a fresh
+ * start is reachable from the chapters menu's "Restart from beginning",
+ * so Enter would just risk clobbering the autosave on a stray tap. */
+.title-hint.has-continue .title-hint-text {
+	display: none;
+}
 @keyframes title-hint-pulse {
 	0%, 100% { opacity: 0.55; }
 	50%      { opacity: 1;    }
+}
+
+/* Continue — sits ABOVE Enter when an autosave exists. Takes the gold
+ * + amber-glow treatment so it reads as the primary call to action;
+ * Enter recedes to dark ink underneath. */
+.title-continue {
+	font-family: inherit;
+	font-size: clamp(16px, 1.9vw, 24px);
+	font-weight: 500;
+	letter-spacing: 0.5em;
+	text-transform: uppercase;
+	color: var(--gold-bright);
+	text-shadow:
+		0 0 14px rgba(196, 147, 90, 0.85),
+		0 0 32px rgba(196, 147, 90, 0.5),
+		0 0 60px rgba(196, 147, 90, 0.3);
+	background: transparent;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	animation: title-hint-pulse 2.6s ease-in-out infinite;
 }
 
 /* ----- chapter title overlay ----- */
@@ -224,11 +273,11 @@ html, body {
 	border-radius: 12px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	/* padding-top must stay smaller than .prose-content p { margin-bottom }
-	 * (1em = font-size). Otherwise scrollChunkToTop's "scroll to
-	 * paragraph.offsetTop - padTop" lands inside the previous paragraph
-	 * and the bottom of its last line peeks at the top of the panel. */
-	padding: 22px 36px 26px 36px;
+	/* padding-top must stay well below .prose-content p { margin-bottom }
+	 * — scrollChunkToTop scrolls to paragraph.offsetTop - padTop, so the
+	 * size of (margin-bottom - padTop) is the gap between viewport top
+	 * and the previous paragraph's bottom. Bigger gap = no peek. */
+	padding: 18px 36px 26px 36px;
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;
@@ -280,6 +329,10 @@ html, body {
 	transform: translateX(-50%);
 	transition: opacity 0.6s ease-in-out;
 	z-index: 20;
+	/* will-change pins the chevron on its own GPU layer, so Safari
+	 * caches the drop-shadow as a static texture instead of re-rasterizing
+	 * it on every animation frame — that's what was reading as flicker. */
+	will-change: transform;
 	filter:
 		drop-shadow(0 0 8px rgba(224, 176, 112, 0.7))
 		drop-shadow(0 0 22px rgba(224, 176, 112, 0.4));
@@ -289,15 +342,17 @@ html, body {
 	opacity: 1;
 	animation: hint-float 2.4s ease-in-out infinite;
 }
+/* Bob-only — opacity stays at the .visible value (1) so the glow is
+ * constant. The transition above still handles fade-in/out at show/hide. */
 @keyframes hint-float {
-	0%, 100% { transform: translate(-50%, 0);   opacity: 0.6; }
-	50%      { transform: translate(-50%, 7px); opacity: 1;    }
+	0%, 100% { transform: translate(-50%, 0);   }
+	50%      { transform: translate(-50%, 7px); }
 }
 /* Mobile variant — chevron is right-anchored inside the prose corner,
  * so no translateX(-50%) baseline; just bob the Y value. */
 @keyframes hint-float-corner {
-	0%, 100% { transform: translateY(0);   opacity: 0.6; }
-	50%      { transform: translateY(5px); opacity: 1;    }
+	0%, 100% { transform: translateY(0);   }
+	50%      { transform: translateY(5px); }
 }
 
 /* ----- choice panel: upper-third, centered ----- */
@@ -344,10 +399,12 @@ html, body {
 
 /* ----- settings menu ----- */
 
-.settings-btn {
+/* Settings + Chapters buttons share size, position-anchor, and color
+ * so the two corner icons read as a coherent pair. */
+.settings-btn,
+.chapters-btn {
 	position: fixed;
 	top: 12px;
-	right: 12px;
 	width: 36px;
 	height: 36px;
 	border: none;
@@ -355,16 +412,30 @@ html, body {
 	cursor: pointer;
 	z-index: 50;
 	padding: 0;
-	color: rgba(240, 225, 195, 0.78);
+	color: #f5ebd2;
 	transition: color 0.2s ease;
 }
-.settings-btn:hover { color: #fbf2d4; }
+.settings-btn:hover,
+.chapters-btn:hover { color: #fbf2d4; }
+.settings-btn { right: 12px; }
+.chapters-btn { right: 56px; }
+.chapters-btn::before {
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5ebd2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .settings-btn::before {
 	content: '';
 	display: block;
 	width: 100%;
 	height: 100%;
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5ebd2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
@@ -389,6 +460,149 @@ html, body {
 	z-index: 50;
 }
 .settings-panel[hidden] { display: none; }
+
+/* Chapters panel — same chrome as settings, just a different content
+ * model. Shares positioning so only one panel is ever visible at a
+ * time (JS enforces mutual exclusion). */
+.chapters-panel {
+	position: fixed;
+	top: 56px;
+	right: 12px;
+	background: rgba(11, 11, 18, 0.92);
+	border-radius: 12px;
+	padding: 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 240px;
+	max-width: 320px;
+	max-height: 85vh;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	z-index: 50;
+}
+.chapters-panel[hidden] { display: none; }
+
+.chapter-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 4px;
+}
+
+.chapter-empty {
+	font-size: 15px;
+	color: rgba(240, 225, 195, 0.55);
+	font-style: italic;
+	padding: 6px 10px 12px 10px;
+	line-height: 1.45;
+}
+
+.chapter-btn {
+	font-family: inherit;
+	font-size: 18px;
+	color: rgba(240, 225, 195, 0.85);
+	background: transparent;
+	border: none;
+	text-align: left;
+	padding: 6px 10px 6px 24px;
+	cursor: pointer;
+	border-radius: 4px;
+	min-height: 36px;
+	position: relative;
+}
+.chapter-btn:hover { color: #fbf2d4; background: rgba(245, 235, 210, 0.05); }
+.chapter-btn.current::before {
+	content: '•';
+	position: absolute;
+	left: 8px;
+	color: #fbf2d4;
+}
+
+.restart-btn,
+.return-recent-btn {
+	font-family: inherit;
+	font-size: 16px;
+	color: rgba(240, 225, 195, 0.65);
+	background: transparent;
+	border: none;
+	text-align: left;
+	padding: 6px 10px;
+	cursor: pointer;
+	border-radius: 4px;
+	min-height: 36px;
+	letter-spacing: 0.02em;
+}
+.restart-btn:hover,
+.return-recent-btn:hover { color: #fbf2d4; background: rgba(245, 235, 210, 0.05); }
+.return-recent-btn[hidden] { display: none; }
+
+/* ----- confirm dialog ----- */
+.confirm-dialog {
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.55);
+	backdrop-filter: blur(2px);
+	-webkit-backdrop-filter: blur(2px);
+}
+.confirm-dialog[hidden] { display: none; }
+.confirm-card {
+	background: rgba(15, 15, 22, 0.96);
+	border: 1px solid rgba(245, 235, 210, 0.18);
+	border-radius: 12px;
+	padding: 24px 24px 18px 24px;
+	max-width: 380px;
+	width: calc(100vw - 48px);
+	color: #f5ebd2;
+}
+.confirm-title {
+	font-size: 20px;
+	font-weight: 500;
+	margin-bottom: 10px;
+	color: #fbf2d4;
+}
+.confirm-message {
+	font-size: 16px;
+	line-height: 1.5;
+	color: rgba(240, 225, 195, 0.8);
+	margin-bottom: 22px;
+}
+.confirm-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+}
+.confirm-cancel,
+.confirm-ok {
+	font-family: inherit;
+	font-size: 16px;
+	padding: 8px 16px;
+	border-radius: 6px;
+	cursor: pointer;
+	background: transparent;
+}
+.confirm-cancel {
+	color: rgba(240, 225, 195, 0.7);
+	border: 1px solid rgba(245, 235, 210, 0.25);
+}
+.confirm-cancel:hover {
+	color: #fbf2d4;
+	border-color: rgba(245, 235, 210, 0.5);
+}
+.confirm-ok {
+	color: #1a1a22;
+	background: #d4b878;
+	border: 1px solid #d4b878;
+}
+.confirm-ok:hover {
+	background: #e2c98c;
+	border-color: #e2c98c;
+}
 
 .settings-heading {
 	font-size: 18px;
@@ -519,6 +733,34 @@ html, body {
 	border-radius: 4px;
 }
 .dev-item:hover { background: rgba(245, 235, 210, 0.08); color: #fbf2d4; }
+.dev-item.current {
+	color: #fbf2d4;
+	background: rgba(212, 184, 120, 0.12);
+	font-weight: 500;
+}
+.dev-item.current::before {
+	content: '►';
+	display: inline-block;
+	margin-right: 6px;
+	color: var(--gold-bright, #d4b878);
+	font-size: 10px;
+	transform: translateY(-1px);
+}
+
+/* Sub-header showing the user's current bg so they can orient quickly
+ * and skip forward/back from where they are. */
+.dev-current {
+	font-family: ui-monospace, Menlo, monospace;
+	font-size: 12px;
+	color: rgba(245, 235, 210, 0.6);
+	padding: 2px 0 10px 0;
+	letter-spacing: 0.02em;
+}
+.dev-current[hidden] { display: none; }
+.dev-current strong {
+	color: #fbf2d4;
+	font-weight: 500;
+}
 .dev-footer {
 	margin-top: 10px;
 	padding-top: 10px;
@@ -587,7 +829,8 @@ html, body {
 		max-width: none;
 		top: 8%;
 	}
-	.settings-panel {
+	.settings-panel,
+	.chapters-panel {
 		/* Anchor both top AND bottom so the panel's height is fully
 		   constrained inside the viewport. Without a hard bottom edge,
 		   iOS rubber-bands past the screen and snaps back, which is

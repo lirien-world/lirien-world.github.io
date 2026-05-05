@@ -26,6 +26,7 @@ const MUSIC_DIR = "music/";
 // ----- DOM refs -----
 
 const $bg = document.getElementById("bg");
+const $bgImage = document.getElementById("bg-image");
 const $proseContent = document.getElementById("prose-content");
 const $prose = document.getElementById("prose");
 const $continueHint = document.getElementById("continue-hint");
@@ -33,12 +34,24 @@ const $choices = document.getElementById("choices");
 const $chapterTitle = document.getElementById("chapter-title");
 const $settingsBtn = document.getElementById("settings-btn");
 const $settingsPanel = document.getElementById("settings-panel");
+const $chaptersBtn = document.getElementById("chapters-btn");
+const $chaptersPanel = document.getElementById("chapters-panel");
+const $chapterList = document.getElementById("chapter-list");
+const $restartBtn = document.getElementById("restart-btn");
+const $returnRecentBtn = document.getElementById("return-recent-btn");
+const $titleContinue = document.getElementById("title-continue");
+const $confirmDialog = document.getElementById("confirm-dialog");
+const $confirmTitle = document.getElementById("confirm-title");
+const $confirmMessage = document.getElementById("confirm-message");
+const $confirmOk = document.getElementById("confirm-ok");
+const $confirmCancel = document.getElementById("confirm-cancel");
 const $titleScreen = document.getElementById("title-screen");
 const $titleHint = document.getElementById("title-hint");
 const $devPanel = document.getElementById("dev-panel");
 const $devSearch = document.getElementById("dev-search");
 const $devList = document.getElementById("dev-list");
 const $devClose = document.getElementById("dev-close");
+const $devCurrent = document.getElementById("dev-current");
 
 // ----- settings (persisted to localStorage) -----
 
@@ -78,8 +91,39 @@ let allBgNames = [];
 
 (async function init() {
 	bindSettingsMenu();
+	bindChaptersMenu();
 	bindAdvanceInput();
 	bindDevMenu();
+
+	$titleContinue.addEventListener("click", () => {
+		// Title-screen Continue: unlock audio (autoplay policy), dismiss
+		// the title, and resume from the autosave snapshot. Falls back
+		// to a fresh start if anything goes wrong.
+		onFirstUserGesture();
+		const saved = loadAutosave();
+		if (!story || !saved) {
+			state = "idle";
+			dismissTitleScreen();
+			advance();
+			return;
+		}
+		try { story.state.LoadJson(saved.state); }
+		catch (e) {
+			console.warn("[autosave] LoadJson failed, starting fresh:", e);
+			state = "idle";
+			dismissTitleScreen();
+			advance();
+			return;
+		}
+		// Order matters: clearTranscript must run BEFORE applyAutosaveVisuals
+		// because the latter renders the saved lastChunk into the panel.
+		clearTranscript();
+		applyAutosaveVisuals(saved);
+		isExploring = false;
+		state = "idle";
+		dismissTitleScreen();
+		advance();
+	});
 	// Show the title screen immediately. The story.json fetch happens
 	// in the background; until it resolves, the hint says "loading".
 	// The first tap on the title screen unlocks audio and starts the
@@ -90,12 +134,22 @@ let allBgNames = [];
 		const parsed = await fetch("story.json").then(r => r.json());
 		story = new inkjs.Story(parsed);
 		allBgNames = extractBgNames(parsed);
+		// Warm the first 2-3 bgs while the user reads the title screen,
+		// so the very first chunk after Enter doesn't flash from black.
+		prefetchUpcomingBgs(3);
 		state = "title";
 		// Swap the "loading…" text for the gold-line + "Enter" hint.
 		const loadingEl = $titleHint.querySelector(".title-hint-loading");
 		const readyEl = $titleHint.querySelector(".title-hint-ready");
 		if (loadingEl) loadingEl.hidden = true;
 		if (readyEl) readyEl.hidden = false;
+		// Reveal the Continue button if there's an autosave to resume.
+		// .has-continue on the parent flips Enter from gold to dark ink
+		// so the gold Continue stays the primary call to action.
+		if (loadAutosave()) {
+			$titleContinue.hidden = false;
+			$titleHint.classList.add("has-continue");
+		}
 	} catch (e) {
 		showFatalError(e);
 	}
@@ -124,6 +178,13 @@ function advance() {
 	// (just like the Godot runner used to do) so a pure-tag beat
 	// doesn't strand the user.
 	while (story.canContinue) {
+		// Snapshot state BEFORE Continue() so chapter bookmarks land
+		// at "just before the chapter started emitting." Without this,
+		// the chapter:/bg:/music: tags all fire in a single Continue()
+		// step and the snapshot would land after the first chunk's
+		// text — meaning a jump-to-chapter would skip that chunk and
+		// its bg swap. See recordChapterBookmark for the consumer.
+		stateBeforeContinue = story.state.toJson();
 		const text = story.Continue();
 		applyTags(story.currentTags || []);
 		const trimmed = (text || "").trim();
@@ -133,15 +194,21 @@ function advance() {
 		// this chunk. At choice points all branches are walked, so
 		// whichever path the user picks the bg is already cached.
 		prefetchUpcomingBgs(3);
+		// Autosave the current reading position. While exploring (jumped
+		// to a chapter via the menu) this is skipped so the user's "real"
+		// most-recent point stays parked until they return or restart.
+		if (!isExploring) saveAutosave();
 		return;
 	}
 	if (story.currentChoices && story.currentChoices.length > 0) {
 		applyTags(story.currentTags || []);
 		showChoices(story.currentChoices);
+		if (!isExploring) saveAutosave();
 		return;
 	}
 	state = "ended";
 	hideContinueHint();
+	if (!isExploring) saveAutosave();
 }
 
 // ----- chunk reveal (typewriter) -----
@@ -167,6 +234,8 @@ function typeChunk(text) {
 	hideContinueHint();
 	$choices.classList.remove("visible");
 	$choices.innerHTML = "";
+	// Remember this chunk so saveAutosave can persist it as resume context.
+	lastTypedChunk = text;
 
 	// Build a paragraph with one <span class="ch"> per character. Each
 	// span gets `animation-delay` = (typing time to reach that char,
@@ -330,7 +399,12 @@ function clearTranscript() {
 	$prose.scrollTop = 0;
 }
 
-function showChapterTitle(spec) {
+// Visual-only chapter overlay: parses the spec, paints it, and fades
+// it in/out. No transcript clearing or bookmark recording — those are
+// the caller's responsibility. Used both by the natural in-flow tag
+// handler and by autosave resume (Continue / Return-to-recent), where
+// recording a bookmark would land on a stale stateBeforeContinue.
+function showChapterTitleOverlay(spec) {
 	// spec is "<num> — <title>", e.g. "One — Ash and Arrival".
 	let numText = "";
 	let titleText = spec;
@@ -353,17 +427,37 @@ function showChapterTitle(spec) {
 		$chapterTitle.classList.remove("visible");
 		chapterTimer = null;
 	}, CHAPTER_FADE_IN_MS + CHAPTER_HOLD_MS);
+}
+
+function showChapterTitle(spec) {
+	showChapterTitleOverlay(spec);
 
 	// Clear the prose transcript at chapter boundaries — same as the
 	// Godot version's per-chapter fresh-buffer rule.
 	clearTranscript();
+
+	// Record (or update) this chapter's bookmark so the Chapters menu
+	// reflects where the player has been. Idempotent on repeated visits
+	// to the same chapter — see recordChapterBookmark.
+	recordChapterBookmark(spec);
 }
 
 // ----- backgrounds -----
 
+let currentBgName = "";
+
 function swapBackground(name) {
+	// Skip identical reassignment — defensive against rapid advance()
+	// calls re-applying the same bg, which would otherwise trigger a
+	// fresh decode+composite even though the visible bitmap is unchanged.
+	if (name === currentBgName) return;
 	const url = ATMOSPHERE_DIR + name + ".png";
-	$bg.style.backgroundImage = `url("${url}")`;
+	// Setting img.src instead of CSS background-image gives Safari a
+	// clean release-then-decode lifecycle. Browsers also share the
+	// decoded bitmap between this img and any prior `new Image()`
+	// preload of the same URL, so the prefetch actually pays off here.
+	$bgImage.src = url;
+	currentBgName = name;
 }
 
 // ----- music: HTML5 Audio with Web Audio gain control for crossfade ---
@@ -535,11 +629,19 @@ function bindAdvanceInput() {
 		// click events.
 		if (ev.target.closest(".choice")) return;
 		if (ev.target.closest(".settings-btn") || ev.target.closest(".settings-panel")) return;
+		if (ev.target.closest(".chapters-btn") || ev.target.closest(".chapters-panel")) return;
+		if (ev.target.closest(".title-continue")) return;
+		if (ev.target.closest(".confirm-dialog")) return;
 
 		// Title screen: first tap dismisses + starts the story. Taps
 		// during "title-loading" are ignored (story.json not parsed
 		// yet); they still unlock audio via onFirstUserGesture above.
+		// When an autosave exists, the title shows only the gold
+		// Continue button — taps elsewhere are ignored so a stray
+		// tap can't clobber the autosave with a fresh playthrough.
+		// (Restart-from-beginning lives in the chapters menu.)
 		if (state === "title") {
+			if ($titleHint.classList.contains("has-continue")) return;
 			state = "idle";
 			dismissTitleScreen();
 			advance();
@@ -575,6 +677,8 @@ function bindAdvanceInput() {
 function bindSettingsMenu() {
 	$settingsBtn.addEventListener("click", () => {
 		$settingsPanel.hidden = !$settingsPanel.hidden;
+		// Mutual exclusion — only one corner panel visible at a time.
+		if (!$settingsPanel.hidden) $chaptersPanel.hidden = true;
 		refreshSelectionMarkers();
 	});
 	for (const btn of $settingsPanel.querySelectorAll(".speed-btn")) {
@@ -622,6 +726,323 @@ function bindSettingsMenu() {
 		if (ev.target.closest(".settings-panel") || ev.target.closest(".settings-btn")) return;
 		$settingsPanel.hidden = true;
 	});
+}
+
+// ----- chapters menu -----
+//
+// Empty shell for now — the chapter list is populated when save/restore
+// is wired up. Restart-from-beginning is functional today since it
+// just resets the inkjs state and re-runs the start.
+
+function bindChaptersMenu() {
+	$chaptersBtn.addEventListener("click", () => {
+		$chaptersPanel.hidden = !$chaptersPanel.hidden;
+		// Mutual exclusion — only one corner panel visible at a time.
+		if (!$chaptersPanel.hidden) {
+			$settingsPanel.hidden = true;
+			// Render on open so previously-saved bookmarks appear even
+			// if no chapter: tag has fired yet this session, and so any
+			// late-session changes are reflected.
+			renderChapterList();
+			updateReturnRecentVisibility();
+		}
+	});
+
+	$restartBtn.addEventListener("click", () => {
+		showConfirm({
+			title: "Restart from beginning?",
+			message: "Your reading position and chapter list will be cleared. This can't be undone.",
+			confirmLabel: "Restart",
+		}, () => {
+			$chaptersPanel.hidden = true;
+			restartFromBeginning();
+		});
+	});
+
+	$returnRecentBtn.addEventListener("click", () => {
+		$chaptersPanel.hidden = true;
+		returnToMostRecent();
+	});
+
+	// Click outside the panel closes it.
+	document.addEventListener("pointerdown", (ev) => {
+		if ($chaptersPanel.hidden) return;
+		if (ev.target.closest(".chapters-panel") || ev.target.closest(".chapters-btn")) return;
+		$chaptersPanel.hidden = true;
+	});
+}
+
+// ----- autosave (persisted to localStorage) -----
+//
+// Stores a JSON snapshot of inkjs state at the user's most-recent
+// natural-progression point. Updated by advance() unless we're in
+// exploration mode (jumped to a chapter via the menu). Consumed by
+// the title-screen Continue button and the in-panel "Return to
+// most recent point" button.
+
+function loadAutosave() {
+	try {
+		const raw = localStorage.getItem(AUTOSAVE_KEY);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw);
+		// Backwards compat: earlier versions stored only the state JSON
+		// string. Treat that as a stateless-of-visuals save.
+		if (typeof parsed === "string") {
+			return { state: parsed, bg: "", music: "", chapter: "", lastChunk: "" };
+		}
+		// Older object-shape saves may lack lastChunk; default to "".
+		if (typeof parsed.lastChunk !== "string") parsed.lastChunk = "";
+		return parsed;
+	} catch (e) { return null; }
+}
+
+function saveAutosave() {
+	if (!story) return;
+	try {
+		// State alone doesn't capture the visible bg/music — those are
+		// set by tags on past Continue() calls and won't re-fire on
+		// resume. Persist them explicitly so a Continue/Return shows
+		// the correct atmosphere instead of inheriting whatever the
+		// user was looking at last (e.g. an exploration chapter).
+		// lastChunk gives the resume an anchor of text so the panel
+		// isn't blank at end-of-story.
+		const blob = {
+			state: story.state.toJson(),
+			bg: currentBgName,
+			music: currentMusicName,
+			chapter: currentChapterName,
+			lastChunk: lastTypedChunk,
+		};
+		localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(blob));
+	} catch (e) { /* quota / private mode — drop silently */ }
+}
+
+// Paint a chunk into the prose panel without the typewriter animation.
+// Used on resume so the reader sees their last paragraph immediately
+// as anchored context. [i]/[/i] markers in the source become <em>.
+function renderInstantChunk(text) {
+	if (!text) return;
+	const paragraph = document.createElement("p");
+	const escaped = text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/\[i\]/g, "<em>")
+		.replace(/\[\/i\]/g, "</em>");
+	paragraph.innerHTML = escaped;
+	$proseContent.appendChild(paragraph);
+}
+
+// Centralized restoration so Continue (title screen) and Return-to-recent
+// (chapters panel) handle the bg/music/chapter rehydration the same way.
+// Fades the chapter title overlay in/out as a visual anchor — without
+// it the prose just snaps in mid-text with no sense of where you are.
+// Caller is responsible for clearTranscript BEFORE calling this; the
+// lastChunk render below depends on a clean prose panel.
+function applyAutosaveVisuals(saved) {
+	if (!saved) return;
+	if (saved.bg)    swapBackground(saved.bg);
+	if (saved.music) swapMusic(saved.music);
+	if (saved.chapter) {
+		currentChapterName = saved.chapter;
+		showChapterTitleOverlay(saved.chapter);
+	}
+	if (saved.lastChunk) {
+		// Restore the last paragraph the user saw so they have anchored
+		// context. advance() will append the next chunk below if there
+		// is one; if not (end-of-story), this is the only text shown.
+		renderInstantChunk(saved.lastChunk);
+		lastTypedChunk = saved.lastChunk;
+	}
+}
+
+function clearAutosave() {
+	try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) { /* ignore */ }
+}
+
+function updateReturnRecentVisibility() {
+	// Only show the "Return to most recent point" button when there's
+	// actually somewhere to return to AND we're currently exploring.
+	const hasAutosave = !!loadAutosave();
+	$returnRecentBtn.hidden = !(hasAutosave && isExploring);
+}
+
+function returnToMostRecent() {
+	const saved = loadAutosave();
+	if (!story || !saved) return;
+	try { story.state.LoadJson(saved.state); }
+	catch (e) { console.warn("[autosave] LoadJson failed:", e); return; }
+	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
+	currentReveal = null;
+	$choices.innerHTML = "";
+	$choices.classList.remove("visible");
+	hideContinueHint();
+	clearTranscript();
+	applyAutosaveVisuals(saved);
+	isExploring = false;
+	state = "idle";
+	advance();
+}
+
+// ----- styled confirm dialog -----
+//
+// Used in place of native confirm() so the destructive prompts match
+// the rest of the UI. Single-use modal; rebinds handlers per call so
+// the wiring stays self-contained.
+
+function showConfirm({ title, message, confirmLabel = "Confirm", cancelLabel = "Cancel" }, onConfirm) {
+	$confirmTitle.textContent = title;
+	$confirmMessage.textContent = message;
+	$confirmOk.textContent = confirmLabel;
+	$confirmCancel.textContent = cancelLabel;
+	$confirmDialog.hidden = false;
+
+	const cleanup = () => {
+		$confirmDialog.hidden = true;
+		$confirmOk.removeEventListener("click", handleOk);
+		$confirmCancel.removeEventListener("click", handleCancel);
+		document.removeEventListener("keydown", handleKey);
+	};
+	const handleOk = () => { cleanup(); onConfirm(); };
+	const handleCancel = () => { cleanup(); };
+	const handleKey = (ev) => {
+		if (ev.key === "Escape") { ev.preventDefault(); handleCancel(); }
+		else if (ev.key === "Enter") { ev.preventDefault(); handleOk(); }
+	};
+	$confirmOk.addEventListener("click", handleOk);
+	$confirmCancel.addEventListener("click", handleCancel);
+	document.addEventListener("keydown", handleKey);
+	$confirmOk.focus();
+}
+
+// ----- chapter bookmarks (persisted to localStorage) -----
+//
+// Each bookmark is { name, state }. Name is the chapter spec from the
+// chapter: tag (e.g. "One — Ash and Arrival"). State is the inkjs JSON
+// snapshot captured the moment that tag was processed, so jumping to
+// the bookmark replays the story from just after the chapter break.
+//
+// Bookmarks are deduped by name: re-encountering a chapter overwrites
+// its state with the latest visit's snapshot. That keeps the list
+// short and matches "where I last entered chapter X" semantics.
+
+const CHAPTERS_KEY = "lirien.chapters";
+const AUTOSAVE_KEY = "lirien.save";
+let chapterBookmarks = loadChapterBookmarks();
+let currentChapterName = "";
+// Updated in advance() before each Continue(). recordChapterBookmark
+// uses this so the bookmark snapshot lands at "just before the chapter
+// started emitting" rather than "just after the first chunk emitted."
+let stateBeforeContinue = null;
+// The most recent chunk text that typeChunk rendered. Persisted with
+// the autosave so that resume can paint it back into the prose panel
+// — gives the reader anchored context (especially at end-of-story
+// where advance() produces no further chunk).
+let lastTypedChunk = "";
+// Set true when the user jumps to a chapter via the menu. While true,
+// advance() does NOT update the autosave — the user's real most-recent
+// point stays parked so they can return to it. Cleared on
+// restartFromBeginning, returnToMostRecent, and title-screen Continue.
+let isExploring = false;
+
+function loadChapterBookmarks() {
+	try {
+		const raw = localStorage.getItem(CHAPTERS_KEY);
+		if (!raw) return [];
+		const parsed = JSON.parse(raw);
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (e) {
+		return [];
+	}
+}
+
+function saveChapterBookmarks() {
+	try { localStorage.setItem(CHAPTERS_KEY, JSON.stringify(chapterBookmarks)); }
+	catch (e) { /* quota / private mode — drop silently */ }
+}
+
+function recordChapterBookmark(spec) {
+	if (!story) return;
+	// Use the pre-Continue snapshot so a jump-to-chapter starts BEFORE
+	// the chapter:/bg:/music: tags fire — that way Continue() re-emits
+	// all of them naturally and the first chunk renders with its bg
+	// and music, not just the text.
+	const stateJson = stateBeforeContinue;
+	if (!stateJson) return;
+	const idx = chapterBookmarks.findIndex(b => b.name === spec);
+	if (idx >= 0) chapterBookmarks[idx].state = stateJson;
+	else chapterBookmarks.push({ name: spec, state: stateJson });
+	currentChapterName = spec;
+	saveChapterBookmarks();
+	renderChapterList();
+}
+
+function renderChapterList() {
+	$chapterList.innerHTML = "";
+	if (chapterBookmarks.length === 0) {
+		const empty = document.createElement("div");
+		empty.className = "chapter-empty";
+		empty.textContent = "Chapter list will appear here as you read.";
+		$chapterList.appendChild(empty);
+		return;
+	}
+	for (const b of chapterBookmarks) {
+		const btn = document.createElement("button");
+		btn.className = "chapter-btn";
+		if (b.name === currentChapterName) btn.classList.add("current");
+		btn.textContent = b.name;
+		btn.addEventListener("click", () => {
+			$chaptersPanel.hidden = true;
+			jumpToChapter(b);
+		});
+		$chapterList.appendChild(btn);
+	}
+}
+
+function jumpToChapter(bookmark) {
+	if (!story) return;
+	try { story.state.LoadJson(bookmark.state); }
+	catch (e) { console.warn("[chapters] LoadJson failed:", e); return; }
+	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
+	currentReveal = null;
+	$choices.innerHTML = "";
+	$choices.classList.remove("visible");
+	hideContinueHint();
+	clearTranscript();
+	// Enter exploration mode — autosave is now frozen at the user's
+	// real most-recent point so they can return to it. The chapters
+	// panel will surface a "Return to most recent point" button until
+	// they leave exploration mode (return, restart, or title Continue).
+	isExploring = true;
+	state = "idle";
+	// Don't manually call showChapterTitle here — the bookmark state is
+	// from BEFORE the chapter: tag fires, so advance()'s next Continue()
+	// will naturally re-emit the chapter/bg/music tags and applyTags
+	// will fire showChapterTitle (and re-record the bookmark, idempotent).
+	advance();
+}
+
+function restartFromBeginning() {
+	if (!story) return;
+	try { story.ResetState(); } catch (e) { console.warn("ResetState failed", e); return; }
+	// Cancel any in-flight reveal timers so they don't fire after the
+	// restart and trigger a stray continue-hint or scroll on the new chunk.
+	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
+	currentReveal = null;
+	clearTranscript();
+	$choices.innerHTML = "";
+	$choices.classList.remove("visible");
+	hideContinueHint();
+	// Clean slate: autosave gone, all chapter bookmarks gone,
+	// exploration mode off.
+	clearAutosave();
+	chapterBookmarks = [];
+	currentChapterName = "";
+	saveChapterBookmarks();
+	renderChapterList();
+	isExploring = false;
+	state = "idle";
+	advance();
 }
 
 function refreshSelectionMarkers() {
@@ -707,11 +1128,15 @@ function prefetchUpcomingBgs(maxBgs) {
 // carried it. Useful for testing scenes without playing through.
 
 function extractBgNames(parsedJson) {
+	// Compiled inkjs tags appear as "^bg: name" — the # is stripped
+	// during compilation but the ^ literal-string marker stays.
+	// Returns names in first-seen (source) order so the dev list
+	// reads roughly like the story; Set preserves insertion order.
 	const bgs = new Set();
 	const walk = (node) => {
 		if (typeof node === "string") {
-			if (node.startsWith("^# bg:")) {
-				const name = node.slice(6).trim();
+			if (node.startsWith("^bg:")) {
+				const name = node.slice(4).trim();
 				if (name) bgs.add(name);
 			}
 		} else if (Array.isArray(node)) {
@@ -721,16 +1146,21 @@ function extractBgNames(parsedJson) {
 		}
 	};
 	walk(parsedJson);
-	return Array.from(bgs).sort();
+	return Array.from(bgs);
 }
 
 function buildDevList() {
 	const filter = ($devSearch.value || "").toLowerCase();
 	$devList.innerHTML = "";
+	let currentEl = null;
 	for (const name of allBgNames) {
 		if (filter && !name.toLowerCase().includes(filter)) continue;
 		const btn = document.createElement("button");
 		btn.className = "dev-item";
+		if (name === currentBgName) {
+			btn.classList.add("current");
+			currentEl = btn;
+		}
 		btn.textContent = name;
 		btn.addEventListener("click", () => {
 			$devPanel.hidden = true;
@@ -746,6 +1176,7 @@ function buildDevList() {
 		empty.textContent = filter ? "no matches" : "(no bg tags found)";
 		$devList.appendChild(empty);
 	}
+	return currentEl;
 }
 
 function bindDevMenu() {
@@ -768,8 +1199,25 @@ function toggleDevPanel() {
 	$devPanel.hidden = !$devPanel.hidden;
 	if (!$devPanel.hidden) {
 		$devSearch.value = "";
-		buildDevList();
+		// Sub-header: show the bg the user is currently looking at so
+		// they can orient and skip forward/back from where they are.
+		if (currentBgName) {
+			$devCurrent.innerHTML = "currently: <strong></strong>";
+			$devCurrent.querySelector("strong").textContent = currentBgName;
+			$devCurrent.hidden = false;
+		} else {
+			$devCurrent.hidden = true;
+		}
+		const currentEl = buildDevList();
 		$devSearch.focus();
+		// Center the current row in the list so neighbors are visible
+		// in both directions. Defer one frame so layout has settled
+		// after the panel un-hides.
+		if (currentEl) {
+			requestAnimationFrame(() => {
+				currentEl.scrollIntoView({ block: "center", behavior: "auto" });
+			});
+		}
 	}
 }
 
@@ -777,40 +1225,71 @@ function jumpToBg(targetName) {
 	if (!story) return false;
 	try { story.ResetState(); } catch (e) { console.warn("ResetState failed", e); return false; }
 
-	let latestBg = null;
-	let latestMusic = null;
+	// Depth-first search: walk forward, and at every choice point try
+	// each branch in turn (saving/restoring state via toJson/LoadJson).
+	// Without this, bgs that only appear on choice 1+ branches were
+	// unreachable. `safety` is shared across recursion so total work
+	// stays bounded.
 	let safety = 50000;
-	while (safety-- > 0) {
-		if (story.canContinue) {
-			const text = story.Continue();
-			const tags = story.currentTags || [];
-			for (const raw of tags) {
-				const tag = String(raw).trim();
-				if (tag.startsWith("bg:"))    latestBg = tag.slice(3).trim();
-				else if (tag.startsWith("music:")) latestMusic = tag.slice(6).trim();
-			}
-			if (latestBg === targetName) {
-				// Match. Apply latest bg + music (skip chapter title overlay).
-				if (latestBg)    swapBackground(latestBg);
-				if (latestMusic) swapMusic(latestMusic);
-				clearTranscript();
-				const trimmed = (text || "").trim();
-				if (trimmed.length > 0) {
-					typeChunk(trimmed);
-					prefetchUpcomingBgs(3);
-				} else {
-					state = "idle";
-					advance();
+
+	// On hit, returns the matched chunk's text + the bg/music tags
+	// accumulated up to and including the matched chunk, with story
+	// state left at the matched position so the caller can render it.
+	// On miss, returns null and the caller is responsible for restoring
+	// state (or calling ResetState before another search).
+	function walk(latestBg, latestMusic) {
+		while (safety-- > 0) {
+			if (story.canContinue) {
+				const text = story.Continue();
+				for (const raw of (story.currentTags || [])) {
+					const tag = String(raw).trim();
+					if (tag.startsWith("bg:"))         latestBg = tag.slice(3).trim();
+					else if (tag.startsWith("music:")) latestMusic = tag.slice(6).trim();
 				}
-				return true;
+				if (latestBg === targetName) {
+					return { text, latestBg, latestMusic };
+				}
+			} else if (story.currentChoices && story.currentChoices.length > 0) {
+				let saved;
+				try { saved = story.state.toJson(); } catch (e) { return null; }
+				// Capture branch count BEFORE recursing — after walk()
+				// returns, story state has moved past this choice point
+				// and story.currentChoices no longer reflects it.
+				const numChoices = story.currentChoices.length;
+				for (let i = 0; i < numChoices; i++) {
+					// Always restore before each branch; the i=0 case is
+					// also restoring from a state captured at this exact
+					// choice point, so it's a clean re-entry.
+					try { story.state.LoadJson(saved); } catch (e) { return null; }
+					try { story.ChooseChoiceIndex(i); } catch (e) { continue; }
+					const result = walk(latestBg, latestMusic);
+					if (result) return result;
+				}
+				return null;
+			} else {
+				return null;
 			}
-		} else if (story.currentChoices && story.currentChoices.length > 0) {
-			try { story.ChooseChoiceIndex(0); } catch (e) { return false; }
-		} else {
-			console.warn("[dev] reached end of story without finding bg:", targetName);
-			return false;
 		}
+		return null;
 	}
-	console.warn("[dev] safety limit while searching for bg:", targetName);
-	return false;
+
+	const result = walk(null, null);
+	if (!result) {
+		console.warn("[dev] no path to bg:", targetName);
+		return false;
+	}
+
+	// Match. Apply latest bg + music (skip chapter title overlay).
+	if (result.latestBg)    swapBackground(result.latestBg);
+	if (result.latestMusic) swapMusic(result.latestMusic);
+	clearTranscript();
+	const trimmed = (result.text || "").trim();
+	if (trimmed.length > 0) {
+		typeChunk(trimmed);
+		prefetchUpcomingBgs(3);
+	} else {
+		state = "idle";
+		advance();
+	}
+	return true;
 }

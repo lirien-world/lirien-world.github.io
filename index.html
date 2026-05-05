@@ -36,9 +36,9 @@
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}
     .nav-links a:hover{color:var(--gold)}
     @media(max-width:480px){
-      .nav-links{display:none}
+      .nav-links{display:none;animation:none;opacity:1}
       .hamburger{display:flex}
-      .nav-links.open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,6,15,.97);justify-content:center;align-items:center;gap:2.5rem;z-index:200}
+      .nav-links.open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,6,15,.97);justify-content:center;align-items:center;gap:2.5rem;z-index:200;animation:none;opacity:1}
       .nav-links.open a{font-size:1.4rem;letter-spacing:.2em}
     }
     @media(min-width:481px){.hamburger{display:none}}
@@ -195,7 +195,7 @@
     <ul class="nav-links" id="nav-links">
     <li><a href="#world">The World</a></li>
     <li><a href="#characters">Characters</a></li>
-    <li><a href="#begin">Begin</a></li>
+    <li><a href="#begin">Walk the Spiral</a></li>
   </ul>
 </nav>
 
@@ -257,7 +257,7 @@
 </div>
 
 <div class="image-panel reveal">
-  <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget">
+  <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget" style="object-position:20% center;">
   <div class="panel-overlay" aria-hidden="true"></div>
   <div class="panel-caption">
     <h3>Solrien</h3>
@@ -364,9 +364,7 @@
         <div class="card-name">Thistle</div>
         <span class="card-subtitle">Fox-adjacent. Sparkle-adjacent. Disaster-adjacent.</span>
         <p class="card-desc">
-          They arrived with opinions about everything and have been present
-          for considerably longer than seems reasonable. The copper-and-bone charm
-          they carry does not stop spinning. They notice things they don't mention.
+          They arrived with opinions about everything and show no particular interest in gravity as a personal constraint. Something about them suggests they have been here before. In what sense, they decline to specify.
         </p>
       </div>
     </div>
@@ -388,20 +386,20 @@
     <div class="glyph-line r"></div>
   </div>
   <span class="section-label reveal">The Story</span>
-  <h2 class="reveal d1">The first chapter is waiting.<br><em>The world will remember you.</em></h2>
-  <p class="reveal d2" style="font-size:var(--text-md);font-family:'Cormorant Garamond',serif;font-weight:300;color:var(--cream);font-style:normal;margin-bottom:2rem;">
-    A man destroys the world by trying to save it alone.<br>He must learn to let others carry what he cannot.
-  </p>
-  <p class="reveal d3">
+  <h2 class="reveal d1">The story is waiting.<br><em>The world will remember you.</em></h2>
+  <p class="reveal d2">
     An interactive narrative. Every choice is small.
     Every choice is load-bearing. The ending finds you
     by the accumulated weight of who you chose to be.
   </p>
+  <p class="reveal d3" style="font-size:var(--text-md);font-family:'Cormorant Garamond',serif;font-weight:300;color:var(--cream);font-style:normal;margin-bottom:2rem;">
+    A man destroys the world by trying to save it alone.<br>He must learn to let others carry what he cannot.
+  </p>
   <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--mist);margin-bottom:2rem;">
-    The story begins in the ash.
+    It begins in ash.
   </p>
   <div class="reveal">
-    <a href="lirien/index.html" class="cta-button">Begin the Story</a>
+    <a href="lirien/index.html" class="cta-button">Walk the Spiral</a>
     <span class="cta-note">Chapters One &amp; Two — Free to read</span>
   </div>
 </section>

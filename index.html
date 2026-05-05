@@ -36,14 +36,14 @@
     .nav-links{display:flex;gap:clamp(1.2rem,3vw,2.5rem);list-style:none;opacity:0;animation:fade-in 2s ease forwards .8s}
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}
     .nav-links a:hover{color:var(--gold)}
-    @media(max-width:768px){
+    @media(max-width:480px){
       .nav-links{display:none;animation:none;opacity:1}
       .nav-mark{display:none}
       .hamburger{display:flex;opacity:1}
       .nav-links.open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,6,15,.97);justify-content:center;align-items:center;gap:2.5rem;z-index:200;animation:none;opacity:1}
       .nav-links.open a{font-size:1.4rem;letter-spacing:.2em}
     }
-    @media(min-width:769px){.hamburger{display:none}}
+    @media(min-width:481px){.hamburger{display:none}}
     .hero{position:relative;width:100%;height:100svh;min-height:600px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
     .hero-image{position:absolute;inset:0;background-image:url('hero_banner.png');background-size:cover;background-position:center 40%;animation:slow-zoom 50s ease-in-out infinite alternate}
     @keyframes slow-zoom{to{transform:scale(1.05)}}
@@ -142,13 +142,54 @@
     @keyframes bar-bounce{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.8)}}
     .music-control.muted .music-bar{animation:none;opacity:.3}
     .music-control.muted .music-label{color:var(--ash)}
-    .hamburger{display:none;flex-direction:column;gap:6px;cursor:pointer;padding:.75rem;z-index:300;background:rgba(8,6,15,.5);border:1px solid rgba(196,147,90,.2);opacity:1!important}
-    .hamburger span{display:block;width:22px;height:2px;background:#b8a8cc;transition:all .3s ease;opacity:1}
-    .hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
-    .hamburger.open span:nth-child(2){opacity:0}
-    .hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
     .close-nav{display:none;position:fixed;inset:0;z-index:150}
-    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:var(--ash)}
+    /* Hamburger — JS controlled, fixed position */
+    #hamburger{
+      display:none;
+      position:fixed;
+      top:1rem;
+      right:1rem;
+      z-index:500;
+      flex-direction:column;
+      gap:6px;
+      cursor:pointer;
+      padding:.75rem;
+      background:rgba(8,6,15,.85);
+      border:1px solid rgba(196,147,90,.35);
+      border-radius:2px;
+    }
+    #hamburger span{
+      display:block;
+      width:22px;
+      height:2px;
+      background:#e0b070;
+      transition:all .3s ease;
+    }
+    #hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+    #hamburger.open span:nth-child(2){opacity:0}
+    #hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+    #mobile-nav{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(8,6,15,.97);
+      z-index:400;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:2.5rem;
+    }
+    #mobile-nav.open{display:flex}
+    #mobile-nav a{
+      font-family:'Cormorant Garamond',serif;
+      font-size:1.8rem;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+      color:#b8a8cc;
+      text-decoration:none;
+    }
+    #mobile-nav a:hover{color:#c4935a}
+        ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:var(--ash)}
   </style>
 </head>
 <body>
@@ -191,15 +232,24 @@
 
 <nav aria-label="Main">
   <div class="nav-mark">Chronicles of Lirien</div>
-  <button class="hamburger" id="hamburger" aria-label="Open navigation">
-      <span></span><span></span><span></span>
-    </button>
-    <ul class="nav-links" id="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="#world">The World</a></li>
     <li><a href="#characters">Characters</a></li>
     <li><a href="#begin">Walk the Spiral</a></li>
   </ul>
 </nav>
+
+<!-- Mobile hamburger — fixed position, JS controlled -->
+<button id="hamburger" aria-label="Open navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Mobile nav overlay -->
+<div id="mobile-nav">
+  <a href="#world" class="mobile-nav-link">The World</a>
+  <a href="#characters" class="mobile-nav-link">Characters</a>
+  <a href="#begin" class="mobile-nav-link">Walk the Spiral</a>
+</div>
 
 <section class="hero" aria-label="Hero">
   <div class="hero-image" role="img" aria-label="Aerin walking north across the ash plain, shimmer trail behind him"></div>
@@ -259,7 +309,7 @@
 </div>
 
 <div class="image-panel reveal">
-  <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget" style="object-position:15% center;">
+  <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget" style="object-position:15% center!important;">
   <div class="panel-overlay" aria-hidden="true"></div>
   <div class="panel-caption">
     <h3>Solrien</h3>
@@ -437,17 +487,36 @@
 </footer>
 
 <script>
-  // Hamburger menu
+  // Mobile hamburger — JS controlled
   const hamburger = document.getElementById('hamburger');
-  const navLinks = document.getElementById('nav-links');
+  const mobileNav = document.getElementById('mobile-nav');
+
+
+
+  function updateNav() {
+    if (window.innerWidth <= 768) {
+      hamburger.style.display = 'flex';
+      document.getElementById('nav-links').style.display = 'none';
+    } else {
+      hamburger.style.display = 'none';
+      document.getElementById('nav-links').style.display = 'flex';
+      mobileNav.classList.remove('open');
+      hamburger.classList.remove('open');
+    }
+  }
+
+  updateNav();
+  window.addEventListener('resize', updateNav);
+
   hamburger.addEventListener('click', () => {
     hamburger.classList.toggle('open');
-    navLinks.classList.toggle('open');
+    mobileNav.classList.toggle('open');
   });
-  navLinks.querySelectorAll('a').forEach(link => {
+
+  document.querySelectorAll('.mobile-nav-link').forEach(link => {
     link.addEventListener('click', () => {
       hamburger.classList.remove('open');
-      navLinks.classList.remove('open');
+      mobileNav.classList.remove('open');
     });
   });
 

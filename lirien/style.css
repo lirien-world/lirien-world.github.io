@@ -608,13 +608,20 @@ html, body {
  * Shown once on mobile in browser mode (not standalone). Persists
  * dismissal in localStorage so we don't nag returning visitors.
  * The hero is the actual apple-touch-icon — what they'll see on
- * their home screen if they install — to set expectations visually. */
+ * their home screen if they install — to set expectations visually.
+ *
+ * z-index 1000 sits above the rotate-prompt (999) so the splash
+ * shows in portrait orientation; the rotate prompt only takes over
+ * AFTER the user has dismissed the splash. */
 .install-splash {
 	position: fixed;
 	inset: 0;
-	z-index: 300;
+	z-index: 1000;
 	display: flex;
-	align-items: center;
+	/* flex-start so a too-tall content block doesn't clip its top
+	 * (the icon) off-screen in landscape. The container itself
+	 * scrolls if content overflows. */
+	align-items: flex-start;
 	justify-content: center;
 	overflow-y: auto;
 	overscroll-behavior: contain;
@@ -628,6 +635,48 @@ html, body {
 		max(20px, env(safe-area-inset-left));
 }
 .install-splash[hidden] { display: none; }
+/* Center the content vertically when there IS room, but cap with a
+ * top auto so the icon sits naturally below the safe-area inset in
+ * tall viewports. The auto-margin trick centers when there's slack
+ * and falls back to flex-start (top) when there isn't. */
+.install-splash-content { margin: auto; }
+
+/* Landscape with constrained height (typical mobile landscape) — go
+ * to a two-column layout: icon on the left, the whole text/steps
+ * stack on the right. Better use of horizontal space, no clipping. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.install-splash {
+		align-items: center;
+	}
+	.install-splash-content {
+		display: grid;
+		grid-template-columns: 80px 1fr;
+		gap: 24px;
+		max-width: 640px;
+		text-align: left;
+		align-items: start;
+	}
+	.install-splash-icon {
+		width: 80px;
+		height: 80px;
+		margin: 0;
+		grid-column: 1;
+		grid-row: 1 / span 6;
+		align-self: start;
+	}
+	.install-splash-title,
+	.install-splash-body,
+	.install-splash-platform,
+	.install-splash-continue,
+	.install-splash-note {
+		grid-column: 2;
+	}
+	.install-splash-title { font-size: 24px; margin: 0 0 8px 0; }
+	.install-splash-body  { font-size: 14px; margin: 0 0 14px 0; }
+	.install-splash-platform { margin-bottom: 12px; }
+	.install-splash-steps li { margin-bottom: 8px; font-size: 14px; }
+	.install-splash-prompt-btn { padding: 12px 24px; font-size: 16px; }
+}
 
 .install-splash-content {
 	max-width: 380px;

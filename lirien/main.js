@@ -35,6 +35,10 @@ const $settingsBtn = document.getElementById("settings-btn");
 const $settingsPanel = document.getElementById("settings-panel");
 const $titleScreen = document.getElementById("title-screen");
 const $titleHint = document.getElementById("title-hint");
+const $devPanel = document.getElementById("dev-panel");
+const $devSearch = document.getElementById("dev-search");
+const $devList = document.getElementById("dev-list");
+const $devClose = document.getElementById("dev-close");
 
 // ----- settings (persisted to localStorage) -----
 
@@ -70,9 +74,12 @@ let chapterTimer = null;
 
 // ----- bootstrap -----
 
+let allBgNames = [];
+
 (async function init() {
 	bindSettingsMenu();
 	bindAdvanceInput();
+	bindDevMenu();
 	// Show the title screen immediately. The story.json fetch happens
 	// in the background; until it resolves, the hint says "loading".
 	// The first tap on the title screen unlocks audio and starts the
@@ -80,8 +87,9 @@ let chapterTimer = null;
 	state = "title-loading";
 	requestAnimationFrame(() => $titleScreen.classList.add("visible"));
 	try {
-		const json = await fetch("story.json").then(r => r.text());
-		story = new inkjs.Story(json);
+		const parsed = await fetch("story.json").then(r => r.json());
+		story = new inkjs.Story(parsed);
+		allBgNames = extractBgNames(parsed);
 		state = "title";
 		// Swap the "loading…" text for the gold-line + "Enter" hint.
 		const loadingEl = $titleHint.querySelector(".title-hint-loading");
@@ -121,6 +129,10 @@ function advance() {
 		const trimmed = (text || "").trim();
 		if (trimmed.length === 0) continue;
 		typeChunk(trimmed);
+		// Warm the next 2-3 background images while the user reads
+		// this chunk. At choice points all branches are walked, so
+		// whichever path the user picks the bg is already cached.
+		prefetchUpcomingBgs(3);
 		return;
 	}
 	if (story.currentChoices && story.currentChoices.length > 0) {
@@ -625,4 +637,180 @@ function refreshSelectionMarkers() {
 		const want = btn.dataset.music === "on";
 		btn.classList.toggle("current", want === !!settings.musicOn);
 	}
+}
+
+// ----- bg image preload (lookahead through choice branches) ---------
+//
+// Snapshots state, walks the inkjs story forward up to N unique bg
+// tags, restores. At choice points all branches are explored so a
+// player who taps either choice finds the bg already in browser
+// cache. `<img>.src = url` is enough to start a fetch — no need to
+// keep the image around; the HTTP cache holds it. Calls are cheap
+// after the first since duplicate URLs short-circuit at the browser.
+
+const preloadedBgs = new Set();
+
+function preloadImage(url) {
+	if (preloadedBgs.has(url)) return;
+	preloadedBgs.add(url);
+	const img = new Image();
+	img.src = url;
+}
+
+function prefetchUpcomingBgs(maxBgs) {
+	if (!story) return;
+	const seen = new Set();
+
+	let savedState;
+	try {
+		savedState = story.state.toJson();
+	} catch (e) { return; }
+
+	const walk = () => {
+		while (story.canContinue && seen.size < maxBgs) {
+			story.Continue();
+			const tags = story.currentTags || [];
+			for (const raw of tags) {
+				const tag = String(raw).trim();
+				if (tag.startsWith("bg:")) {
+					const name = tag.slice(3).trim();
+					if (name) seen.add(name);
+					if (seen.size >= maxBgs) return;
+				}
+			}
+		}
+		if (seen.size >= maxBgs) return;
+		if (story.currentChoices && story.currentChoices.length > 0) {
+			let branchSaved;
+			try { branchSaved = story.state.toJson(); } catch (e) { return; }
+			for (let i = 0; i < story.currentChoices.length && seen.size < maxBgs; i++) {
+				try { story.state.LoadJson(branchSaved); } catch (e) { break; }
+				try { story.ChooseChoiceIndex(i); } catch (e) { continue; }
+				walk();
+			}
+		}
+	};
+
+	try { walk(); } catch (e) { /* swallow: prefetch is best-effort */ }
+	try { story.state.LoadJson(savedState); } catch (e) { /* lost — bad */ }
+
+	for (const name of seen) {
+		preloadImage(ATMOSPHERE_DIR + name + ".png");
+	}
+}
+
+// ----- dev menu (backtick toggles) ----------------------------------
+//
+// Lists every bg name found in story.json. Selecting one resets the
+// story state and fast-forwards (auto-picking choice 0 at branches)
+// until the matching bg tag is hit, then renders the chunk that
+// carried it. Useful for testing scenes without playing through.
+
+function extractBgNames(parsedJson) {
+	const bgs = new Set();
+	const walk = (node) => {
+		if (typeof node === "string") {
+			if (node.startsWith("^# bg:")) {
+				const name = node.slice(6).trim();
+				if (name) bgs.add(name);
+			}
+		} else if (Array.isArray(node)) {
+			for (const x of node) walk(x);
+		} else if (node && typeof node === "object") {
+			for (const k in node) walk(node[k]);
+		}
+	};
+	walk(parsedJson);
+	return Array.from(bgs).sort();
+}
+
+function buildDevList() {
+	const filter = ($devSearch.value || "").toLowerCase();
+	$devList.innerHTML = "";
+	for (const name of allBgNames) {
+		if (filter && !name.toLowerCase().includes(filter)) continue;
+		const btn = document.createElement("button");
+		btn.className = "dev-item";
+		btn.textContent = name;
+		btn.addEventListener("click", () => {
+			$devPanel.hidden = true;
+			jumpToBg(name);
+		});
+		$devList.appendChild(btn);
+	}
+	if ($devList.children.length === 0) {
+		const empty = document.createElement("div");
+		empty.className = "dev-item";
+		empty.style.color = "rgba(245,235,210,0.4)";
+		empty.style.cursor = "default";
+		empty.textContent = filter ? "no matches" : "(no bg tags found)";
+		$devList.appendChild(empty);
+	}
+}
+
+function bindDevMenu() {
+	document.addEventListener("keydown", (ev) => {
+		// Backtick toggles. Don't fire while focus is on a text input
+		// (e.g. the dev search field itself uses backtick to type).
+		const inText = ev.target.matches && ev.target.matches("input, textarea");
+		if (ev.code === "Backquote" && !inText) {
+			ev.preventDefault();
+			toggleDevPanel();
+		} else if (ev.code === "Escape" && !$devPanel.hidden) {
+			$devPanel.hidden = true;
+		}
+	});
+	$devClose.addEventListener("click", () => { $devPanel.hidden = true; });
+	$devSearch.addEventListener("input", buildDevList);
+}
+
+function toggleDevPanel() {
+	$devPanel.hidden = !$devPanel.hidden;
+	if (!$devPanel.hidden) {
+		$devSearch.value = "";
+		buildDevList();
+		$devSearch.focus();
+	}
+}
+
+function jumpToBg(targetName) {
+	if (!story) return false;
+	try { story.ResetState(); } catch (e) { console.warn("ResetState failed", e); return false; }
+
+	let latestBg = null;
+	let latestMusic = null;
+	let safety = 50000;
+	while (safety-- > 0) {
+		if (story.canContinue) {
+			const text = story.Continue();
+			const tags = story.currentTags || [];
+			for (const raw of tags) {
+				const tag = String(raw).trim();
+				if (tag.startsWith("bg:"))    latestBg = tag.slice(3).trim();
+				else if (tag.startsWith("music:")) latestMusic = tag.slice(6).trim();
+			}
+			if (latestBg === targetName) {
+				// Match. Apply latest bg + music (skip chapter title overlay).
+				if (latestBg)    swapBackground(latestBg);
+				if (latestMusic) swapMusic(latestMusic);
+				clearTranscript();
+				const trimmed = (text || "").trim();
+				if (trimmed.length > 0) {
+					typeChunk(trimmed);
+					prefetchUpcomingBgs(3);
+				} else {
+					state = "idle";
+					advance();
+				}
+				return true;
+			}
+		} else if (story.currentChoices && story.currentChoices.length > 0) {
+			try { story.ChooseChoiceIndex(0); } catch (e) { return false; }
+		} else {
+			console.warn("[dev] reached end of story without finding bg:", targetName);
+			return false;
+		}
+	}
+	console.warn("[dev] safety limit while searching for bg:", targetName);
+	return false;
 }

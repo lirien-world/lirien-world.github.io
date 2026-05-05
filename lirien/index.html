@@ -60,6 +60,15 @@
 		<button class="music-btn" data-music="off">Off</button>
 	</div>
 	<div id="rotate-prompt" class="rotate-prompt">Please rotate your device to landscape</div>
+	<div id="dev-panel" class="dev-panel" hidden>
+		<div class="dev-header">
+			<span>Jump to bg</span>
+			<button id="dev-close" class="dev-close" aria-label="Close">&times;</button>
+		</div>
+		<input id="dev-search" class="dev-search" placeholder="filter&hellip;" type="text" autocomplete="off" spellcheck="false">
+		<div id="dev-list" class="dev-list"></div>
+		<div class="dev-footer">backtick (<code>`</code>) toggles &middot; esc closes &middot; auto-picks choice 0 at branches</div>
+	</div>
 	<script src="ink.js"></script>
 	<script src="main.js"></script>
 </body>

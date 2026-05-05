@@ -339,9 +339,13 @@ html, body {
 	 * caches the drop-shadow as a static texture instead of re-rasterizing
 	 * it on every animation frame — that's what was reading as flicker. */
 	will-change: transform;
-	filter:
-		drop-shadow(0 0 8px rgba(224, 176, 112, 0.7))
-		drop-shadow(0 0 22px rgba(224, 176, 112, 0.4));
+	/* Single drop-shadow rather than the previous two stacked. The
+	 * chevron's animation runs continuously while waiting for a tap;
+	 * each stacked drop-shadow doubles per-frame rasterization cost
+	 * on Safari, and on long sessions that adds up to noticeable
+	 * battery/heat. One shadow with a slightly wider blur reads
+	 * almost identical visually but halves the per-frame work. */
+	filter: drop-shadow(0 0 14px rgba(224, 176, 112, 0.6));
 }
 .continue-hint svg { display: block; width: 100%; height: 100%; }
 .continue-hint.visible {

@@ -22,6 +22,14 @@ const CHOICE_STAGGER_MS = 80;
 
 const ATMOSPHERE_DIR = "atmosphere/";
 const MUSIC_DIR = "music/";
+// Bumped on each deploy alongside the script/style ?v= in index.html.
+// Atmosphere images and music tracks aren't referenced from <link>
+// tags, so without a query-param version on their URLs returning
+// visitors keep getting the cached old bytes. Appending ?v=<id>
+// makes the URL itself change → browser fetches as a new resource.
+const ASSET_VERSION = "20260505j";
+function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
+function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
 // ----- DOM refs -----
 
@@ -488,6 +496,44 @@ function onChunkRevealed() {
 	currentReveal = null;
 	state = "waiting";
 	showContinueHint();
+	// Drop the per-character spans now that the chunk is fully revealed.
+	// They were needed for the per-char fade animation; once everyone's
+	// at opacity 1 the spans are pure DOM weight — Safari keeps each
+	// one's compositing/animation state warm even after completion, and
+	// across a long session that's hundreds of stale animated layers.
+	// Replacing them with plain text + <em> for italics gives an
+	// identical render at a fraction of the sustained cost.
+	simplifyRevealedParagraph();
+}
+
+function simplifyRevealedParagraph() {
+	const paragraphs = $proseContent.querySelectorAll("p");
+	if (paragraphs.length === 0) return;
+	const last = paragraphs[paragraphs.length - 1];
+	if (!last.querySelector(".ch")) return; // already simplified
+
+	// Walk the .ch spans, batching contiguous-italic runs into <em>
+	// and contiguous-plain runs into text nodes. Result: one or two
+	// nodes per paragraph instead of N spans-with-inline-styles.
+	let html = "";
+	let italicBuf = "";
+	let plainBuf = "";
+	const flushItalic = () => { if (italicBuf) { html += "<em>" + escapeHtml(italicBuf) + "</em>"; italicBuf = ""; } };
+	const flushPlain  = () => { if (plainBuf)  { html += escapeHtml(plainBuf); plainBuf = ""; } };
+
+	for (const child of last.children) {
+		if (!child.classList.contains("ch")) continue;
+		const ch = child.textContent;
+		if (child.classList.contains("i")) { flushPlain();  italicBuf += ch; }
+		else                                { flushItalic(); plainBuf  += ch; }
+	}
+	flushItalic();
+	flushPlain();
+	last.innerHTML = html;
+}
+
+function escapeHtml(s) {
+	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function scrollChunkToTop(paragraph) {
@@ -599,7 +645,7 @@ function swapBackground(name) {
 	// calls re-applying the same bg, which would otherwise trigger a
 	// fresh decode+composite even though the visible bitmap is unchanged.
 	if (name === currentBgName) return;
-	const url = ATMOSPHERE_DIR + name + ".png";
+	const url = bgUrl(name);
 	// Setting img.src instead of CSS background-image gives Safari a
 	// clean release-then-decode lifecycle. Browsers also share the
 	// decoded bitmap between this img and any prior `new Image()`
@@ -756,7 +802,7 @@ function applyMusicTrackChange(name) {
 	if (!name || name === currentMusicName) return;
 	if (!audioCtx) return;
 	currentMusicName = name;
-	const url = MUSIC_DIR + name + ".ogg";
+	const url = musicUrl(name);
 	const outgoing = activePlayer;
 	const incoming = (outgoing === musicA) ? musicB : musicA;
 
@@ -1294,6 +1340,12 @@ function preloadImage(url) {
 
 function prefetchUpcomingBgs(maxBgs) {
 	if (!story) return;
+	// Skip the walk entirely once all bgs are already preloaded — at
+	// that point the toJson/LoadJson/Continue dance is pure CPU work
+	// for no benefit. allBgNames comes from extractBgNames at startup,
+	// so we have a known ceiling. (Each preloadedBgs entry is the full
+	// versioned URL; the count is what we're matching against.)
+	if (allBgNames.length > 0 && preloadedBgs.size >= allBgNames.length) return;
 	const seen = new Set();
 
 	let savedState;
@@ -1330,7 +1382,7 @@ function prefetchUpcomingBgs(maxBgs) {
 	try { story.state.LoadJson(savedState); } catch (e) { /* lost — bad */ }
 
 	for (const name of seen) {
-		preloadImage(ATMOSPHERE_DIR + name + ".png");
+		preloadImage(bgUrl(name));
 	}
 }
 

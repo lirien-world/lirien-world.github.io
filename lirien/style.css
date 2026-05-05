@@ -44,6 +44,12 @@ html, body {
 	user-select: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
+	/* touch-action: manipulation disables iOS Safari's double-tap-to-zoom
+	 * AND the 300ms tap-delay heuristic that comes with it. Critical
+	 * here because the game IS rapid tapping (skip + advance) and the
+	 * zoom kept triggering mid-read. user-scalable=no on the viewport
+	 * meta is unreliable; this CSS rule is the modern fix. */
+	touch-action: manipulation;
 }
 
 /* ----- background image ----- */
@@ -1032,9 +1038,11 @@ html, body {
 	 * browser chrome eating space, so the prose panel can shrink and
 	 * still hold a comfortable amount of text per chunk — letting the
 	 * scene art breathe more behind it. Mobile-browser stays at 32%
-	 * because the URL bar already eats the top of the viewport. */
+	 * because the URL bar already eats the top of the viewport.
+	 * 45% (panel = 55% of vh) holds typical chunks without scroll;
+	 * 55% (panel = 45% of vh) was too tight — last lines clipped. */
 	body.is-standalone .prose {
-		top: 55%;
+		top: 45%;
 	}
 	.prose-content {
 		/* Scale the user's chosen size proportionally instead of

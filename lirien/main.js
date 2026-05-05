@@ -738,8 +738,19 @@ function applyMusicTrackChange(name) {
 	const url = MUSIC_DIR + name + ".ogg";
 	const outgoing = activePlayer;
 	const incoming = (outgoing === musicA) ? musicB : musicA;
+
+	// Pin incoming's gain to 0 BEFORE changing src. Without this, if
+	// incoming was still ramping from a recent prior crossfade (e.g.
+	// it was outgoing 1.5s ago and the 2.0s fade hasn't completed),
+	// its gain is at some small-but-nonzero value when we yank the
+	// src — producing an audible click as the MediaElementSource
+	// emits the transition. cancelScheduledValues + setValueAtTime
+	// is the only way to actually override an in-flight linearRamp.
+	const now = audioCtx.currentTime;
+	incoming.gain.gain.cancelScheduledValues(now);
+	incoming.gain.gain.setValueAtTime(0, now);
+
 	incoming.el.src = url;
-	incoming.gain.gain.value = 0;
 	const playPromise = incoming.el.play();
 	if (playPromise && playPromise.catch) {
 		playPromise.catch(() => { /* autoplay blocked or decode error */ });
@@ -763,10 +774,16 @@ function applyMusicTrackChange(name) {
 // Tell the audio element to drop its current resource. The pause+
 // removeAttribute+load sequence is the documented way to free a
 // decoded media buffer; setting src to a new URL later will trigger
-// a fresh load with no leftover state.
+// a fresh load with no leftover state. Muting the gain first guards
+// against any output click during the load() reset.
 function releasePlayerSrc(player) {
 	if (!player || !player.el) return;
 	try {
+		if (audioCtx && player.gain) {
+			const now = audioCtx.currentTime;
+			player.gain.gain.cancelScheduledValues(now);
+			player.gain.gain.setValueAtTime(0, now);
+		}
 		player.el.pause();
 		player.el.removeAttribute("src");
 		player.el.load();

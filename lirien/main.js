@@ -45,6 +45,9 @@ const $confirmTitle = document.getElementById("confirm-title");
 const $confirmMessage = document.getElementById("confirm-message");
 const $confirmOk = document.getElementById("confirm-ok");
 const $confirmCancel = document.getElementById("confirm-cancel");
+const $installSplash = document.getElementById("install-splash");
+const $installSplashInstructions = document.getElementById("install-splash-instructions");
+const $installSplashContinue = document.getElementById("install-splash-continue");
 const $titleScreen = document.getElementById("title-screen");
 const $titleHint = document.getElementById("title-hint");
 const $devPanel = document.getElementById("dev-panel");
@@ -73,6 +76,76 @@ function saveSettings() {
 	try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 	catch (e) { /* private mode etc. */ }
 }
+// ----- platform detection + install splash -----
+//
+// PWA-style "Add to Home Screen" gives users a chrome-less full-screen
+// experience and noticeably smoother performance — we detect mobile
+// browser users and prompt them once. iOS Safari has no programmatic
+// install API, so the prompt is text instructions; Android Chrome
+// has them too (the native beforeinstallprompt is browser-discretion
+// and unreliable, so we use the text instructions for both).
+
+const INSTALL_SPLASH_KEY = "lirien.installSplashDismissed";
+
+function isStandaloneMode() {
+	return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+	       window.navigator.standalone === true;
+}
+
+function isMobileDevice() {
+	if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) return true;
+	// Touch-first device with a smallish viewport — covers stock
+	// Android browsers that don't expose "Android" in UA strings.
+	if (window.matchMedia &&
+	    window.matchMedia("(pointer: coarse)").matches &&
+	    window.matchMedia("(max-width: 1024px)").matches) return true;
+	return false;
+}
+
+function isIOSDevice() {
+	return /iPhone|iPad|iPod/.test(navigator.userAgent);
+}
+
+function isAndroidDevice() {
+	return /Android/i.test(navigator.userAgent);
+}
+
+function maybeShowInstallSplash() {
+	// Skip if: already a standalone PWA, not a mobile device, or the
+	// user previously dismissed the splash.
+	if (isStandaloneMode()) return;
+	if (!isMobileDevice()) return;
+	try { if (localStorage.getItem(INSTALL_SPLASH_KEY)) return; } catch (e) { /* private mode — show splash */ }
+
+	// Per-platform instructions. iOS users need to find the Share
+	// button (bottom toolbar in portrait, top in some landscape modes);
+	// Android users get the kebab menu's Install option.
+	if (isIOSDevice()) {
+		$installSplashInstructions.innerHTML =
+			"<ol>" +
+			"<li>Tap the <strong>Share</strong> button at the bottom of Safari</li>" +
+			"<li>Scroll down and tap <strong>Add to Home Screen</strong></li>" +
+			"<li>Tap <strong>Add</strong> in the top corner</li>" +
+			"</ol>";
+	} else if (isAndroidDevice()) {
+		$installSplashInstructions.innerHTML =
+			"<ol>" +
+			"<li>Tap the <strong>menu</strong> (three dots) in the corner</li>" +
+			"<li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong></li>" +
+			"</ol>";
+	} else {
+		$installSplashInstructions.innerHTML =
+			"<p>Look for an &ldquo;Add to Home Screen&rdquo; or &ldquo;Install&rdquo; option in your browser menu.</p>";
+	}
+
+	$installSplash.hidden = false;
+
+	$installSplashContinue.addEventListener("click", () => {
+		$installSplash.hidden = true;
+		try { localStorage.setItem(INSTALL_SPLASH_KEY, "1"); } catch (e) { /* drop */ }
+	}, { once: true });
+}
+
 function applyFontSize() {
 	const px = (settings && settings.fontSize) || DEFAULT_SETTINGS.fontSize;
 	document.documentElement.style.setProperty("--prose-font-size", px + "px");
@@ -90,6 +163,12 @@ let chapterTimer = null;
 let allBgNames = [];
 
 (async function init() {
+	// Detect standalone mode (Add to Home Screen) and tag the body so
+	// CSS can fine-tune sizing for the chrome-less viewport.
+	if (isStandaloneMode()) document.body.classList.add("is-standalone");
+	// Mobile-only first-visit splash prompting Add-to-Home-Screen.
+	maybeShowInstallSplash();
+
 	bindSettingsMenu();
 	bindChaptersMenu();
 	bindAdvanceInput();
@@ -482,6 +561,12 @@ const MUSIC_CROSSFADE_S = 2.0;
 const MUSIC_RESTORE_FADE_S = 1.5;
 const MUSIC_DIM_FADE_S = 6.0;
 const MUSIC_QUIET_FADE_S = 1.5;
+// Debounce window for actual track swaps (i.e. .src changes on the
+// audio elements). Volume-only adjustments (silence/dim/fade_out/same-
+// track) bypass this. Without it, rapid scene changes back-to-back-
+// triggered .src changes mid-decode, causing audible record-scratch
+// artifacts AND piling up decoded buffers in Safari's media decoder.
+const MUSIC_SWAP_DEBOUNCE_MS = 300;
 
 let audioCtx = null;
 let musicA = null;
@@ -490,6 +575,7 @@ let activePlayer = null;
 let currentMusicName = "";
 let userGestured = false;          // first pointerup/keydown flips this true
 let pendingMusicName = null;       // music tag that fired before gesture
+let musicSwapTimer = null;         // pending debounced track-change timer
 
 function ensureAudioRig() {
 	if (audioCtx) return;
@@ -513,11 +599,13 @@ function onFirstUserGesture() {
 }
 
 function stopAllMusic() {
-	// Pause both players. Keep `pendingMusicName` so toggling music
-	// back on re-engages the scene's current track.
+	// Pause both players and release their decoded buffers. Keep
+	// `pendingMusicName` so toggling music back on re-engages the
+	// scene's current track.
 	currentMusicName = "";
-	if (musicA) { fadeGain(musicA, 0, 0.4); setTimeout(() => musicA.el.pause(), 500); }
-	if (musicB) { fadeGain(musicB, 0, 0.4); setTimeout(() => musicB.el.pause(), 500); }
+	if (musicSwapTimer) { clearTimeout(musicSwapTimer); musicSwapTimer = null; }
+	if (musicA) { fadeGain(musicA, 0, 0.4); setTimeout(() => releasePlayerSrc(musicA), 500); }
+	if (musicB) { fadeGain(musicB, 0, 0.4); setTimeout(() => releasePlayerSrc(musicB), 500); }
 }
 
 function makePlayer() {
@@ -556,6 +644,8 @@ function swapMusic(name) {
 	ensureAudioRig();
 	if (audioCtx.state === "suspended") audioCtx.resume();
 
+	// Volume-only adjustments fire immediately — they don't change
+	// any element's src, so they're cheap and don't risk a leak.
 	if (name === "silence") {
 		fadeGain(activePlayer, MUSIC_QUIET_VOLUME, MUSIC_QUIET_FADE_S);
 		return;
@@ -563,7 +653,7 @@ function swapMusic(name) {
 	if (name === "fade_out") {
 		currentMusicName = "";
 		fadeGain(activePlayer, 0, 4.0);
-		setTimeout(() => activePlayer && activePlayer.el.pause(), 4100);
+		setTimeout(() => releasePlayerSrc(activePlayer), 4100);
 		return;
 	}
 	if (name === "dim") {
@@ -579,6 +669,23 @@ function swapMusic(name) {
 		return;
 	}
 
+	// Different track. Debounce so rapid scene changes don't trigger
+	// back-to-back .src changes on the audio elements — that's what
+	// produced the audible record-scratch and ballooned the media
+	// decoder. The latest pending track wins after MUSIC_SWAP_DEBOUNCE_MS
+	// of no further requests.
+	if (musicSwapTimer) clearTimeout(musicSwapTimer);
+	musicSwapTimer = setTimeout(() => {
+		musicSwapTimer = null;
+		// Use pendingMusicName in case it changed during the debounce
+		// window (later request supersedes this one).
+		applyMusicTrackChange(pendingMusicName);
+	}, MUSIC_SWAP_DEBOUNCE_MS);
+}
+
+function applyMusicTrackChange(name) {
+	if (!name || name === currentMusicName) return;
+	if (!audioCtx) return;
 	currentMusicName = name;
 	const url = MUSIC_DIR + name + ".ogg";
 	const outgoing = activePlayer;
@@ -587,15 +694,35 @@ function swapMusic(name) {
 	incoming.gain.gain.value = 0;
 	const playPromise = incoming.el.play();
 	if (playPromise && playPromise.catch) {
-		playPromise.catch(() => { /* autoplay blocked; will work after first gesture */ });
+		playPromise.catch(() => { /* autoplay blocked or decode error */ });
 	}
 	activePlayer = incoming;
 
 	fadeGain(outgoing, 0, MUSIC_CROSSFADE_S);
 	fadeGain(incoming, MUSIC_VOLUME, MUSIC_CROSSFADE_S);
 	setTimeout(() => {
-		if (outgoing && outgoing.el && outgoing !== activePlayer) outgoing.el.pause();
+		if (outgoing && outgoing.el && outgoing !== activePlayer) {
+			outgoing.el.pause();
+			// Explicitly release the decoded buffer so Safari's media
+			// decoder doesn't accumulate. Without this the outgoing
+			// element holds onto its prior track until GC, and rapid
+			// swaps over a session bloat the GPU/Media process.
+			releasePlayerSrc(outgoing);
+		}
 	}, (MUSIC_CROSSFADE_S * 1000) + 100);
+}
+
+// Tell the audio element to drop its current resource. The pause+
+// removeAttribute+load sequence is the documented way to free a
+// decoded media buffer; setting src to a new URL later will trigger
+// a fresh load with no leftover state.
+function releasePlayerSrc(player) {
+	if (!player || !player.el) return;
+	try {
+		player.el.pause();
+		player.el.removeAttribute("src");
+		player.el.load();
+	} catch (e) { /* element may already be in error state — ignore */ }
 }
 
 // ----- tag dispatch -----
@@ -632,6 +759,7 @@ function bindAdvanceInput() {
 		if (ev.target.closest(".chapters-btn") || ev.target.closest(".chapters-panel")) return;
 		if (ev.target.closest(".title-continue")) return;
 		if (ev.target.closest(".confirm-dialog")) return;
+		if (ev.target.closest(".install-splash")) return;
 
 		// Title screen: first tap dismisses + starts the story. Taps
 		// during "title-loading" are ignored (story.json not parsed

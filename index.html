@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chronicles of Lirien — The Spiral That Remembers</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Favicons -->
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#060a18">
+  <link rel="preconnect" href="https://fonts.googleapis.com">  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -30,14 +31,15 @@
     .particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
     .particle{position:absolute;border-radius:50%;opacity:0;background:var(--gold-bright);animation:shimmer var(--dur,8s) ease-in-out var(--delay,0s) infinite}
     @keyframes shimmer{0%{opacity:0;transform:translateY(0) scale(1)}20%{opacity:.5}80%{opacity:.2}100%{opacity:0;transform:translateY(-50px) scale(.5)}}
-    nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:clamp(1rem,3vw,2rem) clamp(1.5rem,5vw,4rem);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(8,6,15,.95) 0%,transparent 100%)}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:clamp(1rem,3vw,2rem) clamp(1.5rem,5vw,4rem);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(8,6,15,.95) 0%,transparent 100%);opacity:1!important}
     .nav-mark{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;color:var(--mist);opacity:0;animation:fade-in 2s ease forwards .5s}
     .nav-links{display:flex;gap:clamp(1.2rem,3vw,2.5rem);list-style:none;opacity:0;animation:fade-in 2s ease forwards .8s}
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}
     .nav-links a:hover{color:var(--gold)}
     @media(max-width:480px){
       .nav-links{display:none;animation:none;opacity:1}
-      .hamburger{display:flex}
+      .nav-mark{display:none}
+      .hamburger{display:flex;opacity:1}
       .nav-links.open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,6,15,.97);justify-content:center;align-items:center;gap:2.5rem;z-index:200;animation:none;opacity:1}
       .nav-links.open a{font-size:1.4rem;letter-spacing:.2em}
     }
@@ -140,8 +142,8 @@
     @keyframes bar-bounce{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.8)}}
     .music-control.muted .music-bar{animation:none;opacity:.3}
     .music-control.muted .music-label{color:var(--ash)}
-    .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:.5rem;z-index:300;background:none;border:none}
-    .hamburger span{display:block;width:22px;height:1.5px;background:var(--mist);transition:all .3s ease}
+    .hamburger{display:none;flex-direction:column;gap:6px;cursor:pointer;padding:.75rem;z-index:300;background:rgba(8,6,15,.5);border:1px solid rgba(196,147,90,.2);opacity:1!important}
+    .hamburger span{display:block;width:22px;height:2px;background:#b8a8cc;transition:all .3s ease;opacity:1}
     .hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
     .hamburger.open span:nth-child(2){opacity:0}
     .hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
@@ -257,7 +259,7 @@
 </div>
 
 <div class="image-panel reveal">
-  <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget" style="object-position:20% center;">
+  <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget" style="object-position:15% center;">
   <div class="panel-overlay" aria-hidden="true"></div>
   <div class="panel-caption">
     <h3>Solrien</h3>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Golden spiral icon">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#101426"/>
+      <stop offset="70%" stop-color="#060a18"/>
+      <stop offset="100%" stop-color="#03050d"/>
+    </radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 1
+                0 0.62 0 0 0.47
+                0 0 0.18 0 0.08
+                0 0 0 0.85 0" result="goldGlow"/>
+      <feMerge>
+        <feMergeNode in="goldGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="92" fill="url(#bg)"/>
+  <path d="M139 348
+           C188 389 293 386 348 312
+           C406 234 351 128 253 127
+           C171 126 112 191 122 261
+           C134 345 244 361 295 300
+           C344 241 303 170 243 177
+           C189 183 167 244 202 281
+           C231 313 282 298 288 259
+           C293 231 267 211 242 222
+           C224 230 220 252 233 263"
+        fill="none"
+        stroke="#ffc95a"
+        stroke-width="22"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        filter="url(#glow)"/>
+</svg>

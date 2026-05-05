@@ -5,11 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-	<title>Chronicles of Lirien</title>
-	<link rel="icon" type="image/x-icon" href="../favicon.ico">
-	<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
-	<link rel="apple-touch-icon" sizes="180x180" href="../favicon-180.png">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<title>Chronicles of Lirien</title>	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
@@ -73,6 +69,15 @@
 		<button class="music-btn" data-music="off">Off</button>
 	</div>
 	<div id="rotate-prompt" class="rotate-prompt">Please rotate your device to landscape</div>
+	<div id="install-splash" class="install-splash" hidden>
+		<div class="install-splash-content">
+			<h2 class="install-splash-title">For a smoother reading</h2>
+			<p class="install-splash-body">Chronicles of Lirien runs best as a full-screen app. Add it to your home screen and the browser chrome disappears, performance is smoother, and the story takes the whole screen.</p>
+			<div id="install-splash-instructions" class="install-splash-instructions"></div>
+			<button id="install-splash-continue" class="install-splash-continue">Continue in browser</button>
+			<p class="install-splash-note">The browser version works fine &mdash; just slightly less smooth on long sessions.</p>
+		</div>
+	</div>
 	<div id="confirm-dialog" class="confirm-dialog" hidden>
 		<div class="confirm-card">
 			<div id="confirm-title" class="confirm-title"></div>

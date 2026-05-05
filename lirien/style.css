@@ -604,6 +604,90 @@ html, body {
 	border-color: #e2c98c;
 }
 
+/* ----- install-to-home-screen splash (mobile-only, first-visit) -----
+ * Shown once on mobile in browser mode (not standalone). Persists
+ * dismissal in localStorage so we don't nag returning visitors. */
+.install-splash {
+	position: fixed;
+	inset: 0;
+	z-index: 300;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(8, 6, 15, 0.97);
+	padding:
+		max(24px, env(safe-area-inset-top))
+		max(24px, env(safe-area-inset-right))
+		max(24px, env(safe-area-inset-bottom))
+		max(24px, env(safe-area-inset-left));
+}
+.install-splash[hidden] { display: none; }
+.install-splash-content {
+	max-width: 380px;
+	width: 100%;
+	color: #f5ebd2;
+	text-align: center;
+}
+.install-splash-title {
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 32px;
+	font-weight: 300;
+	margin: 0 0 18px 0;
+	color: var(--gold-bright);
+	letter-spacing: 0.02em;
+}
+.install-splash-body {
+	font-size: 15px;
+	line-height: 1.55;
+	margin: 0 0 22px 0;
+	opacity: 0.85;
+}
+.install-splash-instructions {
+	margin-bottom: 26px;
+	text-align: left;
+}
+.install-splash-instructions ol {
+	padding-left: 22px;
+	margin: 0;
+	line-height: 1.65;
+	font-size: 15px;
+	color: rgba(245, 235, 210, 0.88);
+}
+.install-splash-instructions ol li { margin-bottom: 6px; }
+.install-splash-instructions strong {
+	color: var(--gold-bright);
+	font-weight: 500;
+}
+.install-splash-instructions p {
+	font-size: 14px;
+	line-height: 1.5;
+	color: rgba(245, 235, 210, 0.75);
+	margin: 0;
+}
+.install-splash-continue {
+	font-family: inherit;
+	font-size: 16px;
+	padding: 10px 22px;
+	background: transparent;
+	border: 1px solid rgba(245, 235, 210, 0.4);
+	border-radius: 6px;
+	color: #f5ebd2;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+.install-splash-continue:hover,
+.install-splash-continue:focus {
+	background: rgba(245, 235, 210, 0.08);
+	border-color: rgba(245, 235, 210, 0.65);
+	outline: none;
+}
+.install-splash-note {
+	font-size: 12px;
+	margin: 14px 0 0 0;
+	opacity: 0.55;
+	font-style: italic;
+}
+
 .settings-heading {
 	font-size: 18px;
 	color: rgba(245, 230, 200, 1);
@@ -821,14 +905,40 @@ html, body {
 	.continue-hint.visible {
 		animation: hint-float-corner 2.4s ease-in-out infinite;
 	}
+	/* On mobile, choices float over the prose panel rather than try to
+	 * fit alongside it — viewport is too small to host both, and the
+	 * desktop "panel near the top" pattern shoves prose offscreen.
+	 * Centered overlay with a stronger backdrop reads as "this is
+	 * what you need to interact with now." */
 	.choices {
-		left: max(12px, env(safe-area-inset-left));
-		right: max(12px, env(safe-area-inset-right));
-		transform: none;
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		right: auto;
+		transform: translate(-50%, -50%);
+		width: calc(100vw - 32px);
+		max-width: 460px;
+		max-height: calc(100vh - 96px);
 		min-width: 0;
-		max-width: none;
-		top: 8%;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+		background: rgba(11, 11, 18, 0.94);
+		border: 1px solid rgba(245, 235, 210, 0.18);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+		padding: 14px 18px;
+		gap: 6px;
+		z-index: 30;
 	}
+	.choice {
+		font-size: 17px;
+		padding: 9px 10px;
+		min-height: 40px;
+		line-height: 1.45;
+	}
+	/* Standalone mode (Add to Home Screen) gets a hair more breathing
+	 * room since there's no browser chrome eating the viewport. */
+	body.is-standalone .choice { font-size: 18px; padding: 10px 12px; }
 	.settings-panel,
 	.chapters-panel {
 		/* Anchor both top AND bottom so the panel's height is fully

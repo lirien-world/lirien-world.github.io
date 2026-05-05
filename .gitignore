@@ -6,6 +6,10 @@ interactive_book/
 # Kept locally for future image-quality experiments, not deployed.
 lirien/atmosphere_test/
 
+# Favicon source asset + reference snippet — dev-only, not shipped.
+favicon-source-*.png
+favicon-html-snippet.txt
+
 # macOS metadata
 .DS_Store
 

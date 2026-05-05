@@ -421,6 +421,21 @@ function typeChunk(text) {
 				s.style.animation = "none";
 				s.style.opacity = "1";
 			}
+			// Match natural completion's end-state scroll position:
+			// bottom of the last line flush with the panel's bottom
+			// inner padding edge. Without this, on a chunk taller than
+			// the panel the user sees the chunk's top with its bottom
+			// clipped — the progressive-scroll timers we just cancelled
+			// were what would have scrolled into view.
+			if (spans.length > 0) {
+				const last = spans[spans.length - 1];
+				const padBottom = parseInt(getComputedStyle($prose).paddingBottom, 10) || 0;
+				const desiredScroll = Math.max(0,
+					last.offsetTop + last.offsetHeight - $prose.clientHeight + padBottom);
+				if (desiredScroll > $prose.scrollTop) {
+					$prose.scrollTo({ top: desiredScroll, behavior: "auto" });
+				}
+			}
 			onChunkRevealed();
 		}
 	};

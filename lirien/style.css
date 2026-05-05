@@ -224,7 +224,11 @@ html, body {
 	border-radius: 12px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding: 40px 36px 26px 36px;
+	/* padding-top must stay smaller than .prose-content p { margin-bottom }
+	 * (1em = font-size). Otherwise scrollChunkToTop's "scroll to
+	 * paragraph.offsetTop - padTop" lands inside the previous paragraph
+	 * and the bottom of its last line peeks at the top of the panel. */
+	padding: 22px 36px 26px 36px;
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;

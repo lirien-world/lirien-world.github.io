@@ -365,6 +365,27 @@ html, body {
 	50%      { transform: translateY(5px); }
 }
 
+/* Offline waiting indicator — shown in place of the chevron when the
+ * next chunk would need an asset (bg or music) we don't already have
+ * cached. Same position as the chevron so there's no layout jump. */
+.offline-hint {
+	position: absolute;
+	left: 50%;
+	bottom: 18px;
+	transform: translateX(-50%);
+	font-size: 13px;
+	letter-spacing: 0.06em;
+	color: rgba(245, 235, 210, 0.7);
+	pointer-events: none;
+	z-index: 20;
+	animation: offline-hint-pulse 2.6s ease-in-out infinite;
+}
+.offline-hint[hidden] { display: none; }
+@keyframes offline-hint-pulse {
+	0%, 100% { opacity: 0.55; }
+	50%      { opacity: 1;    }
+}
+
 /* ----- choice panel: upper-third, centered ----- */
 
 .choices {

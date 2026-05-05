@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260505k";
+const ASSET_VERSION = "20260505l";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -38,6 +38,7 @@ const $bgImage = document.getElementById("bg-image");
 const $proseContent = document.getElementById("prose-content");
 const $prose = document.getElementById("prose");
 const $continueHint = document.getElementById("continue-hint");
+const $offlineHint = document.getElementById("offline-hint");
 const $choices = document.getElementById("choices");
 const $chapterTitle = document.getElementById("chapter-title");
 const $settingsBtn = document.getElementById("settings-btn");
@@ -495,7 +496,9 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 function onChunkRevealed() {
 	currentReveal = null;
 	state = "waiting";
-	showContinueHint();
+	// Decide between the continue-chevron and the offline-block hint
+	// based on whether the next chunk would need an uncached asset.
+	presentWaitingHintForCurrentState();
 	// Drop the per-character spans now that the chunk is fully revealed.
 	// They were needed for the per-char fade animation; once everyone's
 	// at opacity 1 the spans are pure DOM weight — Safari keeps each
@@ -574,14 +577,118 @@ function pickChoice(index) {
 	advance();
 }
 
-// ----- continue hint -----
+// ----- continue hint + offline gate -----
+//
+// The continue chevron is the "you can advance now" affordance during
+// the waiting state. The offline-hint replaces it when the user is
+// offline AND advancing would land on a chunk whose bg or music isn't
+// in the browser's HTTP cache yet — the user would otherwise see a
+// broken-image icon or silence. Only one of the two is shown at a
+// time. We don't preempt — if the user has the assets cached (because
+// they read this scene before, or prefetched it earlier this session),
+// the offline state is invisible and they can keep reading.
+
+let offlineBlocked = false;
 
 function showContinueHint() {
 	$continueHint.classList.add("visible");
+	$offlineHint.hidden = true;
 }
 function hideContinueHint() {
 	$continueHint.classList.remove("visible");
 }
+
+function showOfflineBlock() {
+	offlineBlocked = true;
+	$continueHint.classList.remove("visible");
+	$offlineHint.hidden = false;
+}
+function hideOfflineBlock() {
+	offlineBlocked = false;
+	$offlineHint.hidden = true;
+}
+
+// Peek the next chunk without advancing. Returns null if there's
+// nothing left, otherwise { bg, music } — either may be null if the
+// next chunk doesn't carry that tag.
+function peekNextChunkTags() {
+	if (!story || !story.canContinue) return null;
+	const saved = story.state.toJson();
+	let bg = null, music = null;
+	try {
+		story.Continue();
+		for (const raw of story.currentTags || []) {
+			const tag = String(raw).trim();
+			if (tag.startsWith("bg:"))         bg = tag.slice(3).trim();
+			else if (tag.startsWith("music:")) music = tag.slice(6).trim();
+		}
+	} finally {
+		try { story.state.LoadJson(saved); } catch (e) { /* lost — bad */ }
+	}
+	return { bg, music };
+}
+
+// Async: returns true if we're offline AND the next chunk would need
+// a bg or music asset that isn't already in the browser's HTTP cache.
+// Uses fetch's `cache: only-if-cached` mode to authoritatively check
+// the cache without going to network — so a user who read this scene
+// in a previous session (and has it on disk) is correctly identified
+// as "fine to advance" even though our JS state is fresh.
+async function nextChunkWouldBreakOffline() {
+	if (navigator.onLine !== false) return false; // navigator.onLine can be undefined; treat as online
+	const next = peekNextChunkTags();
+	if (!next) return false;
+	if (next.bg && !(await isUrlCached(bgUrl(next.bg)))) return true;
+	if (next.music
+	    && !["silence", "fade_out", "dim"].includes(next.music)
+	    && next.music !== currentMusicName
+	    && !(await isUrlCached(musicUrl(next.music)))) return true;
+	return false;
+}
+
+async function isUrlCached(url) {
+	try {
+		const res = await fetch(url, { cache: "only-if-cached", mode: "same-origin" });
+		return res.ok;
+	} catch (e) {
+		return false;
+	}
+}
+
+// Decide which hint to show after a chunk reveals. Default is the
+// continue chevron; we only override to the offline-hint when the
+// async cache check confirms the next swap would fail.
+function presentWaitingHintForCurrentState() {
+	if (navigator.onLine !== false) {
+		// Online — chevron immediately, no async dance needed.
+		showContinueHint();
+		return;
+	}
+	// Offline — chevron tentatively, but flip to offline-hint if peek confirms.
+	showContinueHint();
+	nextChunkWouldBreakOffline().then(broken => {
+		if (state !== "waiting") return; // user already advanced or moved on
+		if (broken) showOfflineBlock();
+	});
+}
+
+window.addEventListener("offline", () => {
+	if (state === "waiting" && !offlineBlocked) {
+		nextChunkWouldBreakOffline().then(broken => {
+			if (state === "waiting" && broken) showOfflineBlock();
+		});
+	}
+});
+window.addEventListener("online", () => {
+	if (offlineBlocked) {
+		// Coming back online clears the block; the next user tap will
+		// fetch over the network normally. Optionally re-warm prefetch
+		// since whatever was waiting is presumably also next-up.
+		hideOfflineBlock();
+		if (state === "waiting") showContinueHint();
+		if (story) prefetchUpcomingBgs(3);
+	}
+});
 
 // ----- chapter title overlay -----
 
@@ -914,6 +1021,10 @@ function bindAdvanceInput() {
 			return;
 		}
 		if (state === "waiting") {
+			// If offline AND the next chunk would land on an uncached
+			// asset, swallow the tap. The offline-hint is already up;
+			// the user just has to wait for connection.
+			if (offlineBlocked) return;
 			state = "idle";
 			hideContinueHint();
 			advance();

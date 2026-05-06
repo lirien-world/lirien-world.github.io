@@ -17,3 +17,6 @@ favicon-html-snippet.txt
 *.swp
 *.swo
 *~
+
+# Wrangler local state — created by `wrangler deploy`, not deployable.
+.wrangler/

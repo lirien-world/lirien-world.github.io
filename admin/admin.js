@@ -1065,6 +1065,22 @@
 			loadSoftWait(),
 			loadConnectionBreakdown(),
 		]);
+		// Charts render asynchronously and grow the page height as they
+		// land, which throws off the browser's initial scroll-to-fragment.
+		// After every section has finished its first paint, re-resolve
+		// the URL fragment and scroll the matching section into view.
+		// Two rAFs to make sure layout has settled (Chart.js does its
+		// final layout pass on rAF).
+		const hash = window.location.hash;
+		if (hash && hash.length > 1) {
+			const targetId = hash.slice(1);
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					const el = document.getElementById(targetId);
+					if (el) el.scrollIntoView({ block: "start", behavior: "auto" });
+				});
+			});
+		}
 	}
 
 	initFilterBar();

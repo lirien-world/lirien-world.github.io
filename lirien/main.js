@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506m";
+const ASSET_VERSION = "20260506n";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -1899,12 +1899,28 @@ function refreshSelectionMarkers() {
 // after the first since duplicate URLs short-circuit at the browser.
 
 const preloadedBgs = new Set();
+const preloadedMusic = new Set();
 
 function preloadImage(url) {
 	if (preloadedBgs.has(url)) return;
 	preloadedBgs.add(url);
 	const img = new Image();
 	img.src = url;
+}
+
+// Music prefetch via fetch() rather than a hidden <audio>: avoids
+// occupying a decoder slot for a track that may not actually play
+// for several minutes, while still warming the HTTP cache so the
+// real swapMusic() pulls from cache and the audio element starts
+// instantly. The "popping sounds" Steve hears come from src-set
+// occurring while the file is still being fetched on a slow
+// network — pre-warming eliminates that case.
+function preloadMusic(url) {
+	if (preloadedMusic.has(url)) return;
+	preloadedMusic.add(url);
+	try {
+		fetch(url, { credentials: "omit", priority: "low" }).catch(() => {});
+	} catch (e) { /* fetch with priority not supported — fall through */ }
 }
 
 function prefetchUpcomingBgs(maxBgs) {
@@ -1916,6 +1932,11 @@ function prefetchUpcomingBgs(maxBgs) {
 	// versioned URL; the count is what we're matching against.)
 	if (allBgNames.length > 0 && preloadedBgs.size >= allBgNames.length) return;
 	const seen = new Set();
+	// Music swaps less often than bgs, so a single look-ahead is
+	// usually enough to cover the next track change. Stop after we've
+	// found one upcoming music name that differs from what's playing.
+	const musicSeen = new Set();
+	const MAX_MUSIC_LOOKAHEAD = 2;
 
 	let savedState;
 	try {
@@ -1932,6 +1953,15 @@ function prefetchUpcomingBgs(maxBgs) {
 					const name = tag.slice(3).trim();
 					if (name) seen.add(name);
 					if (seen.size >= maxBgs) return;
+				} else if (tag.startsWith("music:") && musicSeen.size < MAX_MUSIC_LOOKAHEAD) {
+					const name = tag.slice(6).trim();
+					// Skip pure directives (silence/dim/fade_out) that
+					// don't load any new file. Skip the track that's
+					// already playing — its bytes are already local.
+					if (name && name !== "silence" && name !== "dim" && name !== "fade_out"
+					    && name !== currentMusicName) {
+						musicSeen.add(name);
+					}
 				}
 			}
 		}
@@ -1952,6 +1982,9 @@ function prefetchUpcomingBgs(maxBgs) {
 
 	for (const name of seen) {
 		preloadImage(bgUrl(name));
+	}
+	for (const name of musicSeen) {
+		preloadMusic(musicUrl(name));
 	}
 }
 

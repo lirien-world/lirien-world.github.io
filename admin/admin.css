@@ -594,6 +594,44 @@ section {
 	.funnel-num { text-align: right; }
 }
 
+/* ---- Severity pills (errors panel) --------------------------- */
+
+.severity-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+
+/* The errors table's severity column. Errors keep the gold; warnings
+   shift to the cooler mist palette so the eye drops past them when
+   scanning the page for trouble. Same data, different visual weight. */
+.severity-tag {
+	display: inline-block;
+	font-family: var(--font-mono);
+	font-size: 9.5px;
+	letter-spacing: 0.20em;
+	text-transform: uppercase;
+	padding: 2px 8px;
+	border-radius: 3px;
+	border: 1px solid var(--rule);
+}
+.severity-error {
+	color: var(--gold);
+	border-color: var(--rule-gold);
+}
+.severity-warning {
+	color: var(--mist);
+	border-color: var(--rule);
+}
+
+.ledger tr.sev-warning td {
+	color: var(--mist);
+}
+.ledger tr.sev-warning td.num {
+	color: var(--ash);
+}
+
 /* ---- Tables (ledger style) ------------------------------------ */
 
 .ledger {

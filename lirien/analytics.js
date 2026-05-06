@@ -81,6 +81,26 @@
 	let lastChunkAt = null;       // performance.now() of last chunk reveal
 	let sessionStarted = false;
 
+	// Track time the page spends hidden between consecutive chunk
+	// reveals so time_since_prev_ms reflects actual reading time, not
+	// wall-clock time. performance.now() advances in hidden tabs;
+	// without correction, a reader who tabs away for 10 minutes
+	// returns and taps once produces a 10-minute "reading speed"
+	// outlier that pollutes the pace chart.
+	let hiddenMsSinceLastChunk = 0;
+	let hiddenAt = (typeof document !== "undefined" && document.visibilityState === "hidden")
+		? performance.now() : null;
+	if (typeof document !== "undefined") {
+		document.addEventListener("visibilitychange", () => {
+			if (document.visibilityState === "hidden") {
+				hiddenAt = performance.now();
+			} else if (hiddenAt !== null) {
+				hiddenMsSinceLastChunk += performance.now() - hiddenAt;
+				hiddenAt = null;
+			}
+		});
+	}
+
 	function nowSinceSessionStart() {
 		return Math.round(performance.now() - SESSION_START_PERF);
 	}
@@ -91,8 +111,16 @@
 
 		// Auto-enrich chunk_revealed with time-since-previous-chunk so
 		// callers don't have to track it. Reading speed comes from this.
+		// Subtract any time the page was hidden between the prior chunk
+		// and this one — that's not reading time.
 		if (eventName === "chunk_revealed" && lastChunkAt !== null && props.time_since_prev_ms === undefined) {
-			props.time_since_prev_ms = Math.round(performance.now() - lastChunkAt);
+			let hidden = hiddenMsSinceLastChunk;
+			// If the page is hidden RIGHT NOW (visibilitychange handler
+			// won't run again until visible), include the in-progress
+			// hidden span up to now.
+			if (hiddenAt !== null) hidden += performance.now() - hiddenAt;
+			const elapsed = performance.now() - lastChunkAt;
+			props.time_since_prev_ms = Math.max(0, Math.round(elapsed - hidden));
 		}
 
 		const evt = {
@@ -107,6 +135,11 @@
 		// session_end is correct even if emission triggers a re-entry.
 		if (eventName === "chunk_revealed") {
 			chunksReached++;
+			// Reset the hidden-time accumulator for the next interval. If
+			// the page is hidden right now, restart its timer so the next
+			// chunk only sees hidden-time accumulated from this moment on.
+			hiddenMsSinceLastChunk = 0;
+			if (hiddenAt !== null) hiddenAt = performance.now();
 			lastChunkBg = props.bg || lastChunkBg;
 			lastChunkChapter = props.chapter || lastChunkChapter;
 			lastChunkAt = performance.now();

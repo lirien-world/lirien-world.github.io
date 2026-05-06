@@ -10,7 +10,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
-	<link rel="stylesheet" href="admin.css?v=20260506k">
+	<link rel="stylesheet" href="admin.css?v=20260506n">
 </head>
 <body>
 	<div class="vignette" aria-hidden="true"></div>
@@ -180,15 +180,20 @@
 
 		<section class="errors" id="sec-errors">
 			<header class="section-header">
-				<h2 class="section-title">The Things That Broke</h2>
-				<p class="section-aside">Errors and offline blocks. Empty is the goal.</p>
+				<h2 class="section-title">The Things That Broke or Wobbled</h2>
+				<p class="section-aside">Errors are the things that genuinely broke. Warnings are friction the reader either didn't notice or recovered from — offline-blocks, ink state-restoration warnings on a stale cache. Toggle the severity to drill in.</p>
 			</header>
+			<div class="severity-pills" role="tablist" aria-label="Severity filter">
+				<button class="filter-chip" data-severity="">All</button>
+				<button class="filter-chip" data-severity="error">Errors only</button>
+				<button class="filter-chip" data-severity="warning">Warnings only</button>
+			</div>
 			<table class="ledger" id="errors-table">
 				<thead>
-					<tr><th>Event</th><th>Where</th><th>Detail</th><th class="num">N</th></tr>
+					<tr><th>Event</th><th>Severity</th><th>Where</th><th>Detail</th><th class="num">N</th></tr>
 				</thead>
 				<tbody>
-					<tr><td colspan="4" class="empty">Loading&hellip;</td></tr>
+					<tr><td colspan="5" class="empty">Loading&hellip;</td></tr>
 				</tbody>
 			</table>
 		</section>
@@ -345,6 +350,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-	<script src="admin.js?v=20260506k"></script>
+	<script src="admin.js?v=20260506n"></script>
 </body>
 </html>

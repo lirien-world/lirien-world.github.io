@@ -80,6 +80,7 @@
 			browser:    params.get("browser")    || "",
 			standalone: params.get("standalone") || "",
 			conn_type:  params.get("conn_type")  || "",
+			severity:   params.get("severity")   || "",
 		};
 	}
 
@@ -97,6 +98,7 @@
 		if (FILTERS.browser)    u.set("browser", FILTERS.browser);
 		if (FILTERS.standalone) u.set("standalone", FILTERS.standalone);
 		if (FILTERS.conn_type)  u.set("conn_type", FILTERS.conn_type);
+		if (FILTERS.severity)   u.set("severity", FILTERS.severity);
 		return u.toString();
 	}
 
@@ -401,22 +403,36 @@
 
 		if (!rows.length) {
 			tbody.innerHTML =
-				`<tr><td colspan="4" class="empty">No errors. The room is undisturbed.</td></tr>`;
+				`<tr><td colspan="5" class="empty">Nothing in this severity. The room is undisturbed.</td></tr>`;
 			return;
 		}
 
 		tbody.innerHTML = rows.map((r) => {
 			const where = r.bg || r.name || "—";
 			const detail = r.message || "—";
+			const severity = r.severity || "error";
 			return `
-				<tr>
+				<tr class="sev-${escapeHtml(severity)}">
 					<td>${escapeHtml(r.event_name)}</td>
+					<td><span class="severity-tag severity-${escapeHtml(severity)}">${escapeHtml(severity)}</span></td>
 					<td>${escapeHtml(where)}</td>
 					<td>${escapeHtml(detail)}</td>
 					<td class="num">${fmt(r.n)}</td>
 				</tr>
 			`;
 		}).join("");
+	}
+
+	function initSeverityPills() {
+		const pills = document.querySelectorAll(".severity-pills .filter-chip");
+		const current = FILTERS.severity || "";
+		for (const pill of pills) {
+			const sev = pill.dataset.severity || "";
+			pill.setAttribute("aria-pressed", sev === current ? "true" : "false");
+			pill.addEventListener("click", () => {
+				setUrlAndReload({ severity: sev || null });
+			});
+		}
 	}
 
 	// ---- time at each scene (heatmap-style horizontal bar) --------
@@ -634,6 +650,39 @@
 	async function loadSettingsDistribution() {
 		const rows = await fetchQuery("settings_distribution");
 
+		// Map raw setting values to the friendly labels the reader app's
+		// settings menu uses, so this chart speaks the same language as
+		// the UI. If a value falls outside the known set (e.g. someone
+		// opened a developer console and set a custom value), fall back
+		// to the raw number — the chart still renders, just less prettily.
+		const SPEED_LABELS = {
+			0.2: "Very slow",
+			0.3: "Slow",
+			0.4: "Normal",
+			0.7: "Fast",
+			1.0: "Very fast",
+		};
+		const SPEED_ORDER = ["Very slow", "Slow", "Normal", "Fast", "Very fast"];
+
+		const SIZE_LABELS = {
+			28: "Small",
+			32: "Medium",
+			36: "Large",
+			42: "Very large",
+		};
+		const SIZE_ORDER = ["Small", "Medium", "Large", "Very large"];
+
+		const speedFor = (v) => {
+			if (v === null || v === undefined) return "—";
+			const num = typeof v === "number" ? v : parseFloat(v);
+			return SPEED_LABELS[num] || `${num}×`;
+		};
+		const sizeFor = (v) => {
+			if (v === null || v === undefined) return "—";
+			const num = typeof v === "number" ? v : parseInt(v, 10);
+			return SIZE_LABELS[num] || `${num}px`;
+		};
+
 		const sumBy = (key, labelFn) => {
 			const map = {};
 			rows.forEach((r) => {
@@ -644,15 +693,22 @@
 			return map;
 		};
 
-		// Speed: numeric multipliers, sorted ascending so 0.5 → 1.0 → 2.0
-		// reads left-to-right as "slower → faster."
-		const speedMap = sumBy("speed", (v) => (v === null || v === undefined ? "—" : `${v}×`));
-		const speedKeys = Object.keys(speedMap).sort((a, b) => parseFloat(a) - parseFloat(b));
+		// Sort keys by canonical order, falling back to insertion order
+		// for any unknown raw values (so they still appear at the end
+		// rather than being dropped).
+		const orderKeys = (mapObj, canonical) => {
+			const present = new Set(Object.keys(mapObj));
+			const ordered = canonical.filter((k) => present.has(k));
+			for (const k of present) if (!canonical.includes(k)) ordered.push(k);
+			return ordered;
+		};
+
+		const speedMap = sumBy("speed", speedFor);
+		const speedKeys = orderKeys(speedMap, SPEED_ORDER);
 		miniBarChart("chart-set-speed", speedKeys, speedKeys.map((k) => speedMap[k]));
 
-		// Size: integer pixels, sorted ascending.
-		const sizeMap = sumBy("size", (v) => (v === null || v === undefined ? "—" : `${v}px`));
-		const sizeKeys = Object.keys(sizeMap).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+		const sizeMap = sumBy("size", sizeFor);
+		const sizeKeys = orderKeys(sizeMap, SIZE_ORDER);
 		miniBarChart("chart-set-size", sizeKeys, sizeKeys.map((k) => sizeMap[k]));
 
 		// Music: boolean — relabel for legibility.
@@ -982,5 +1038,6 @@
 	}
 
 	initFilterBar();
+	initSeverityPills();
 	loadAll();
 })();

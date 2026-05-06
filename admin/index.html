@@ -10,7 +10,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
-	<link rel="stylesheet" href="admin.css?v=20260506i">
+	<link rel="stylesheet" href="admin.css?v=20260506j">
 </head>
 <body>
 	<div class="vignette" aria-hidden="true"></div>
@@ -281,7 +281,7 @@
 		<section class="soft-wait">
 			<header class="section-header">
 				<h2 class="section-title">Where the Reader Waited</h2>
-				<p class="section-aside">When the next scene's image arrived after the prose had already finished revealing, the reader was looking at finished words and the wrong atmosphere. These buckets count those moments by how long the gap was.</p>
+				<p class="section-aside">When a scene's image arrives after its prose has finished revealing, the reader is looking at the previous scene's atmosphere — or, on the first scene of a session, at empty dark. Buckets count those moments by lag. Anything under 100ms is imperceptible; anything past 500ms is felt.</p>
 			</header>
 			<div class="chart-frame">
 				<canvas id="chart-soft-wait"></canvas>
@@ -291,7 +291,7 @@
 		<section class="connection">
 			<header class="section-header">
 				<h2 class="section-title">The Wire They Came Through</h2>
-				<p class="section-aside">Effective network class for each session that started, with average downlink and round-trip when reported. Safari does not expose this; those sessions show as <em>unknown</em>.</p>
+				<p class="section-aside">Effective network class — the four-bucket speed estimate (4G / 3G / 2G / slow 2G) with average downlink and round-trip when reported. This is observed speed, not physical link: a slow wifi shows as <em>3g</em>. Safari does not expose the API; those sessions show as <em>unknown</em>. The physical wifi-vs-cellular distinction is hidden by most browsers as anti-fingerprinting and so isn't shown here.</p>
 			</header>
 			<table class="ledger" id="connection-table">
 				<thead>
@@ -325,6 +325,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-	<script src="admin.js?v=20260506i"></script>
+	<script src="admin.js?v=20260506j"></script>
 </body>
 </html>

@@ -153,13 +153,18 @@
 		else if (/(CriOS|Chrome)\//.test(ua))   browser = "chrome";
 		else if (/Safari\//.test(ua))           browser = "safari";
 
-		// Phone/tablet/desktop heuristic. coarse-pointer => touch device.
-		// Tablets are touch devices with a wide viewport (768+ in most
-		// orientation-friendly conventions).
+		// Phone/tablet/desktop heuristic. coarse-pointer ⇒ touch device.
+		// Branch by the SHORT edge of the viewport so a phone in
+		// landscape doesn't get mis-classified as a tablet — iPhone
+		// Pro Max landscape is 932×430, which trivially exceeds any
+		// width-only threshold. Phones top out around 480px on the
+		// short edge; iPad mini portrait starts at 744. 600 is a
+		// conservative midpoint.
 		let device_class = "desktop";
 		const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 		if (coarse) {
-			device_class = (window.innerWidth >= 768) ? "tablet" : "phone";
+			const shortEdge = Math.min(window.innerWidth, window.innerHeight);
+			device_class = (shortEdge >= 600) ? "tablet" : "phone";
 		}
 
 		// Timezone offset in minutes, signed JS-style (negative = ahead of UTC).
@@ -168,25 +173,37 @@
 		const tz_offset_min = (new Date()).getTimezoneOffset();
 
 		// Network connection info — Chromium and Firefox expose this;
-		// Safari does not. Effective type is the four-bucket coarse
-		// classification ("4g","3g","2g","slow-2g"), downlink is in
-		// Mbps, rtt in ms (rounded to 25ms increments by the API for
-		// privacy). saveData reflects the user's data-saver preference.
-		// We capture once at session start; we don't subscribe to
-		// changes (a reader switching from cellular to wifi mid-session
-		// is rare and the change handler would need additional plumbing).
-		let conn_effective_type = null, conn_downlink = null, conn_rtt = null, conn_save_data = null;
+		// Safari does not. Two distinct fields:
+		//   effectiveType — derived speed bucket: 4g/3g/2g/slow-2g.
+		//                   Reflects observed bandwidth + RTT, not
+		//                   physical medium. A slow wifi can show as
+		//                   "3g". Reliably populated where the API
+		//                   exists.
+		//   type          — physical link: wifi/cellular/ethernet/etc.
+		//                   Hidden in Safari, iOS, and most Chromium
+		//                   contexts as anti-fingerprinting; usually
+		//                   null in practice. Captured anyway because
+		//                   when it IS available it's the only way to
+		//                   distinguish wifi from cellular.
+		// downlink in Mbps, rtt in ms (rounded to 25ms increments by
+		// the API for privacy). saveData reflects user's data-saver
+		// preference. Captured once at session start — we don't
+		// subscribe to changes.
+		let conn_effective_type = null, conn_link_type = null;
+		let conn_downlink = null, conn_rtt = null, conn_save_data = null;
 		const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 		if (c) {
 			conn_effective_type = typeof c.effectiveType === "string" ? c.effectiveType : null;
-			conn_downlink       = typeof c.downlink       === "number" ? c.downlink       : null;
-			conn_rtt            = typeof c.rtt            === "number" ? c.rtt            : null;
-			conn_save_data      = typeof c.saveData       === "boolean" ? c.saveData      : null;
+			conn_link_type      = typeof c.type          === "string" ? c.type          : null;
+			conn_downlink       = typeof c.downlink      === "number" ? c.downlink       : null;
+			conn_rtt            = typeof c.rtt           === "number" ? c.rtt            : null;
+			conn_save_data      = typeof c.saveData      === "boolean" ? c.saveData      : null;
 		}
 
 		return {
 			platform, browser, device_class, tz_offset_min,
-			conn_effective_type, conn_downlink, conn_rtt, conn_save_data,
+			conn_effective_type, conn_link_type,
+			conn_downlink, conn_rtt, conn_save_data,
 		};
 	}
 

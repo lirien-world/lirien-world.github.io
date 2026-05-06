@@ -322,6 +322,16 @@
 	// relative URL silently returned nothing; that was the bug behind
 	// the original "0% cache hit" chart.
 	const READY_THRESHOLD_MS = 100;
+	// PerformanceResourceTiming.duration is wall-clock time, not active
+	// CPU time. If the tab was hidden during the load (user switched
+	// apps, locked the screen) the entry can report durations of many
+	// minutes for resources that were actually served from cache the
+	// instant the tab regained focus. Those samples are not useful as
+	// cache or network performance signal — they just measure how long
+	// the user looked away. Drop anything beyond this cap. 30s is well
+	// above any plausible single-asset load on any connection we'd want
+	// to support.
+	const SANITY_MAX_MS = 30000;
 
 	function recordAssetLoad(type, name, url) {
 		setTimeout(() => {
@@ -338,6 +348,11 @@
 				const transfer_size     = typeof entry.transferSize    === "number" ? entry.transferSize    : null;
 				const encoded_body_size = typeof entry.encodedBodySize === "number" ? entry.encodedBodySize : null;
 				const ms = Math.round(entry.duration);
+				// Drop poisoned samples — almost always tab-backgrounding.
+				// Recording these would inflate the percentile tail with
+				// non-events. We don't even emit a placeholder; the
+				// missing sample is the most accurate report we can make.
+				if (ms > SANITY_MAX_MS) return;
 				let cache_state = "fresh";
 				if (transfer_size === 0)                              cache_state = "hit";
 				else if (encoded_body_size === 0 && transfer_size > 0) cache_state = "revalidated";

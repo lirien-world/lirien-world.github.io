@@ -49,7 +49,10 @@
 	"use strict";
 
 	const BACKEND = "beacon";        // "console" | "beacon"
-	const ENDPOINT = "https://lirien-analytics.lirien.workers.dev/track";
+	// Same-origin route on lirien.world; the Worker is served behind
+	// the /api/* path now that lirien.world is on Cloudflare. No CORS
+	// dance needed — the request is same-origin from the reader app.
+	const ENDPOINT = "https://lirien.world/api/track";
 
 	// Ephemeral session UUID. Regenerated every page load. Never persisted.
 	const SESSION_ID = (typeof crypto !== "undefined" && crypto.randomUUID)

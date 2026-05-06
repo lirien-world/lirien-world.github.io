@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506l";
+const ASSET_VERSION = "20260506m";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -315,6 +315,24 @@ let allBgNames = [];
 	try {
 		const parsed = await fetch("story.json").then(r => r.json());
 		story = new inkjs.Story(parsed);
+		// Route inkjs warnings + errors through a dedicated handler
+		// instead of letting StoryException bubble to window.onerror.
+		// Without this, every recoverable warning (e.g., a save state
+		// pointing at a knot that's been renamed since save creation —
+		// inkjs auto-recovers by approximating to root) was getting
+		// captured as a fatal `error` event in analytics. Warnings
+		// stay observable as a separate event type for diagnosis.
+		story.onError = function (message, type) {
+			const isWarning = (type && type.toString().toLowerCase().includes("warning"))
+			               || (message && /WARNING/.test(message));
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.track(isWarning ? "ink_warning" : "ink_error", {
+					message: String(message).slice(0, 500),
+					type: type ? String(type) : null,
+				});
+			}
+			if (!isWarning) console.warn("[ink]", message);
+		};
 		allBgNames = extractBgNames(parsed);
 		// Warm the first 2-3 bgs while the user reads the title screen,
 		// so the very first chunk after Enter doesn't flash from black.

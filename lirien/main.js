@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506k";
+const ASSET_VERSION = "20260506l";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -964,6 +964,15 @@ function ensureAudioRig() {
 }
 
 function onFirstUserGesture() {
+	// Always reasonable: resume the audio context if it isn't running.
+	// iOS auto-suspends on background; running this on every tap (not
+	// just the first) means any prose-panel interaction is a chance to
+	// re-engage audio if it stalled. Belt-and-braces alongside the
+	// visibility/focus handlers below.
+	if (audioCtx && audioCtx.state !== "running") {
+		const p = audioCtx.resume();
+		if (p && p.catch) p.catch(() => {});
+	}
 	if (userGestured) return;
 	userGestured = true;
 	ensureAudioRig();
@@ -974,6 +983,44 @@ function onFirstUserGesture() {
 		swapMusic(n);
 	}
 }
+
+// When the app comes back from background (iOS standalone PWA: user
+// swipes home, locks the screen, switches apps — or any browser tab
+// loses focus and returns), the AudioContext gets auto-suspended by
+// the system. Without recovery, music never comes back until the user
+// force-quits. We resume on visibility, pageshow, and focus, and re-
+// trigger play() on the active player if the resume succeeded.
+//
+// resume() is allowed without a fresh user gesture when the context
+// was running and was auto-suspended by the system. If iOS refuses
+// (rare), the next prose-panel tap will also try via the path above.
+function recoverAudioOnReturn() {
+	if (!audioCtx) return;
+	if (audioCtx.state === "running") return;
+	const p = audioCtx.resume();
+	const onResumed = () => {
+		if (!settings.musicOn) return;
+		if (!currentMusicName) return;
+		const ap = activePlayer;
+		if (!ap || !ap.el) return;
+		if (!ap.el.paused) return;
+		const pp = ap.el.play();
+		if (pp && pp.catch) pp.catch(() => {});
+	};
+	if (p && p.then) p.then(onResumed, () => {});
+	else onResumed();
+}
+
+document.addEventListener("visibilitychange", () => {
+	if (document.visibilityState === "visible") recoverAudioOnReturn();
+});
+// pageshow fires when the page is restored from bfcache (iOS Safari
+// back-forward cache, and some standalone PWA resume paths).
+window.addEventListener("pageshow", () => recoverAudioOnReturn());
+// focus is a third belt — covers the case where the tab regains
+// focus without a visibility transition (rare desktop window-manager
+// edge cases).
+window.addEventListener("focus", recoverAudioOnReturn);
 
 function stopAllMusic() {
 	// Pause both players and release their decoded buffers. Keep

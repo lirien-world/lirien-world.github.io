@@ -594,6 +594,15 @@ section {
 	.funnel-num { text-align: right; }
 }
 
+/* ---- Dropoff mode pills -------------------------------------- */
+
+.dropoff-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+
 /* ---- Severity pills (errors panel) --------------------------- */
 
 .severity-pills {

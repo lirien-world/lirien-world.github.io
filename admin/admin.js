@@ -406,6 +406,270 @@
 		});
 	}
 
+	// ---- shared mini-bar chart factory ----------------------------
+	//
+	// The device + settings sections all want the same chart shape: a
+	// short categorical bar chart with gold gradient bars, mist axis
+	// ticks, no grid clutter. One factory keeps them visually identical.
+
+	function miniBarChart(canvasId, labels, data, opts) {
+		opts = opts || {};
+		const ctx = document.getElementById(canvasId);
+		if (!ctx) return;
+		new Chart(ctx, {
+			type: "bar",
+			data: {
+				labels,
+				datasets: [{
+					data,
+					backgroundColor: (c) => goldGradient(c.chart.ctx, c.chart.chartArea),
+					hoverBackgroundColor: PAL.goldBright,
+					borderWidth: 0,
+					barThickness: "flex",
+					maxBarThickness: 28,
+				}],
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 700, easing: "easeOutQuart" },
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							title: (items) => items[0].label,
+							label: (item) => opts.tooltipLabel
+								? opts.tooltipLabel(item)
+								: `${item.formattedValue} session${item.raw === 1 ? "" : "s"}`,
+						},
+					},
+				},
+				scales: {
+					x: {
+						ticks: { color: PAL.mist, font: { size: 10 } },
+						grid: { display: false },
+						border: { color: PAL.ruleStrong },
+					},
+					y: {
+						beginAtZero: true,
+						ticks: { color: PAL.mist, precision: 0, font: { size: 10 } },
+						grid: { color: PAL.rule, drawBorder: false },
+						border: { display: false },
+					},
+				},
+			},
+		});
+	}
+
+	// Sort entries (label, n) tuples by descending count, with "other"
+	// pinned to the end so it never crowds out a real value.
+	function sortedByCount(rows, labelKey) {
+		const out = rows.slice();
+		out.sort((a, b) => {
+			if (a[labelKey] === "other" && b[labelKey] !== "other") return 1;
+			if (b[labelKey] === "other" && a[labelKey] !== "other") return -1;
+			return (b.n || 0) - (a.n || 0);
+		});
+		return out;
+	}
+
+	// ---- how they came in (devices) -------------------------------
+
+	async function loadDeviceBreakdown() {
+		const rows = await fetchQuery("device_breakdown");
+
+		// The query returns one row per (platform, browser, device_class,
+		// standalone) combination. Roll up to three independent histograms.
+		const sumBy = (key) => {
+			const map = {};
+			rows.forEach((r) => {
+				const k = r[key] === null || r[key] === undefined ? "unknown" : String(r[key]);
+				map[k] = (map[k] || 0) + (r.n || 0);
+			});
+			return Object.keys(map).map((k) => ({ label: k, n: map[k] }));
+		};
+
+		const platforms = sortedByCount(sumBy("platform").map((x) => ({ platform: x.label, n: x.n })), "platform");
+		const browsers  = sortedByCount(sumBy("browser").map((x) => ({ browser: x.label, n: x.n })), "browser");
+		const classes   = sortedByCount(sumBy("device_class").map((x) => ({ device_class: x.label, n: x.n })), "device_class");
+
+		miniBarChart("chart-device-platform", platforms.map((r) => r.platform), platforms.map((r) => r.n));
+		miniBarChart("chart-device-browser",  browsers.map((r) => r.browser),   browsers.map((r) => r.n));
+		miniBarChart("chart-device-class",    classes.map((r) => r.device_class), classes.map((r) => r.n));
+	}
+
+	// ---- the door off the street (install funnel) ----------------
+
+	async function loadInstallFunnel() {
+		const rows = await fetchQuery("install_funnel");
+		const counts = {};
+		rows.forEach((r) => { counts[r.event_name] = r.n || 0; });
+
+		const titleSeen        = counts.title_seen || 0;
+		const splashSeen       = counts.splash_seen || 0;
+		const splashDismissed  = counts.splash_dismissed || 0;
+		const installPrompted  = counts.install_prompted || 0;
+		const installAccepted  = counts.install_accepted || 0;
+		const installRejected  = counts.install_rejected || 0;
+		const standaloneStart  = counts.standalone_session || 0;
+
+		// Stages, in narrative order. Each row gets a count; the bar
+		// fills relative to the page's title-screen views (the widest
+		// part of the funnel for non-standalone visits).
+		const denom = Math.max(titleSeen, splashSeen, 1);
+		const stages = [
+			{ label: "Saw the title",        sub: "title_seen",       n: titleSeen },
+			{ label: "Saw the splash",       sub: "splash_seen",      n: splashSeen },
+			{ label: "Dismissed the splash", sub: "splash_dismissed", n: splashDismissed },
+			{ label: "Tapped install",       sub: "install_prompted", n: installPrompted },
+			{ label: "Accepted",             sub: "install_accepted", n: installAccepted, gold: true },
+			{ label: "Rejected",             sub: "install_rejected", n: installRejected },
+			{ label: "Already standalone",   sub: "session_start with standalone=1", n: standaloneStart },
+		];
+
+		const list = document.getElementById("funnel-list");
+		list.innerHTML = "";
+		const anyData = stages.some((s) => s.n > 0);
+		if (!anyData) {
+			const p = document.createElement("p");
+			p.className = "empty-state";
+			p.textContent = "No funnel data yet. Wait for a reader to find the door.";
+			list.appendChild(p);
+			return;
+		}
+
+		for (const s of stages) {
+			const pct = s.n > 0 ? Math.min(100, (s.n / denom) * 100) : 0;
+			const row = document.createElement("div");
+			row.className = "funnel-row";
+			row.innerHTML =
+				`<div class="funnel-label">${escapeHtml(s.label)}<span class="funnel-sub">${escapeHtml(s.sub)}</span></div>` +
+				`<div class="funnel-track"><span class="funnel-fill" style="width: ${pct.toFixed(2)}%"></span></div>` +
+				`<div class="funnel-num">${escapeHtml(String(s.n))}<span class="pct-num">${pct.toFixed(0)}%</span></div>`;
+			list.appendChild(row);
+		}
+	}
+
+	// ---- how they have it set (settings distribution) ------------
+
+	async function loadSettingsDistribution() {
+		const rows = await fetchQuery("settings_distribution");
+
+		const sumBy = (key, labelFn) => {
+			const map = {};
+			rows.forEach((r) => {
+				const v = r[key];
+				const lbl = labelFn ? labelFn(v) : String(v);
+				map[lbl] = (map[lbl] || 0) + (r.n || 0);
+			});
+			return map;
+		};
+
+		// Speed: numeric multipliers, sorted ascending so 0.5 → 1.0 → 2.0
+		// reads left-to-right as "slower → faster."
+		const speedMap = sumBy("speed", (v) => (v === null || v === undefined ? "—" : `${v}×`));
+		const speedKeys = Object.keys(speedMap).sort((a, b) => parseFloat(a) - parseFloat(b));
+		miniBarChart("chart-set-speed", speedKeys, speedKeys.map((k) => speedMap[k]));
+
+		// Size: integer pixels, sorted ascending.
+		const sizeMap = sumBy("size", (v) => (v === null || v === undefined ? "—" : `${v}px`));
+		const sizeKeys = Object.keys(sizeMap).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+		miniBarChart("chart-set-size", sizeKeys, sizeKeys.map((k) => sizeMap[k]));
+
+		// Music: boolean — relabel for legibility.
+		const musicMap = sumBy("music", (v) => (v === 1 || v === true ? "On" : v === 0 || v === false ? "Off" : "—"));
+		const musicKeys = ["On", "Off"].filter((k) => musicMap[k] !== undefined);
+		miniBarChart("chart-set-music", musicKeys, musicKeys.map((k) => musicMap[k]));
+	}
+
+	// ---- what they were doing when they left ---------------------
+
+	async function loadDropoutState() {
+		const rows = await fetchQuery("dropout_state");
+		// Friendlier labels in the literary register; preserve unknown.
+		const order = ["typing", "waiting", "choosing", "ended", "idle", "unknown"];
+		const labelMap = {
+			typing:   "Mid-sentence",
+			waiting:  "Waiting to tap",
+			choosing: "At a choice",
+			ended:    "Finished a chapter",
+			idle:     "On the title",
+			unknown:  "Unknown",
+		};
+		const counts = {};
+		rows.forEach((r) => { counts[r.last_state || "unknown"] = r.n || 0; });
+		const present = order.filter((k) => counts[k]);
+		const labels = present.map((k) => labelMap[k] || k);
+		const data   = present.map((k) => counts[k]);
+
+		miniBarChart("chart-dropout-state", labels, data, {
+			tooltipLabel: (item) => `${item.formattedValue} session${item.raw === 1 ? "" : "s"} ended here`,
+		});
+	}
+
+	// ---- when they read (hour of day) ----------------------------
+
+	async function loadTimeOfDay() {
+		const rows = await fetchQuery("time_of_day");
+
+		// Pad to all 24 hours so the chart shape is stable and the
+		// quiet hours read as actual zeros, not missing data.
+		const buckets = new Array(24).fill(0);
+		rows.forEach((r) => {
+			const h = parseInt(r.hour_local, 10);
+			if (Number.isFinite(h) && h >= 0 && h < 24) buckets[h] += (r.n || 0);
+		});
+		const labels = buckets.map((_, h) => {
+			if (h === 0) return "12a";
+			if (h === 12) return "12p";
+			return h < 12 ? `${h}a` : `${h - 12}p`;
+		});
+
+		new Chart(document.getElementById("chart-time-of-day"), {
+			type: "bar",
+			data: {
+				labels,
+				datasets: [{
+					data: buckets,
+					backgroundColor: (c) => goldGradient(c.chart.ctx, c.chart.chartArea),
+					hoverBackgroundColor: PAL.goldBright,
+					borderWidth: 0,
+					barThickness: "flex",
+					maxBarThickness: 18,
+					categoryPercentage: 0.92,
+					barPercentage: 0.86,
+				}],
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 700, easing: "easeOutQuart" },
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							title: (items) => items[0].label + " (local)",
+							label: (item) => `${item.formattedValue} session${item.raw === 1 ? "" : "s"} started`,
+						},
+					},
+				},
+				scales: {
+					x: {
+						ticks: { color: PAL.mist, font: { size: 10 }, autoSkip: false, maxRotation: 0 },
+						grid: { display: false },
+						border: { color: PAL.ruleStrong },
+					},
+					y: {
+						beginAtZero: true,
+						ticks: { color: PAL.mist, precision: 0 },
+						grid: { color: PAL.rule, drawBorder: false },
+						border: { display: false },
+					},
+				},
+			},
+		});
+	}
+
 	// ---- last refresh stamp ---------------------------------------
 
 	function setRefresh() {
@@ -431,6 +695,11 @@
 			loadSlow(),
 			loadErrors(),
 			loadPace(),
+			loadDeviceBreakdown(),
+			loadInstallFunnel(),
+			loadSettingsDistribution(),
+			loadDropoutState(),
+			loadTimeOfDay(),
 		]);
 	}
 

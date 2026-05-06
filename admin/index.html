@@ -10,7 +10,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
-	<link rel="stylesheet" href="admin.css?v=20260506f">
+	<link rel="stylesheet" href="admin.css?v=20260506g">
 </head>
 <body>
 	<div class="vignette" aria-hidden="true"></div>
@@ -122,6 +122,78 @@
 			</div>
 		</section>
 
+		<section class="devices">
+			<header class="section-header">
+				<h2 class="section-title">How They Came In</h2>
+				<p class="section-aside">Platform, browser, and form factor for every session that started. The shape of the readership, in plain count.</p>
+			</header>
+			<div class="device-grid">
+				<div class="device-panel">
+					<h3 class="device-panel-h">Platform</h3>
+					<div class="chart-frame device-frame"><canvas id="chart-device-platform"></canvas></div>
+				</div>
+				<div class="device-panel">
+					<h3 class="device-panel-h">Browser</h3>
+					<div class="chart-frame device-frame"><canvas id="chart-device-browser"></canvas></div>
+				</div>
+				<div class="device-panel">
+					<h3 class="device-panel-h">Form factor</h3>
+					<div class="chart-frame device-frame"><canvas id="chart-device-class"></canvas></div>
+				</div>
+			</div>
+		</section>
+
+		<section class="funnel">
+			<header class="section-header">
+				<h2 class="section-title">The Door Off the Street</h2>
+				<p class="section-aside">From the title screen to a homescreen icon. Each step counts how many sessions reached it, including those who returned already standalone.</p>
+			</header>
+			<div class="funnel-list" id="funnel-list">
+				<p class="empty-state">Loading&hellip;</p>
+			</div>
+		</section>
+
+		<section class="settings-dist">
+			<header class="section-header">
+				<h2 class="section-title">How They Have It Set</h2>
+				<p class="section-aside">The defaults readers run with — typing speed, font size, music. If a non-default value dominates, the default is wrong.</p>
+			</header>
+			<div class="settings-grid">
+				<div class="setting-panel">
+					<h3 class="device-panel-h">Speed</h3>
+					<div class="chart-frame device-frame"><canvas id="chart-set-speed"></canvas></div>
+				</div>
+				<div class="setting-panel">
+					<h3 class="device-panel-h">Size</h3>
+					<div class="chart-frame device-frame"><canvas id="chart-set-size"></canvas></div>
+				</div>
+				<div class="setting-panel">
+					<h3 class="device-panel-h">Music</h3>
+					<div class="chart-frame device-frame"><canvas id="chart-set-music"></canvas></div>
+				</div>
+			</div>
+		</section>
+
+		<section class="dropout-state">
+			<header class="section-header">
+				<h2 class="section-title">What They Were Doing When They Left</h2>
+				<p class="section-aside">Reading, waiting, choosing, finished. Tells you whether the drop-off is impatience, indecision, or a clean exit.</p>
+			</header>
+			<div class="chart-frame">
+				<canvas id="chart-dropout-state"></canvas>
+			</div>
+		</section>
+
+		<section class="time-of-day">
+			<header class="section-header">
+				<h2 class="section-title">When They Read</h2>
+				<p class="section-aside">Sessions started by hour of the reader's local clock. The dark hours, if there are any, are the ones that found them late.</p>
+			</header>
+			<div class="chart-frame">
+				<canvas id="chart-time-of-day"></canvas>
+			</div>
+		</section>
+
 		<footer class="colophon">
 			<p class="updated">Updated <span id="last-refresh">—</span></p>
 			<p class="motto">The page is the page; the reader is what we cannot see directly. We watch the shape of their attention, and listen.</p>
@@ -138,6 +210,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-	<script src="admin.js?v=20260506f"></script>
+	<script src="admin.js?v=20260506g"></script>
 </body>
 </html>

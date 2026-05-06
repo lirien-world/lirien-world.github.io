@@ -85,6 +85,19 @@ function saveSettings() {
 	try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 	catch (e) { /* private mode etc. */ }
 }
+
+// Snapshot of the current reading-preference settings, flat-shaped for
+// easy SQL aggregation. Used as `extras` on session_start so each
+// session is tagged with the speed/size/music defaults the reader
+// landed in. Calibration signal: if the distribution drifts off the
+// median preset, the median is wrong.
+function currentSettingsForAnalytics() {
+	return {
+		settings_speed: settings.speedMultiplier,
+		settings_size:  settings.fontSize,
+		settings_music: !!settings.musicOn
+	};
+}
 // ----- platform detection + install splash -----
 //
 // PWA-style "Add to Home Screen" gives users a chrome-less full-screen
@@ -165,6 +178,14 @@ function maybeShowInstallSplash() {
 
 	$installSplashContinue.addEventListener("click", dismissInstallSplash);
 	$installSplashAndroidPrompt.addEventListener("click", triggerNativeInstall);
+
+	if (window.lirienAnalytics) {
+		const variant =
+			isIOSDevice() ? "ios" :
+			isAndroidDevice() ? (deferredInstallPrompt ? "android-native" : "android-text") :
+			"generic";
+		window.lirienAnalytics.track("splash_seen", { variant });
+	}
 }
 
 // Reveals the right per-platform section and hides the others. Called
@@ -192,13 +213,24 @@ async function triggerNativeInstall() {
 	if (!deferredInstallPrompt) return;
 	const ev = deferredInstallPrompt;
 	deferredInstallPrompt = null;
+	if (window.lirienAnalytics) window.lirienAnalytics.track("install_prompted", {});
+	let outcome = "dismissed";
 	try {
 		ev.prompt();
-		await ev.userChoice;
+		const choice = await ev.userChoice;
+		outcome = (choice && choice.outcome) || "dismissed";
 	} catch (e) { /* user dismissed or browser declined */ }
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track(
+			outcome === "accepted" ? "install_accepted" : "install_rejected",
+			{ outcome }
+		);
+	}
 	// Hide the splash whether they accepted or dismissed — they've
 	// engaged with the install path either way, no need to re-prompt.
-	dismissInstallSplash();
+	// Don't go through dismissInstallSplash(): that path fires the
+	// "splash_dismissed" event, which would double-count this user.
+	$installSplash.hidden = true;
 }
 
 function dismissInstallSplash() {
@@ -206,7 +238,11 @@ function dismissInstallSplash() {
 	// don't persist a "dismissed forever" flag, since the install
 	// path materially improves the mobile experience (no leaks, no
 	// double-tap-zoom, no nav chrome) and we want to keep nudging.
+	const wasOpen = !$installSplash.hidden;
 	$installSplash.hidden = true;
+	if (wasOpen && window.lirienAnalytics) {
+		window.lirienAnalytics.track("splash_dismissed", {});
+	}
 }
 
 function applyFontSize() {
@@ -263,7 +299,10 @@ let allBgNames = [];
 		applyAutosaveVisuals(saved);
 		isExploring = false;
 		state = "idle";
-		if (window.lirienAnalytics) window.lirienAnalytics.startSession("continue");
+		if (window.lirienAnalytics) {
+			window.lirienAnalytics.startSession("continue", currentSettingsForAnalytics());
+			window.lirienAnalytics.setLastState("idle");
+		}
 		dismissTitleScreen();
 		advance();
 	});
@@ -289,9 +328,19 @@ let allBgNames = [];
 		// Reveal the Continue button if there's an autosave to resume.
 		// .has-continue on the parent flips Enter from gold to dark ink
 		// so the gold Continue stays the primary call to action.
-		if (loadAutosave()) {
+		const hasContinueOption = !!loadAutosave();
+		if (hasContinueOption) {
 			$titleContinue.hidden = false;
 			$titleHint.classList.add("has-continue");
+		}
+		// Title-seen marks the top of the install / read funnel: how many
+		// people landed on the page and reached an interactive title vs
+		// how many ever start a session. has_continue distinguishes
+		// "first-time visitor" from "returning reader" at the same gate.
+		if (window.lirienAnalytics) {
+			window.lirienAnalytics.track("title_seen", {
+				has_continue: hasContinueOption
+			});
 		}
 	} catch (e) {
 		showFatalError(e);
@@ -350,6 +399,7 @@ function advance() {
 		return;
 	}
 	state = "ended";
+	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("ended");
 	hideContinueHint();
 	if (!isExploring) saveAutosave();
 }
@@ -374,6 +424,7 @@ function tokenizeChunk(text) {
 
 function typeChunk(text) {
 	state = "typing";
+	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("typing");
 	hideContinueHint();
 	$choices.classList.remove("visible");
 	$choices.innerHTML = "";
@@ -497,6 +548,7 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 function onChunkRevealed() {
 	currentReveal = null;
 	state = "waiting";
+	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("waiting");
 	// Decide between the continue-chevron and the offline-block hint
 	// based on whether the next chunk would need an uncached asset.
 	presentWaitingHintForCurrentState();
@@ -562,6 +614,7 @@ function scrollChunkToTop(paragraph) {
 
 function showChoices(choices) {
 	state = "choosing";
+	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("choosing");
 	hideContinueHint();
 	$choices.innerHTML = "";
 	$choices.classList.add("visible");
@@ -1048,7 +1101,10 @@ function bindAdvanceInput() {
 		if (state === "title") {
 			if ($titleHint.classList.contains("has-continue")) return;
 			state = "idle";
-			if (window.lirienAnalytics) window.lirienAnalytics.startSession("fresh");
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.startSession("fresh", currentSettingsForAnalytics());
+				window.lirienAnalytics.setLastState("idle");
+			}
 			dismissTitleScreen();
 			advance();
 			return;
@@ -1094,27 +1150,34 @@ function bindSettingsMenu() {
 	for (const btn of $settingsPanel.querySelectorAll(".speed-btn")) {
 		btn.addEventListener("click", () => {
 			const m = parseFloat(btn.dataset.multiplier);
-			if (Number.isFinite(m)) {
+			if (Number.isFinite(m) && m !== settings.speedMultiplier) {
 				settings.speedMultiplier = m;
 				saveSettings();
 				refreshSelectionMarkers();
+				if (window.lirienAnalytics) {
+					window.lirienAnalytics.track("setting_changed", { key: "speed", value: m });
+				}
 			}
 		});
 	}
 	for (const btn of $settingsPanel.querySelectorAll(".size-btn")) {
 		btn.addEventListener("click", () => {
 			const px = parseInt(btn.dataset.size, 10);
-			if (Number.isFinite(px)) {
+			if (Number.isFinite(px) && px !== settings.fontSize) {
 				settings.fontSize = px;
 				saveSettings();
 				applyFontSize();
 				refreshSelectionMarkers();
+				if (window.lirienAnalytics) {
+					window.lirienAnalytics.track("setting_changed", { key: "size", value: px });
+				}
 			}
 		});
 	}
 	for (const btn of $settingsPanel.querySelectorAll(".music-btn")) {
 		btn.addEventListener("click", () => {
 			const want = btn.dataset.music === "on";
+			if (want === settings.musicOn) return;
 			settings.musicOn = want;
 			saveSettings();
 			refreshSelectionMarkers();
@@ -1125,6 +1188,9 @@ function bindSettingsMenu() {
 				const n = pendingMusicName;
 				currentMusicName = "";
 				swapMusic(n);
+			}
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.track("setting_changed", { key: "music", value: want });
 			}
 		});
 	}

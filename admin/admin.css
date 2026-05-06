@@ -284,6 +284,112 @@ section {
 	padding: 36px 16px;
 }
 
+/* ---- Device / settings sub-panels ----------------------------- */
+
+.device-grid,
+.settings-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 22px;
+}
+@media (min-width: 760px) {
+	.device-grid,
+	.settings-grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 24px;
+	}
+}
+
+.device-panel-h {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	letter-spacing: 0.26em;
+	text-transform: uppercase;
+	color: var(--mist);
+	font-weight: 400;
+	margin-bottom: 12px;
+}
+
+.device-frame {
+	height: 240px;
+}
+@media (max-width: 600px) {
+	.device-frame { height: 220px; }
+}
+
+/* ---- Install funnel rows -------------------------------------- */
+
+.funnel-list {
+	display: grid;
+	gap: 14px;
+}
+
+.funnel-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) auto;
+	align-items: center;
+	column-gap: 18px;
+	background: var(--ink-panel);
+	border: 1px solid var(--rule);
+	border-radius: 12px;
+	padding: 16px 22px;
+}
+
+.funnel-label {
+	font-family: var(--font-display);
+	font-style: italic;
+	font-size: 18px;
+	color: var(--cream);
+	font-weight: 300;
+}
+.funnel-label .funnel-sub {
+	display: block;
+	font-family: var(--font-mono);
+	font-style: normal;
+	font-size: 10px;
+	letter-spacing: 0.20em;
+	text-transform: uppercase;
+	color: var(--mist);
+	margin-top: 4px;
+}
+
+.funnel-track {
+	height: 12px;
+	background: var(--bar-bg);
+	border-radius: 2px;
+	overflow: hidden;
+}
+.funnel-fill {
+	display: block;
+	height: 100%;
+	background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 50%, var(--gold-deep) 100%);
+	border-radius: 2px;
+	transform-origin: left center;
+	animation: grow-x 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.funnel-num {
+	font-family: var(--font-mono);
+	font-size: 13px;
+	color: var(--gold);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+}
+.funnel-num .pct-num {
+	color: var(--cream);
+	margin-left: 8px;
+}
+
+@media (max-width: 600px) {
+	.funnel-row {
+		grid-template-columns: 1fr;
+		gap: 10px;
+		padding: 14px 18px;
+	}
+	.funnel-num { text-align: right; }
+}
+
 /* ---- Tables (ledger style) ------------------------------------ */
 
 .ledger {
@@ -422,8 +528,13 @@ section:nth-of-type(3) { animation-delay: 0.32s; }
 section:nth-of-type(4) { animation-delay: 0.39s; }
 section:nth-of-type(5) { animation-delay: 0.46s; }
 section:nth-of-type(6) { animation-delay: 0.53s; }
-section:nth-of-type(7) { animation-delay: 0.60s; }
-.colophon { animation: drift-in 0.85s ease-out 0.7s both; }
+section:nth-of-type(7)  { animation-delay: 0.60s; }
+section:nth-of-type(8)  { animation-delay: 0.66s; }
+section:nth-of-type(9)  { animation-delay: 0.71s; }
+section:nth-of-type(10) { animation-delay: 0.76s; }
+section:nth-of-type(11) { animation-delay: 0.81s; }
+section:nth-of-type(12) { animation-delay: 0.86s; }
+.colophon { animation: drift-in 0.85s ease-out 0.92s both; }
 
 /* Bar fills grow horizontally on first paint */
 @keyframes grow-x {

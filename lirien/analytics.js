@@ -54,6 +54,15 @@
 	// dance needed — the request is same-origin from the reader app.
 	const ENDPOINT = "https://lirien.world/api/track";
 
+	// Dev-mode escape: ?show-splash forces the install splash to render
+	// for testing on platforms where it wouldn't normally appear. We
+	// don't want those test sessions polluting production telemetry,
+	// so the whole module short-circuits when that flag is present.
+	const DEV_MODE = (() => {
+		try { return new URLSearchParams(window.location.search).has("show-splash"); }
+		catch (e) { return false; }
+	})();
+
 	// Ephemeral session UUID. Regenerated every page load. Never persisted.
 	const SESSION_ID = (typeof crypto !== "undefined" && crypto.randomUUID)
 		? crypto.randomUUID()
@@ -117,24 +126,72 @@
 	}
 
 	function track(eventName, props) {
+		if (DEV_MODE) return;
 		try { emit(eventName, props); } catch (e) { /* swallow */ }
 	}
 
-	function startSession(source) {
+	// Coarse client-side environment detection. Returns categorical
+	// strings only — no full UA, no fingerprint. The combination of
+	// {platform, browser, standalone, device_class} answers questions
+	// like "is the install path being used by iOS Safari readers" at
+	// aggregate level without identifying anyone individually.
+	function detectEnvironment() {
+		const ua = navigator.userAgent || "";
+
+		let platform = "other";
+		if (/iPhone|iPad|iPod/.test(ua)) platform = "ios";
+		else if (/Android/.test(ua))     platform = "android";
+		else if (/Mac OS X/.test(ua))    platform = "macos";
+		else if (/Windows/.test(ua))     platform = "windows";
+		else if (/Linux/.test(ua))       platform = "linux";
+
+		// Order matters: Edge contains Chrome string, Chrome contains Safari, etc.
+		let browser = "other";
+		if (/Edg(iOS)?\//.test(ua))             browser = "edge";
+		else if (/SamsungBrowser/.test(ua))     browser = "samsung";
+		else if (/(FxiOS|Firefox)\//.test(ua))  browser = "firefox";
+		else if (/(CriOS|Chrome)\//.test(ua))   browser = "chrome";
+		else if (/Safari\//.test(ua))           browser = "safari";
+
+		// Phone/tablet/desktop heuristic. coarse-pointer => touch device.
+		// Tablets are touch devices with a wide viewport (768+ in most
+		// orientation-friendly conventions).
+		let device_class = "desktop";
+		const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+		if (coarse) {
+			device_class = (window.innerWidth >= 768) ? "tablet" : "phone";
+		}
+
+		// Timezone offset in minutes, signed JS-style (negative = ahead of UTC).
+		// Coarse temporal signal for "when do readers read?" queries; ~24
+		// distinct values worldwide, low identification risk.
+		const tz_offset_min = (new Date()).getTimezoneOffset();
+
+		return { platform, browser, device_class, tz_offset_min };
+	}
+
+	function startSession(source, extras) {
 		if (sessionStarted) return;
 		sessionStarted = true;
 		const isStandalone =
 			(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
 			window.navigator.standalone === true;
-		track("session_start", {
+		track("session_start", Object.assign({
 			source: source || "fresh",          // "fresh" | "continue"
 			standalone: !!isStandalone,
 			viewport_w: window.innerWidth,
 			viewport_h: window.innerHeight,
 			online: navigator.onLine !== false,
 			lang: navigator.language || null
-		});
+		}, detectEnvironment(), extras || {}));
 	}
+
+	// Caller (main.js) keeps us informed of the game's current `state`
+	// so session_end can record what the reader was doing when they
+	// left ("typing" / "waiting" / "choosing" / "ended") rather than
+	// just where they stopped. Drop-off interpretation hinges on this.
+	let lastKnownState = null;
+	function setLastState(s) { lastKnownState = s || null; }
 
 	function endSession() {
 		// Only emit session_end if we actually started one. Pageviews where
@@ -147,7 +204,8 @@
 			chunks_reached: chunksReached,
 			choices_made: choicesMade,
 			last_chunk: lastChunkBg,
-			last_chapter: lastChunkChapter
+			last_chapter: lastChunkChapter,
+			last_state: lastKnownState
 		});
 	}
 
@@ -217,6 +275,7 @@
 	window.lirienAnalytics = {
 		track,
 		startSession,
+		setLastState,
 		recordAssetLoad,
 		recordAssetError,
 		getSessionId: () => SESSION_ID

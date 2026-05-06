@@ -48,8 +48,8 @@
 (function () {
 	"use strict";
 
-	const BACKEND = "console";       // "console" | "beacon" (phase 2)
-	const ENDPOINT = null;           // set in phase 2
+	const BACKEND = "beacon";        // "console" | "beacon"
+	const ENDPOINT = "https://lirien-analytics.lirien.workers.dev/track";
 
 	// Ephemeral session UUID. Regenerated every page load. Never persisted.
 	const SESSION_ID = (typeof crypto !== "undefined" && crypto.randomUUID)

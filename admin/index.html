@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex, nofollow">
+	<title>The Reading Room — Lirien</title>
+	<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+	<link rel="icon" href="/favicon.ico" sizes="any">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+	<link rel="stylesheet" href="admin.css?v=20260506f">
+</head>
+<body>
+	<div class="vignette" aria-hidden="true"></div>
+
+	<main>
+
+		<header class="title">
+			<p class="eyebrow">Chronicles of Lirien</p>
+			<h1>The Reading <em>Room</em></h1>
+			<p class="subtitle">What the readers are doing, quietly observed.</p>
+		</header>
+
+		<section class="callouts" aria-labelledby="callouts-h">
+			<header class="section-header">
+				<h2 id="callouts-h" class="section-title">The People in the Room</h2>
+				<p class="section-aside">A quiet count of who has come, and how long they have stayed.</p>
+			</header>
+			<div class="callouts-grid">
+				<article class="callout">
+					<span class="value" data-value="sessions_today">—</span>
+					<span class="label">Today</span>
+				</article>
+				<article class="callout">
+					<span class="value" data-value="sessions_week">—</span>
+					<span class="label">This week</span>
+				</article>
+				<article class="callout">
+					<span class="value" data-value="sessions_total">—</span>
+					<span class="label">All&nbsp;time</span>
+				</article>
+				<article class="callout">
+					<span class="value" data-value="avg_minutes" data-suffix=" min">—</span>
+					<span class="label">Avg session</span>
+				</article>
+				<article class="callout">
+					<span class="value" data-value="continue_rate_pct" data-suffix="%">—</span>
+					<span class="label">Returning</span>
+				</article>
+			</div>
+		</section>
+
+		<section class="dropoff">
+			<header class="section-header">
+				<h2 class="section-title">Where Readers Stop</h2>
+				<p class="section-aside">In narrative order, the count of sessions that reached each scene. Where the line drops is where the prose stops carrying them.</p>
+			</header>
+			<div class="chart-frame chart-frame-tall">
+				<canvas id="chart-dropoff"></canvas>
+			</div>
+		</section>
+
+		<section class="choices">
+			<header class="section-header">
+				<h2 class="section-title">Which Way They Turned</h2>
+				<p class="section-aside">For each branch, the share of readers who chose each option. A near-even split is a real choice; an imbalance is a tell.</p>
+			</header>
+			<div id="choices-list" class="choices-list">
+				<p class="empty-state">Loading&hellip;</p>
+			</div>
+		</section>
+
+		<section class="cache">
+			<header class="section-header">
+				<h2 class="section-title">How Quickly the Pages Loaded</h2>
+				<p class="section-aside">Cache hit rate per day, the last seven. High is good — the reader is not waiting on the network for art they have already seen.</p>
+			</header>
+			<div class="chart-frame">
+				<canvas id="chart-cache"></canvas>
+			</div>
+		</section>
+
+		<section class="slow">
+			<header class="section-header">
+				<h2 class="section-title">What Took Too Long</h2>
+				<p class="section-aside">Slowest cold-loaded assets, by mean fetch time. These are the pages that arrived breathing hard.</p>
+			</header>
+			<table class="ledger" id="slow-table">
+				<thead>
+					<tr><th>Asset</th><th class="num">Avg ms</th><th class="num">Worst</th><th class="num">N</th></tr>
+				</thead>
+				<tbody>
+					<tr><td colspan="4" class="empty">Loading&hellip;</td></tr>
+				</tbody>
+			</table>
+		</section>
+
+		<section class="errors">
+			<header class="section-header">
+				<h2 class="section-title">The Things That Broke</h2>
+				<p class="section-aside">Errors and offline blocks. Empty is the goal.</p>
+			</header>
+			<table class="ledger" id="errors-table">
+				<thead>
+					<tr><th>Event</th><th>Where</th><th>Detail</th><th class="num">N</th></tr>
+				</thead>
+				<tbody>
+					<tr><td colspan="4" class="empty">Loading&hellip;</td></tr>
+				</tbody>
+			</table>
+		</section>
+
+		<section class="pace">
+			<header class="section-header">
+				<h2 class="section-title">Time at Each Scene</h2>
+				<p class="section-aside">Average milliseconds before readers tap forward. The deepest gold marks the scenes that asked to be reread.</p>
+			</header>
+			<div class="chart-frame chart-frame-tall">
+				<canvas id="chart-pace"></canvas>
+			</div>
+		</section>
+
+		<footer class="colophon">
+			<p class="updated">Updated <span id="last-refresh">—</span></p>
+			<p class="motto">The page is the page; the reader is what we cannot see directly. We watch the shape of their attention, and listen.</p>
+		</footer>
+
+	</main>
+
+	<div id="auth-error" class="overlay" hidden>
+		<div class="overlay-card">
+			<p class="eyebrow">Restricted</p>
+			<h2>This room is <em>private</em>.</h2>
+			<p class="overlay-body">You'll need a key. Add it to the URL after the path — or ask the author for one if you don't have it.</p>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+	<script src="admin.js?v=20260506f"></script>
+</body>
+</html>

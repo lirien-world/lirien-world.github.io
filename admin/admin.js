@@ -76,11 +76,12 @@
 		const to   = (range === "custom") ? params.get("to")   : (dates && dates.to);
 		return {
 			range, from, to,
-			device:     params.get("device")     || "",
-			browser:    params.get("browser")    || "",
-			standalone: params.get("standalone") || "",
-			conn_type:  params.get("conn_type")  || "",
-			severity:   params.get("severity")   || "",
+			device:        params.get("device")        || "",
+			browser:       params.get("browser")       || "",
+			standalone:    params.get("standalone")    || "",
+			conn_type:     params.get("conn_type")     || "",
+			severity:      params.get("severity")      || "",
+			dropoff_mode:  params.get("dropoff_mode")  || "",
 		};
 	}
 
@@ -98,7 +99,8 @@
 		if (FILTERS.browser)    u.set("browser", FILTERS.browser);
 		if (FILTERS.standalone) u.set("standalone", FILTERS.standalone);
 		if (FILTERS.conn_type)  u.set("conn_type", FILTERS.conn_type);
-		if (FILTERS.severity)   u.set("severity", FILTERS.severity);
+		if (FILTERS.severity)     u.set("severity", FILTERS.severity);
+		if (FILTERS.dropoff_mode) u.set("dropoff_mode", FILTERS.dropoff_mode);
 		return u.toString();
 	}
 
@@ -421,6 +423,21 @@
 				</tr>
 			`;
 		}).join("");
+	}
+
+	function initDropoffModePills() {
+		const pills = document.querySelectorAll("#dropoff-mode-pills .filter-chip");
+		const current = FILTERS.dropoff_mode || "";
+		for (const pill of pills) {
+			const mode = pill.dataset.dropoffMode || "";
+			pill.setAttribute("aria-pressed", mode === current ? "true" : "false");
+			pill.addEventListener("click", () => {
+				// Anchor to the dropoff section so the page scrolls
+				// back here after the URL-driven reload — same pattern
+				// as the severity pills.
+				setUrlAndReload({ dropoff_mode: mode || null }, "sec-dropoff");
+			});
+		}
 	}
 
 	function initSeverityPills() {
@@ -1052,5 +1069,6 @@
 
 	initFilterBar();
 	initSeverityPills();
+	initDropoffModePills();
 	loadAll();
 })();

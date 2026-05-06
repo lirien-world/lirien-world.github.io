@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506h";
+const ASSET_VERSION = "20260506i";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -558,6 +558,16 @@ function onChunkRevealed() {
 			chapter: currentChapterName || null
 		});
 	}
+	// Soft-wait observer: if this is the first chunk after the latest
+	// bg swap, capture the moment so img.onload can compute lag_ms.
+	if (bgLateState.name === currentBgName && bgLateState.chunkRevealedAt === 0) {
+		bgLateState.chunkRevealedAt = performance.now();
+		if (bgLateState.bgLoadedAt > 0) {
+			// bg landed before the chunk finished revealing — no wait.
+			bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
+		}
+		// Else: img.onload will fire later and emit bg_late with the lag.
+	}
 	// Drop the per-character spans now that the chunk is fully revealed.
 	// They were needed for the per-char fade animation; once everyone's
 	// at opacity 1 the spans are pure DOM weight — Safari keeps each
@@ -823,19 +833,46 @@ function showChapterTitle(spec) {
 
 let currentBgName = "";
 
+// Soft-wait observer. Tracks whether the bg image arrived before or
+// after the chunk that triggered its swap finished revealing. If the
+// bg lands AFTER the chunk text is on screen, the reader is briefly
+// looking at finished prose with the wrong (or no) atmosphere — the
+// gap between those two moments is bg_late.lag_ms. When bg arrives
+// first there's no perceptible wait and we emit nothing.
+let bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
+
 function swapBackground(name) {
 	// Skip identical reassignment — defensive against rapid advance()
 	// calls re-applying the same bg, which would otherwise trigger a
 	// fresh decode+composite even though the visible bitmap is unchanged.
 	if (name === currentBgName) return;
 	const url = bgUrl(name);
+	// Reset the soft-wait observer for this bg. Old observation drops
+	// silently if the prior bg never finished loading or never had a
+	// chunk reveal — both are edge-case shapes (rapid skip, end-of-story).
+	bgLateState = { name, chunkRevealedAt: 0, bgLoadedAt: 0 };
 	// Hook load/error before assigning src so analytics can report
 	// cache-hit ratio and detect failed fetches (offline, 404, etc).
 	$bgImage.onload = () => {
 		if (window.lirienAnalytics) window.lirienAnalytics.recordAssetLoad("bg", name, url);
+		if (bgLateState.name === name) {
+			bgLateState.bgLoadedAt = performance.now();
+			if (bgLateState.chunkRevealedAt > 0) {
+				const lagMs = Math.round(bgLateState.bgLoadedAt - bgLateState.chunkRevealedAt);
+				if (lagMs > 0 && window.lirienAnalytics) {
+					window.lirienAnalytics.track("bg_late", { bg: name, lag_ms: lagMs });
+				}
+				bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
+			}
+		}
 	};
 	$bgImage.onerror = () => {
 		if (window.lirienAnalytics) window.lirienAnalytics.recordAssetError("bg", name, "img onerror");
+		// Failed load — drop the observation so a future swap doesn't
+		// inherit a stale chunkRevealedAt.
+		if (bgLateState.name === name) {
+			bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
+		}
 	};
 	// Setting img.src instead of CSS background-image gives Safari a
 	// clean release-then-decode lifecycle. Browsers also share the

@@ -167,7 +167,27 @@
 		// distinct values worldwide, low identification risk.
 		const tz_offset_min = (new Date()).getTimezoneOffset();
 
-		return { platform, browser, device_class, tz_offset_min };
+		// Network connection info — Chromium and Firefox expose this;
+		// Safari does not. Effective type is the four-bucket coarse
+		// classification ("4g","3g","2g","slow-2g"), downlink is in
+		// Mbps, rtt in ms (rounded to 25ms increments by the API for
+		// privacy). saveData reflects the user's data-saver preference.
+		// We capture once at session start; we don't subscribe to
+		// changes (a reader switching from cellular to wifi mid-session
+		// is rare and the change handler would need additional plumbing).
+		let conn_effective_type = null, conn_downlink = null, conn_rtt = null, conn_save_data = null;
+		const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+		if (c) {
+			conn_effective_type = typeof c.effectiveType === "string" ? c.effectiveType : null;
+			conn_downlink       = typeof c.downlink       === "number" ? c.downlink       : null;
+			conn_rtt            = typeof c.rtt            === "number" ? c.rtt            : null;
+			conn_save_data      = typeof c.saveData       === "boolean" ? c.saveData      : null;
+		}
+
+		return {
+			platform, browser, device_class, tz_offset_min,
+			conn_effective_type, conn_downlink, conn_rtt, conn_save_data,
+		};
 	}
 
 	function startSession(source, extras) {
@@ -224,27 +244,43 @@
 
 	// Helper: after an asset URL has been requested (img.src = url or
 	// new Image().src = url or audio.src = url), call this to look up the
-	// PerformanceResourceTiming entry and emit asset_load with cache-hit
-	// info. Resource entries appear asynchronously so we defer.
+	// PerformanceResourceTiming entry and emit asset_load with the cache
+	// state and raw byte counts.
 	//
-	// Cache-hit is determined by transferSize === 0, which means the
-	// response was served from the browser's HTTP cache rather than the
-	// network. (Cross-origin resources without Timing-Allow-Origin will
-	// report transferSize as 0 too — we serve same-origin, so that
-	// confound doesn't apply here.)
+	// Cache state taxonomy:
+	//   "hit"         — transferSize === 0; served entirely from disk cache
+	//   "revalidated" — transferSize > 0 but encodedBodySize === 0; 304
+	//                    response, only headers re-fetched, body from cache
+	//   "fresh"       — both > 0; new bytes pulled from the network
+	//
+	// We pass an absolute URL to getEntriesByName — the Performance API
+	// stores entries keyed by absolute URL, so passing a relative URL
+	// (e.g. "atmosphere/foo.png?v=...") returns nothing and the lookup
+	// silently fails. That was the bug behind the "0% cache hit" chart.
 	function recordAssetLoad(type, name, url) {
 		setTimeout(() => {
 			try {
-				const entries = performance.getEntriesByName(url);
+				const abs = (typeof window !== "undefined" && window.URL)
+					? new URL(url, window.location.href).href
+					: url;
+				const entries = performance.getEntriesByName(abs);
 				if (!entries || entries.length === 0) {
-					track("asset_load", { type, name, ms: null, cache_hit: null, note: "no_entry" });
+					track("asset_load", { type, name, ms: null, cache_hit: null, cache_state: null, note: "no_entry" });
 					return;
 				}
 				const entry = entries[entries.length - 1];
+				const transfer_size      = typeof entry.transferSize      === "number" ? entry.transferSize      : null;
+				const encoded_body_size  = typeof entry.encodedBodySize   === "number" ? entry.encodedBodySize   : null;
+				let cache_state = "fresh";
+				if (transfer_size === 0)                              cache_state = "hit";
+				else if (encoded_body_size === 0 && transfer_size > 0) cache_state = "revalidated";
 				track("asset_load", {
 					type, name,
 					ms: Math.round(entry.duration),
-					cache_hit: entry.transferSize === 0
+					cache_hit: cache_state !== "fresh",  // back-compat boolean
+					cache_state,                          // hit | revalidated | fresh
+					transfer_size,
+					encoded_body_size,
 				});
 			} catch (e) { /* swallow */ }
 		}, 80);

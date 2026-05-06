@@ -10,7 +10,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
-	<link rel="stylesheet" href="admin.css?v=20260506g">
+	<link rel="stylesheet" href="admin.css?v=20260506i">
 </head>
 <body>
 	<div class="vignette" aria-hidden="true"></div>
@@ -22,6 +22,67 @@
 			<h1>The Reading <em>Room</em></h1>
 			<p class="subtitle">What the readers are doing, quietly observed.</p>
 		</header>
+
+		<div class="filter-bar" id="filter-bar">
+			<div class="filter-row filter-row-dates">
+				<span class="filter-row-label">When</span>
+				<div class="filter-chips" id="date-presets">
+					<button class="filter-chip" data-preset="today">Today</button>
+					<button class="filter-chip" data-preset="week">This week</button>
+					<button class="filter-chip" data-preset="month">This month</button>
+					<button class="filter-chip" data-preset="30d">Last 30 days</button>
+					<button class="filter-chip" data-preset="all">All time</button>
+					<button class="filter-chip" data-preset="custom">Custom</button>
+				</div>
+				<div class="filter-custom-dates" id="filter-custom-dates" hidden>
+					<label>from <input type="date" id="filter-from"></label>
+					<label>to <input type="date" id="filter-to"></label>
+				</div>
+			</div>
+			<div class="filter-row filter-row-dims">
+				<span class="filter-row-label">Showing</span>
+				<label class="filter-select">
+					<span>Device</span>
+					<select id="filter-device">
+						<option value="">All</option>
+						<option value="phone">Phone</option>
+						<option value="tablet">Tablet</option>
+						<option value="desktop">Desktop</option>
+					</select>
+				</label>
+				<label class="filter-select">
+					<span>Browser</span>
+					<select id="filter-browser">
+						<option value="">All</option>
+						<option value="safari">Safari</option>
+						<option value="chrome">Chrome</option>
+						<option value="firefox">Firefox</option>
+						<option value="edge">Edge</option>
+						<option value="samsung">Samsung</option>
+						<option value="other">Other</option>
+					</select>
+				</label>
+				<label class="filter-select">
+					<span>Mode</span>
+					<select id="filter-standalone">
+						<option value="">All</option>
+						<option value="true">Standalone</option>
+						<option value="false">In browser</option>
+					</select>
+				</label>
+				<label class="filter-select">
+					<span>Network</span>
+					<select id="filter-conn">
+						<option value="">All</option>
+						<option value="4g">4G</option>
+						<option value="3g">3G</option>
+						<option value="2g">2G</option>
+						<option value="slow-2g">Slow 2G</option>
+					</select>
+				</label>
+				<a class="filter-reset" href="#" id="filter-reset">Reset</a>
+			</div>
+		</div>
 
 		<section class="callouts" aria-labelledby="callouts-h">
 			<header class="section-header">
@@ -194,6 +255,60 @@
 			</div>
 		</section>
 
+		<section class="latency">
+			<header class="section-header">
+				<h2 class="section-title">How Long the Pages Took</h2>
+				<p class="section-aside">Asset-load latency at the median, the slow-tail, and the worst tail, broken down by what kind of asset and how cached. Low and tightly grouped is the goal.</p>
+			</header>
+			<table class="ledger" id="latency-table">
+				<thead>
+					<tr>
+						<th>Asset</th>
+						<th>State</th>
+						<th class="num">p50</th>
+						<th class="num">p90</th>
+						<th class="num">p99</th>
+						<th class="num">Max</th>
+						<th class="num">N</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td colspan="7" class="empty">Loading&hellip;</td></tr>
+				</tbody>
+			</table>
+		</section>
+
+		<section class="soft-wait">
+			<header class="section-header">
+				<h2 class="section-title">Where the Reader Waited</h2>
+				<p class="section-aside">When the next scene's image arrived after the prose had already finished revealing, the reader was looking at finished words and the wrong atmosphere. These buckets count those moments by how long the gap was.</p>
+			</header>
+			<div class="chart-frame">
+				<canvas id="chart-soft-wait"></canvas>
+			</div>
+		</section>
+
+		<section class="connection">
+			<header class="section-header">
+				<h2 class="section-title">The Wire They Came Through</h2>
+				<p class="section-aside">Effective network class for each session that started, with average downlink and round-trip when reported. Safari does not expose this; those sessions show as <em>unknown</em>.</p>
+			</header>
+			<table class="ledger" id="connection-table">
+				<thead>
+					<tr>
+						<th>Network</th>
+						<th class="num">Downlink (Mbps)</th>
+						<th class="num">RTT (ms)</th>
+						<th class="num">Save data</th>
+						<th class="num">Sessions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td colspan="5" class="empty">Loading&hellip;</td></tr>
+				</tbody>
+			</table>
+		</section>
+
 		<footer class="colophon">
 			<p class="updated">Updated <span id="last-refresh">—</span></p>
 			<p class="motto">The page is the page; the reader is what we cannot see directly. We watch the shape of their attention, and listen.</p>
@@ -210,6 +325,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-	<script src="admin.js?v=20260506g"></script>
+	<script src="admin.js?v=20260506i"></script>
 </body>
 </html>

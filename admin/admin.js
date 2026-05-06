@@ -21,6 +21,85 @@
 
 	const ENDPOINT = "/api/data";
 
+	// ---- filters --------------------------------------------------
+	//
+	// URL state model:
+	//   ?range=today|week|month|30d|all|custom  (default: 30d)
+	//   ?from=YYYY-MM-DD&to=YYYY-MM-DD          (only when range=custom)
+	//   ?device=phone|tablet|desktop
+	//   ?browser=safari|chrome|firefox|edge|samsung|other
+	//   ?standalone=true|false
+	//   ?conn_type=4g|3g|2g|slow-2g
+	//
+	// The Worker only understands from/to + the dimensional filters —
+	// it doesn't know about presets. The dashboard converts range→dates
+	// before sending. Custom range exposes the from/to inputs directly.
+
+	function pad(n) { return n < 10 ? "0" + n : "" + n; }
+	function isoDate(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+
+	// Returns YYYY-MM-DD strings (local). Worker treats these as
+	// inclusive bounds: from→00:00:00, to→23:59:59.999.
+	function rangeToDates(range) {
+		const today = new Date();
+		const t = (offsetDays) => {
+			const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - offsetDays);
+			return isoDate(d);
+		};
+		switch (range) {
+			case "today":
+				return { from: isoDate(today), to: isoDate(today) };
+			case "week": {
+				// Calendar week: most recent Monday → today
+				const day = today.getDay() || 7; // Sunday=0 → 7
+				return { from: t(day - 1), to: isoDate(today) };
+			}
+			case "month": {
+				const first = new Date(today.getFullYear(), today.getMonth(), 1);
+				return { from: isoDate(first), to: isoDate(today) };
+			}
+			case "30d":
+				return { from: t(30), to: isoDate(today) };
+			case "all":
+				return { from: "2020-01-01", to: isoDate(today) };
+			case "custom":
+				return null; // caller reads ?from, ?to directly
+			default:
+				return { from: t(30), to: isoDate(today) };
+		}
+	}
+
+	function readFiltersFromUrl() {
+		const range = params.get("range") || "30d";
+		const dates = rangeToDates(range);
+		const from = (range === "custom") ? params.get("from") : (dates && dates.from);
+		const to   = (range === "custom") ? params.get("to")   : (dates && dates.to);
+		return {
+			range, from, to,
+			device:     params.get("device")     || "",
+			browser:    params.get("browser")    || "",
+			standalone: params.get("standalone") || "",
+			conn_type:  params.get("conn_type")  || "",
+		};
+	}
+
+	const FILTERS = readFiltersFromUrl();
+
+	// Build a URL-encoded query string for the Worker call. Drops
+	// empty values so the Worker sees only what's actually filtering.
+	function workerQueryString(name) {
+		const u = new URLSearchParams();
+		u.set("key", KEY);
+		u.set("q", name);
+		if (FILTERS.from) u.set("from", FILTERS.from);
+		if (FILTERS.to)   u.set("to",   FILTERS.to);
+		if (FILTERS.device)     u.set("device", FILTERS.device);
+		if (FILTERS.browser)    u.set("browser", FILTERS.browser);
+		if (FILTERS.standalone) u.set("standalone", FILTERS.standalone);
+		if (FILTERS.conn_type)  u.set("conn_type", FILTERS.conn_type);
+		return u.toString();
+	}
+
 	// Lirien palette — referenced from JS for Chart.js theming so the
 	// CSS variables and the chart colors stay in lockstep.
 	const PAL = {
@@ -59,7 +138,7 @@
 	// ---- helpers --------------------------------------------------
 
 	async function fetchQuery(name) {
-		const u = `${ENDPOINT}?key=${encodeURIComponent(KEY)}&q=${encodeURIComponent(name)}`;
+		const u = `${ENDPOINT}?${workerQueryString(name)}`;
 		let res;
 		try { res = await fetch(u, { cache: "no-store" }); }
 		catch (e) { throw new Error("Network error reaching the room."); }
@@ -670,6 +749,202 @@
 		});
 	}
 
+	// ---- how long the pages took (latency percentiles) -----------
+
+	async function loadLatencyPercentiles() {
+		const rows = await fetchQuery("asset_load_percentiles");
+		const tbody = document.querySelector("#latency-table tbody");
+		if (!rows.length) {
+			tbody.innerHTML =
+				`<tr><td colspan="7" class="empty">No timing data yet.</td></tr>`;
+			return;
+		}
+		// Sort: type asc, then state by canonical order
+		const stateOrder = { hit: 0, revalidated: 1, fresh: 2, unknown: 3 };
+		rows.sort((a, b) => {
+			const t = String(a.type || "").localeCompare(String(b.type || ""));
+			if (t !== 0) return t;
+			return (stateOrder[a.cache_state] || 9) - (stateOrder[b.cache_state] || 9);
+		});
+		tbody.innerHTML = rows.map((r) => {
+			const state = String(r.cache_state || "unknown");
+			return `
+				<tr>
+					<td>${escapeHtml(r.type || "—")}</td>
+					<td><span class="row-meta" style="margin-left:0">${escapeHtml(state)}</span></td>
+					<td class="num">${fmt(r.p50)}</td>
+					<td class="num">${fmt(r.p90)}</td>
+					<td class="num">${fmt(r.p99)}</td>
+					<td class="num">${fmt(r.max_ms)}</td>
+					<td class="num">${fmt(r.samples)}</td>
+				</tr>
+			`;
+		}).join("");
+	}
+
+	// ---- where the reader waited (soft wait distribution) -------
+
+	async function loadSoftWait() {
+		const rows = await fetchQuery("bg_late_distribution");
+		const order = ["under_100ms", "100_250ms", "250_500ms", "500_1000ms", "1_2s", "2_5s", "over_5s"];
+		const labelMap = {
+			under_100ms:  "<100ms",
+			"100_250ms":  "100-250ms",
+			"250_500ms":  "250-500ms",
+			"500_1000ms": "500ms-1s",
+			"1_2s":       "1-2s",
+			"2_5s":       "2-5s",
+			over_5s:      ">5s",
+		};
+		const counts = {};
+		rows.forEach((r) => { counts[r.bucket] = r.n || 0; });
+		const labels = order.map((k) => labelMap[k]);
+		const data   = order.map((k) => counts[k] || 0);
+
+		new Chart(document.getElementById("chart-soft-wait"), {
+			type: "bar",
+			data: {
+				labels,
+				datasets: [{
+					data,
+					backgroundColor: (c) => goldGradient(c.chart.ctx, c.chart.chartArea),
+					hoverBackgroundColor: PAL.goldBright,
+					borderWidth: 0,
+					barThickness: "flex",
+					maxBarThickness: 32,
+				}],
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 700, easing: "easeOutQuart" },
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							title: (items) => "Wait: " + items[0].label,
+							label: (item) => `${item.formattedValue} chunk${item.raw === 1 ? "" : "s"} arrived this late`,
+						},
+					},
+				},
+				scales: {
+					x: {
+						ticks: { color: PAL.mist, font: { size: 11 }, autoSkip: false, maxRotation: 0 },
+						grid: { display: false },
+						border: { color: PAL.ruleStrong },
+					},
+					y: {
+						beginAtZero: true,
+						ticks: { color: PAL.mist, precision: 0 },
+						grid: { color: PAL.rule, drawBorder: false },
+						border: { display: false },
+					},
+				},
+			},
+		});
+	}
+
+	// ---- the wire they came through (connection breakdown) ------
+
+	async function loadConnectionBreakdown() {
+		const rows = await fetchQuery("connection_breakdown");
+		const tbody = document.querySelector("#connection-table tbody");
+		if (!rows.length) {
+			tbody.innerHTML =
+				`<tr><td colspan="5" class="empty">No connection data yet.</td></tr>`;
+			return;
+		}
+		// Sort: known buckets first by canonical order, unknown last
+		const order = { "4g": 0, "3g": 1, "2g": 2, "slow-2g": 3, unknown: 9 };
+		rows.sort((a, b) => (order[a.conn_type] || 9) - (order[b.conn_type] || 9));
+		tbody.innerHTML = rows.map((r) => {
+			return `
+				<tr>
+					<td>${escapeHtml(String(r.conn_type || "unknown"))}</td>
+					<td class="num">${r.avg_downlink_mbps != null ? fmt(r.avg_downlink_mbps) : "—"}</td>
+					<td class="num">${r.avg_rtt_ms != null ? fmt(r.avg_rtt_ms) : "—"}</td>
+					<td class="num">${fmt(r.save_data_n || 0)}</td>
+					<td class="num">${fmt(r.sessions)}</td>
+				</tr>
+			`;
+		}).join("");
+	}
+
+	// ---- filter UI wiring ----------------------------------------
+
+	function setUrlAndReload(updates) {
+		const u = new URL(window.location.href);
+		for (const [k, v] of Object.entries(updates)) {
+			if (v === null || v === "") u.searchParams.delete(k);
+			else u.searchParams.set(k, v);
+		}
+		// Preserve key when reloading.
+		window.location.href = u.toString();
+	}
+
+	function initFilterBar() {
+		const presets = document.getElementById("date-presets");
+		const customInputs = document.getElementById("filter-custom-dates");
+		const fromInput = document.getElementById("filter-from");
+		const toInput   = document.getElementById("filter-to");
+
+		// Highlight the active preset chip.
+		for (const chip of presets.querySelectorAll(".filter-chip")) {
+			chip.setAttribute("aria-pressed", chip.dataset.preset === FILTERS.range ? "true" : "false");
+			chip.addEventListener("click", () => {
+				const preset = chip.dataset.preset;
+				if (preset === "custom") {
+					// Default custom inputs to current filter window if not yet set.
+					if (!params.get("from") && FILTERS.from) fromInput.value = FILTERS.from;
+					if (!params.get("to")   && FILTERS.to)   toInput.value   = FILTERS.to;
+					setUrlAndReload({
+						range: "custom",
+						from:  fromInput.value || FILTERS.from || null,
+						to:    toInput.value   || FILTERS.to   || null,
+					});
+				} else {
+					setUrlAndReload({ range: preset, from: null, to: null });
+				}
+			});
+		}
+
+		if (FILTERS.range === "custom") {
+			customInputs.hidden = false;
+			fromInput.value = FILTERS.from || "";
+			toInput.value   = FILTERS.to   || "";
+		}
+		const onCustomChange = () => {
+			if (fromInput.value && toInput.value) {
+				setUrlAndReload({ range: "custom", from: fromInput.value, to: toInput.value });
+			}
+		};
+		fromInput.addEventListener("change", onCustomChange);
+		toInput.addEventListener("change", onCustomChange);
+
+		// Dimensional filters — selects that update URL on change.
+		const wireSelect = (id, paramName) => {
+			const el = document.getElementById(id);
+			el.value = FILTERS[paramName === "conn_type" ? "conn_type" : paramName];
+			el.addEventListener("change", () => {
+				setUrlAndReload({ [paramName]: el.value || null });
+			});
+		};
+		wireSelect("filter-device",     "device");
+		wireSelect("filter-browser",    "browser");
+		wireSelect("filter-standalone", "standalone");
+		wireSelect("filter-conn",       "conn_type");
+
+		// Reset → strip every filter param from the URL.
+		document.getElementById("filter-reset").addEventListener("click", (ev) => {
+			ev.preventDefault();
+			const u = new URL(window.location.href);
+			for (const k of ["range","from","to","device","browser","standalone","conn_type"]) {
+				u.searchParams.delete(k);
+			}
+			window.location.href = u.toString();
+		});
+	}
+
 	// ---- last refresh stamp ---------------------------------------
 
 	function setRefresh() {
@@ -700,8 +975,12 @@
 			loadSettingsDistribution(),
 			loadDropoutState(),
 			loadTimeOfDay(),
+			loadLatencyPercentiles(),
+			loadSoftWait(),
+			loadConnectionBreakdown(),
 		]);
 	}
 
+	initFilterBar();
 	loadAll();
 })();

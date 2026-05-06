@@ -10,7 +10,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
-	<link rel="stylesheet" href="admin.css?v=20260506o">
+	<link rel="stylesheet" href="admin.css?v=20260506p">
 </head>
 <body>
 	<div class="vignette" aria-hidden="true"></div>
@@ -27,12 +27,12 @@
 			<div class="filter-row filter-row-dates">
 				<span class="filter-row-label">When</span>
 				<div class="filter-chips" id="date-presets">
-					<button class="filter-chip" data-preset="today">Today</button>
-					<button class="filter-chip" data-preset="week">This week</button>
-					<button class="filter-chip" data-preset="month">This month</button>
-					<button class="filter-chip" data-preset="30d">Last 30 days</button>
-					<button class="filter-chip" data-preset="all">All time</button>
-					<button class="filter-chip" data-preset="custom">Custom</button>
+					<button type="button" class="filter-chip" data-preset="today">Today</button>
+					<button type="button" class="filter-chip" data-preset="week">This week</button>
+					<button type="button" class="filter-chip" data-preset="month">This month</button>
+					<button type="button" class="filter-chip" data-preset="30d">Last 30 days</button>
+					<button type="button" class="filter-chip" data-preset="all">All time</button>
+					<button type="button" class="filter-chip" data-preset="custom">Custom</button>
 				</div>
 				<div class="filter-custom-dates" id="filter-custom-dates" hidden>
 					<label>from <input type="date" id="filter-from"></label>
@@ -184,9 +184,9 @@
 				<p class="section-aside">Errors are the things that genuinely broke. Warnings are friction the reader either didn't notice or recovered from — offline-blocks, ink state-restoration warnings on a stale cache. Toggle the severity to drill in.</p>
 			</header>
 			<div class="severity-pills" role="tablist" aria-label="Severity filter">
-				<button class="filter-chip" data-severity="">All</button>
-				<button class="filter-chip" data-severity="error">Errors only</button>
-				<button class="filter-chip" data-severity="warning">Warnings only</button>
+				<button type="button" class="filter-chip" data-severity="">All</button>
+				<button type="button" class="filter-chip" data-severity="error">Errors only</button>
+				<button type="button" class="filter-chip" data-severity="warning">Warnings only</button>
 			</div>
 			<table class="ledger" id="errors-table">
 				<thead>
@@ -350,6 +350,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-	<script src="admin.js?v=20260506o"></script>
+	<script src="admin.js?v=20260506p"></script>
 </body>
 </html>

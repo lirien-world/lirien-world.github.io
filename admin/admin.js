@@ -430,7 +430,11 @@
 			const sev = pill.dataset.severity || "";
 			pill.setAttribute("aria-pressed", sev === current ? "true" : "false");
 			pill.addEventListener("click", () => {
-				setUrlAndReload({ severity: sev || null });
+				// Anchor to the errors section so the browser scrolls
+				// back here after reload instead of trying to maintain
+				// the Y coordinate (which lands somewhere unrelated
+				// when the table size changes).
+				setUrlAndReload({ severity: sev || null }, "sec-errors");
 			});
 		}
 	}
@@ -928,12 +932,21 @@
 
 	// ---- filter UI wiring ----------------------------------------
 
-	function setUrlAndReload(updates) {
+	function setUrlAndReload(updates, anchor) {
 		const u = new URL(window.location.href);
 		for (const [k, v] of Object.entries(updates)) {
 			if (v === null || v === "") u.searchParams.delete(k);
 			else u.searchParams.set(k, v);
 		}
+		// Optional anchor — for filter changes that happen mid-page
+		// (severity pills inside the errors section), pass the
+		// section's id so the browser scrolls back to the section
+		// after reload. Without this, browser scroll-restoration
+		// tries to keep the Y coordinate stable, but the content
+		// height changes when the filter changes (table grows or
+		// shrinks), so Y=4500 ends up in a completely different
+		// section.
+		if (anchor) u.hash = anchor;
 		// Preserve key when reloading.
 		window.location.href = u.toString();
 	}

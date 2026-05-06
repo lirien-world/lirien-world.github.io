@@ -1067,19 +1067,19 @@
 		]);
 		// Charts render asynchronously and grow the page height as they
 		// land, which throws off the browser's initial scroll-to-fragment.
-		// After every section has finished its first paint, re-resolve
-		// the URL fragment and scroll the matching section into view.
-		// Two rAFs to make sure layout has settled (Chart.js does its
-		// final layout pass on rAF).
+		// Re-resolve the URL fragment after everything has rendered AND
+		// once more 600ms later to catch any late layout work (Chart.js
+		// completes a 700ms animation on each chart that doesn't change
+		// canvas size, but it nudges other browser layout work around).
 		const hash = window.location.hash;
 		if (hash && hash.length > 1) {
 			const targetId = hash.slice(1);
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					const el = document.getElementById(targetId);
-					if (el) el.scrollIntoView({ block: "start", behavior: "auto" });
-				});
-			});
+			const reanchor = () => {
+				const el = document.getElementById(targetId);
+				if (el) el.scrollIntoView({ block: "start", behavior: "auto" });
+			};
+			requestAnimationFrame(() => requestAnimationFrame(reanchor));
+			setTimeout(reanchor, 600);
 		}
 	}
 

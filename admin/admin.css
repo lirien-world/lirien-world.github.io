@@ -46,10 +46,15 @@ html, body {
 html { scroll-behavior: smooth; }
 
 /* Account for the sticky filter bar so anchor jumps don't park
-   the section heading underneath it. Tuned a little smaller than
-   the actual sticky height so the eye lands on the title rather
-   than at its edge. */
-[id^="sec-"] { scroll-margin-top: 24px; }
+   the section heading underneath it. The filter bar grows to
+   include up to three rows (date presets, dimensional filters,
+   jump nav) so we leave enough margin to clear the tallest case.
+   On narrow viewports the bar isn't sticky, so the margin can be
+   tighter. */
+[id^="sec-"] { scroll-margin-top: 220px; }
+@media (max-width: 760px) {
+	[id^="sec-"] { scroll-margin-top: 24px; }
+}
 
 /* Atmospheric background — radial vignette warming the center, fading
    to deep ink at edges. Echoes the reader-app title screen. */

@@ -10,7 +10,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
-	<link rel="stylesheet" href="admin.css?v=20260506j">
+	<link rel="stylesheet" href="admin.css?v=20260506k">
 </head>
 <body>
 	<div class="vignette" aria-hidden="true"></div>
@@ -82,9 +82,29 @@
 				</label>
 				<a class="filter-reset" href="#" id="filter-reset">Reset</a>
 			</div>
+			<nav class="filter-row filter-row-jump" aria-label="Jump to section">
+				<span class="filter-row-label">Jump</span>
+				<div class="jump-links">
+					<a href="#sec-people">People</a>
+					<a href="#sec-dropoff">Drop-off</a>
+					<a href="#sec-choices">Choices</a>
+					<a href="#sec-cache">Ready</a>
+					<a href="#sec-slow">Slow</a>
+					<a href="#sec-errors">Errors</a>
+					<a href="#sec-pace">Pace</a>
+					<a href="#sec-devices">Devices</a>
+					<a href="#sec-funnel">Funnel</a>
+					<a href="#sec-settings">Settings</a>
+					<a href="#sec-dropout">Exit</a>
+					<a href="#sec-time">When</a>
+					<a href="#sec-latency">Latency</a>
+					<a href="#sec-wait">Wait</a>
+					<a href="#sec-network">Network</a>
+				</div>
+			</nav>
 		</div>
 
-		<section class="callouts" aria-labelledby="callouts-h">
+		<section class="callouts" id="sec-people" aria-labelledby="callouts-h">
 			<header class="section-header">
 				<h2 id="callouts-h" class="section-title">The People in the Room</h2>
 				<p class="section-aside">A quiet count of who has come, and how long they have stayed.</p>
@@ -113,7 +133,7 @@
 			</div>
 		</section>
 
-		<section class="dropoff">
+		<section class="dropoff" id="sec-dropoff">
 			<header class="section-header">
 				<h2 class="section-title">Where Readers Stop</h2>
 				<p class="section-aside">In narrative order, the count of sessions that reached each scene. Where the line drops is where the prose stops carrying them.</p>
@@ -123,7 +143,7 @@
 			</div>
 		</section>
 
-		<section class="choices">
+		<section class="choices" id="sec-choices">
 			<header class="section-header">
 				<h2 class="section-title">Which Way They Turned</h2>
 				<p class="section-aside">For each branch, the share of readers who chose each option. A near-even split is a real choice; an imbalance is a tell.</p>
@@ -133,17 +153,17 @@
 			</div>
 		</section>
 
-		<section class="cache">
+		<section class="cache" id="sec-cache">
 			<header class="section-header">
-				<h2 class="section-title">How Quickly the Pages Loaded</h2>
-				<p class="section-aside">Cache hit rate per day, the last seven. High is good — the reader is not waiting on the network for art they have already seen.</p>
+				<h2 class="section-title">How Often the Page Was Ready</h2>
+				<p class="section-aside">Share of resource loads — images, music, story — that finished in under 100ms, the threshold below which a load feels instant. A resource is "ready" whether it was on disk from a previous play or the prefetcher got to it in time. High is good. Anything counted here is a reader who didn't have to wait.</p>
 			</header>
 			<div class="chart-frame">
 				<canvas id="chart-cache"></canvas>
 			</div>
 		</section>
 
-		<section class="slow">
+		<section class="slow" id="sec-slow">
 			<header class="section-header">
 				<h2 class="section-title">What Took Too Long</h2>
 				<p class="section-aside">Slowest cold-loaded assets, by mean fetch time. These are the pages that arrived breathing hard.</p>
@@ -158,7 +178,7 @@
 			</table>
 		</section>
 
-		<section class="errors">
+		<section class="errors" id="sec-errors">
 			<header class="section-header">
 				<h2 class="section-title">The Things That Broke</h2>
 				<p class="section-aside">Errors and offline blocks. Empty is the goal.</p>
@@ -173,7 +193,7 @@
 			</table>
 		</section>
 
-		<section class="pace">
+		<section class="pace" id="sec-pace">
 			<header class="section-header">
 				<h2 class="section-title">Time at Each Scene</h2>
 				<p class="section-aside">Average milliseconds before readers tap forward. The deepest gold marks the scenes that asked to be reread.</p>
@@ -183,7 +203,7 @@
 			</div>
 		</section>
 
-		<section class="devices">
+		<section class="devices" id="sec-devices">
 			<header class="section-header">
 				<h2 class="section-title">How They Came In</h2>
 				<p class="section-aside">Platform, browser, and form factor for every session that started. The shape of the readership, in plain count.</p>
@@ -204,7 +224,7 @@
 			</div>
 		</section>
 
-		<section class="funnel">
+		<section class="funnel" id="sec-funnel">
 			<header class="section-header">
 				<h2 class="section-title">The Door Off the Street</h2>
 				<p class="section-aside">From the title screen to a homescreen icon. Each step counts how many sessions reached it, including those who returned already standalone.</p>
@@ -214,7 +234,7 @@
 			</div>
 		</section>
 
-		<section class="settings-dist">
+		<section class="settings-dist" id="sec-settings">
 			<header class="section-header">
 				<h2 class="section-title">How They Have It Set</h2>
 				<p class="section-aside">The defaults readers run with — typing speed, font size, music. If a non-default value dominates, the default is wrong.</p>
@@ -235,7 +255,7 @@
 			</div>
 		</section>
 
-		<section class="dropout-state">
+		<section class="dropout-state" id="sec-dropout">
 			<header class="section-header">
 				<h2 class="section-title">What They Were Doing When They Left</h2>
 				<p class="section-aside">Reading, waiting, choosing, finished. Tells you whether the drop-off is impatience, indecision, or a clean exit.</p>
@@ -245,7 +265,7 @@
 			</div>
 		</section>
 
-		<section class="time-of-day">
+		<section class="time-of-day" id="sec-time">
 			<header class="section-header">
 				<h2 class="section-title">When They Read</h2>
 				<p class="section-aside">Sessions started by hour of the reader's local clock. The dark hours, if there are any, are the ones that found them late.</p>
@@ -255,7 +275,7 @@
 			</div>
 		</section>
 
-		<section class="latency">
+		<section class="latency" id="sec-latency">
 			<header class="section-header">
 				<h2 class="section-title">How Long the Pages Took</h2>
 				<p class="section-aside">Asset-load latency at the median, the slow-tail, and the worst tail, broken down by what kind of asset and how cached. Low and tightly grouped is the goal.</p>
@@ -278,7 +298,7 @@
 			</table>
 		</section>
 
-		<section class="soft-wait">
+		<section class="soft-wait" id="sec-wait">
 			<header class="section-header">
 				<h2 class="section-title">Where the Reader Waited</h2>
 				<p class="section-aside">When a scene's image arrives after its prose has finished revealing, the reader is looking at the previous scene's atmosphere — or, on the first scene of a session, at empty dark. Buckets count those moments by lag. Anything under 100ms is imperceptible; anything past 500ms is felt.</p>
@@ -288,7 +308,7 @@
 			</div>
 		</section>
 
-		<section class="connection">
+		<section class="connection" id="sec-network">
 			<header class="section-header">
 				<h2 class="section-title">The Wire They Came Through</h2>
 				<p class="section-aside">Effective network class — the four-bucket speed estimate (4G / 3G / 2G / slow 2G) with average downlink and round-trip when reported. This is observed speed, not physical link: a slow wifi shows as <em>3g</em>. Safari does not expose the API; those sessions show as <em>unknown</em>. The physical wifi-vs-cellular distinction is hidden by most browsers as anti-fingerprinting and so isn't shown here.</p>
@@ -325,6 +345,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-	<script src="admin.js?v=20260506j"></script>
+	<script src="admin.js?v=20260506k"></script>
 </body>
 </html>

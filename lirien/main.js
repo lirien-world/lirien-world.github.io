@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506j";
+const ASSET_VERSION = "20260506k";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -834,12 +834,35 @@ function showChapterTitle(spec) {
 let currentBgName = "";
 
 // Soft-wait observer. Tracks whether the bg image arrived before or
-// after the chunk that triggered its swap finished revealing. If the
-// bg lands AFTER the chunk text is on screen, the reader is briefly
-// looking at finished prose with the wrong (or no) atmosphere — the
-// gap between those two moments is bg_late.lag_ms. When bg arrives
-// first there's no perceptible wait and we emit nothing.
+// after the chunk that triggered its swap finished revealing. We
+// only emit bg_late if the load was actually a fresh network fetch
+// (transferSize > 0 AND encodedBodySize > 0). Pre-cached images
+// whose onload was briefly delayed by browser scheduling/decoding
+// never put the reader in a "waiting on the wire" position; they
+// just landed a few hundred ms later than ideal. Counting those
+// would inflate the chart with non-events. We want only the cases
+// where the system asked for an asset right now and it wasn't
+// already available locally.
 let bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
+
+function bgLoadWasFresh(url) {
+	try {
+		const abs = (typeof window !== "undefined" && window.URL)
+			? new URL(url, window.location.href).href
+			: url;
+		const entries = performance.getEntriesByName(abs);
+		if (!entries || entries.length === 0) return false;
+		const e = entries[entries.length - 1];
+		// Both byte counts > 0 means real network bytes flowed for
+		// the body. transferSize=0 is cache hit, encodedBodySize=0
+		// with transferSize>0 is a 304 revalidation — neither is a
+		// "user waited for the asset" moment.
+		return typeof e.transferSize === "number" && e.transferSize > 0
+		    && typeof e.encodedBodySize === "number" && e.encodedBodySize > 0;
+	} catch (_) {
+		return false;
+	}
+}
 
 function swapBackground(name) {
 	// Skip identical reassignment — defensive against rapid advance()
@@ -858,9 +881,20 @@ function swapBackground(name) {
 		if (bgLateState.name === name) {
 			bgLateState.bgLoadedAt = performance.now();
 			if (bgLateState.chunkRevealedAt > 0) {
-				const lagMs = Math.round(bgLateState.bgLoadedAt - bgLateState.chunkRevealedAt);
-				if (lagMs > 0 && window.lirienAnalytics) {
-					window.lirienAnalytics.track("bg_late", { bg: name, lag_ms: lagMs });
+				// Only emit bg_late when the asset was actually fetched
+				// fresh from the network. A pre-cached image whose
+				// onload fires a few hundred ms after chunk_revealed
+				// (browser scheduling, decoding, etc.) didn't put the
+				// reader in a "waiting for the wire" position; the
+				// previous scene's atmosphere or the prior frame was
+				// already on screen when text finished, and the new
+				// bg landed almost immediately after. We only count
+				// genuine network waits.
+				if (bgLoadWasFresh(url)) {
+					const lagMs = Math.round(bgLateState.bgLoadedAt - bgLateState.chunkRevealedAt);
+					if (lagMs > 0 && window.lirienAnalytics) {
+						window.lirienAnalytics.track("bg_late", { bg: name, lag_ms: lagMs });
+					}
 				}
 				bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
 			}

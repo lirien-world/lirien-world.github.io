@@ -260,20 +260,36 @@
 	});
 
 	// Helper: after an asset URL has been requested (img.src = url or
-	// new Image().src = url or audio.src = url), call this to look up the
-	// PerformanceResourceTiming entry and emit asset_load with the cache
-	// state and raw byte counts.
+	// new Image().src = url or audio.src = url), call this to look up
+	// the PerformanceResourceTiming entry and emit asset_load.
 	//
-	// Cache state taxonomy:
-	//   "hit"         — transferSize === 0; served entirely from disk cache
-	//   "revalidated" — transferSize > 0 but encodedBodySize === 0; 304
-	//                    response, only headers re-fetched, body from cache
-	//   "fresh"       — both > 0; new bytes pulled from the network
+	// Two layers of state are reported, answering different questions:
 	//
-	// We pass an absolute URL to getEntriesByName — the Performance API
-	// stores entries keyed by absolute URL, so passing a relative URL
-	// (e.g. "atmosphere/foo.png?v=...") returns nothing and the lookup
-	// silently fails. That was the bug behind the "0% cache hit" chart.
+	//   cache_hit (boolean) — was the resource ready when needed?
+	//     True if the load completed in under 100ms — the threshold
+	//     below which a load feels instant. This is the user-facing
+	//     "did I have to wait" signal. A resource on disk from a
+	//     previous play is ready. A prefetch that finished just in
+	//     time is also ready. A cold network fetch usually isn't.
+	//     A "cached" response that took 7s to deliver because the
+	//     tab was backgrounded ALSO isn't ready, even though the
+	//     bytes never crossed the network — the user still waited.
+	//
+	//   cache_state ("hit" | "revalidated" | "fresh") — what did the
+	//     browser actually do?
+	//     "hit"         — transferSize === 0; entirely from disk cache
+	//     "revalidated" — transferSize > 0, encodedBodySize === 0; 304
+	//                     response, headers only, body from cache
+	//     "fresh"       — both > 0; real bytes pulled from the network
+	//     Used for diagnosing the network/cache layer independently of
+	//     the user-experience question.
+	//
+	// We resolve to absolute URL before getEntriesByName because the
+	// Performance API stores entries keyed by absolute URL. Passing a
+	// relative URL silently returned nothing; that was the bug behind
+	// the original "0% cache hit" chart.
+	const READY_THRESHOLD_MS = 100;
+
 	function recordAssetLoad(type, name, url) {
 		setTimeout(() => {
 			try {
@@ -286,16 +302,17 @@
 					return;
 				}
 				const entry = entries[entries.length - 1];
-				const transfer_size      = typeof entry.transferSize      === "number" ? entry.transferSize      : null;
-				const encoded_body_size  = typeof entry.encodedBodySize   === "number" ? entry.encodedBodySize   : null;
+				const transfer_size     = typeof entry.transferSize    === "number" ? entry.transferSize    : null;
+				const encoded_body_size = typeof entry.encodedBodySize === "number" ? entry.encodedBodySize : null;
+				const ms = Math.round(entry.duration);
 				let cache_state = "fresh";
 				if (transfer_size === 0)                              cache_state = "hit";
 				else if (encoded_body_size === 0 && transfer_size > 0) cache_state = "revalidated";
+				const cache_hit = ms !== null && ms < READY_THRESHOLD_MS;
 				track("asset_load", {
-					type, name,
-					ms: Math.round(entry.duration),
-					cache_hit: cache_state !== "fresh",  // back-compat boolean
-					cache_state,                          // hit | revalidated | fresh
+					type, name, ms,
+					cache_hit,        // user perspective: was it ready?
+					cache_state,      // browser perspective: hit | revalidated | fresh
 					transfer_size,
 					encoded_body_size,
 				});

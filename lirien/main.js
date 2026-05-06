@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506c";
+const ASSET_VERSION = "20260506d";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -263,6 +263,7 @@ let allBgNames = [];
 		applyAutosaveVisuals(saved);
 		isExploring = false;
 		state = "idle";
+		if (window.lirienAnalytics) window.lirienAnalytics.startSession("continue");
 		dismissTitleScreen();
 		advance();
 	});
@@ -499,6 +500,12 @@ function onChunkRevealed() {
 	// Decide between the continue-chevron and the offline-block hint
 	// based on whether the next chunk would need an uncached asset.
 	presentWaitingHintForCurrentState();
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track("chunk_revealed", {
+			bg: currentBgName || null,
+			chapter: currentChapterName || null
+		});
+	}
 	// Drop the per-character spans now that the chunk is fully revealed.
 	// They were needed for the per-char fade animation; once everyone's
 	// at opacity 1 the spans are pure DOM weight — Safari keeps each
@@ -570,6 +577,16 @@ function showChoices(choices) {
 
 function pickChoice(index) {
 	if (state !== "choosing") return;
+	if (window.lirienAnalytics) {
+		// Capture the count BEFORE choosing — currentChoices is gone after.
+		const total = (story && story.currentChoices) ? story.currentChoices.length : null;
+		window.lirienAnalytics.track("choice_taken", {
+			bg: currentBgName || null,
+			chapter: currentChapterName || null,
+			choice_index: index,
+			choices_total: total
+		});
+	}
 	story.ChooseChoiceIndex(index);
 	$choices.classList.remove("visible");
 	$choices.innerHTML = "";
@@ -599,6 +616,12 @@ function hideContinueHint() {
 }
 
 function showOfflineBlock() {
+	if (!offlineBlocked && window.lirienAnalytics) {
+		window.lirienAnalytics.track("offline_block", {
+			bg: currentBgName || null,
+			chapter: currentChapterName || null
+		});
+	}
 	offlineBlocked = true;
 	$continueHint.classList.remove("visible");
 	$offlineHint.hidden = false;
@@ -753,6 +776,14 @@ function swapBackground(name) {
 	// fresh decode+composite even though the visible bitmap is unchanged.
 	if (name === currentBgName) return;
 	const url = bgUrl(name);
+	// Hook load/error before assigning src so analytics can report
+	// cache-hit ratio and detect failed fetches (offline, 404, etc).
+	$bgImage.onload = () => {
+		if (window.lirienAnalytics) window.lirienAnalytics.recordAssetLoad("bg", name, url);
+	};
+	$bgImage.onerror = () => {
+		if (window.lirienAnalytics) window.lirienAnalytics.recordAssetError("bg", name, "img onerror");
+	};
 	// Setting img.src instead of CSS background-image gives Safari a
 	// clean release-then-decode lifecycle. Browsers also share the
 	// decoded bitmap between this img and any prior `new Image()`
@@ -926,8 +957,15 @@ function applyMusicTrackChange(name) {
 
 	incoming.el.src = url;
 	const playPromise = incoming.el.play();
-	if (playPromise && playPromise.catch) {
-		playPromise.catch(() => { /* autoplay blocked or decode error */ });
+	if (playPromise) {
+		playPromise.then(() => {
+			if (window.lirienAnalytics) window.lirienAnalytics.recordAssetLoad("music", name, url);
+		}).catch((err) => {
+			// Autoplay blocked is normal pre-gesture; only count true errors
+			if (window.lirienAnalytics && err && err.name !== "NotAllowedError") {
+				window.lirienAnalytics.recordAssetError("music", name, err.message || err.name);
+			}
+		});
 	}
 	activePlayer = incoming;
 
@@ -1010,6 +1048,7 @@ function bindAdvanceInput() {
 		if (state === "title") {
 			if ($titleHint.classList.contains("has-continue")) return;
 			state = "idle";
+			if (window.lirienAnalytics) window.lirienAnalytics.startSession("fresh");
 			dismissTitleScreen();
 			advance();
 			return;
@@ -1241,6 +1280,13 @@ function updateReturnRecentVisibility() {
 function returnToMostRecent() {
 	const saved = loadAutosave();
 	if (!story || !saved) return;
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track("chapter_jump", {
+			from_bg: currentBgName || null,
+			to_chapter: saved.chapter || null,
+			source: "return"
+		});
+	}
 	try { story.state.LoadJson(saved.state); }
 	catch (e) { console.warn("[autosave] LoadJson failed:", e); return; }
 	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
@@ -1372,6 +1418,13 @@ function renderChapterList() {
 
 function jumpToChapter(bookmark) {
 	if (!story) return;
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track("chapter_jump", {
+			from_bg: currentBgName || null,
+			to_chapter: bookmark.name || null,
+			source: "menu"
+		});
+	}
 	try { story.state.LoadJson(bookmark.state); }
 	catch (e) { console.warn("[chapters] LoadJson failed:", e); return; }
 	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();

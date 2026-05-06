@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506f";
+const ASSET_VERSION = "20260506h";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 
@@ -1411,6 +1411,209 @@ function showConfirm({ title, message, confirmLabel = "Confirm", cancelLabel = "
 
 const CHAPTERS_KEY = "lirien.chapters";
 const AUTOSAVE_KEY = "lirien.save";
+
+// ----- save schema migration -----
+//
+// Schema 2 retroactively prefixes all Chapter 1 and Chapter 2 ink
+// knot names and bg keys with `chXX_` so they match the convention
+// Chapter 3 will be born with. Old saves persisted under schema 1
+// reference the un-prefixed names; without migration they would fail
+// to restore against the renamed story.json. Migration walks the
+// inkjs state JSON and rewrites every dotted-path segment that
+// matches the rename map, plus rewrites the outer `bg` field on
+// `lirien.save`. Runs once at module load, then writes the new
+// schema version key so we never re-migrate. Whole block can be
+// deleted once the reader population has been on schema 2 for a
+// while — kept here because deleting too early breaks anyone whose
+// laptop has been closed for a few weeks.
+const SAVE_SCHEMA_VERSION = 2;
+const SCHEMA_VERSION_KEY = "lirien.schemaVersion";
+
+const OLD_TO_NEW_NAME = Object.freeze({
+	// --- Ch1 knots ---
+	"notice_hands":               "ch01_notice_hands",
+	"notice_trees":               "ch01_notice_trees",
+	"the_displacement":           "ch01_the_displacement",
+	"let_move":                   "ch01_let_move",
+	"stop_first":                 "ch01_stop_first",
+	"the_charcoal":               "ch01_the_charcoal",
+	"door_handle":                "ch01_door_handle",
+	"door_spiral":                "ch01_door_spiral",
+	"the_recognition":            "ch01_the_recognition",
+	// --- Ch2 knots ---
+	"chapter_two_start":          "ch02_chapter_two_start",
+	"stump_reach":                "ch02_stump_reach",
+	"stump_study":                "ch02_stump_study",
+	"after_stump":                "ch02_after_stump",
+	"pool_say":                   "ch02_pool_say",
+	"pool_hold":                  "ch02_pool_hold",
+	"after_pool":                 "ch02_after_pool",
+	"bridge_reason":              "ch02_bridge_reason",
+	"bridge_step":                "ch02_bridge_step",
+	"after_bridge":               "ch02_after_bridge",
+	// --- Ch1 bgs ---
+	"aerin_awakens":              "ch01_aerin_awakens",
+	"waking":                     "ch01_waking",
+	"ash_hollow_panorama":        "ch01_ash_hollow_panorama",
+	"hands_inventory":            "ch01_hands_inventory",
+	"standing_in_hollow":         "ch01_standing_in_hollow",
+	"walking_north":              "ch01_walking_north",
+	"walking_examining_hands":    "ch01_walking_examining_hands",
+	"fallen_tree_touch":          "ch01_fallen_tree_touch",
+	"displacement":               "ch01_displacement",
+	"displacement_aftermath":     "ch01_displacement_aftermath",
+	"approaching_ring":           "ch01_approaching_ring",
+	"charcoal_and_parchment":     "ch01_charcoal_and_parchment",
+	"reading_parchment":          "ch01_reading_parchment",
+	"hollow_acknowledged":        "ch01_hollow_acknowledged",
+	"forehead_to_parchment":      "ch01_forehead_to_parchment",
+	"writing_six_words":          "ch01_writing_six_words",
+	"parchment_six_words":        "ch01_parchment_six_words",
+	"dream_corridor":             "ch01_dream_corridor",
+	"handle_door_recognition":    "ch01_handle_door_recognition",
+	"spiral_door_almost_touch":   "ch01_spiral_door_almost_touch",
+	"presence_chamber":           "ch01_presence_chamber",
+	"waking_after_dream":         "ch01_waking_after_dream",
+	"aerin_hand_with_glyph_v2":   "ch01_aerin_hand_with_glyph_v2",
+	"aerin_glyph_awakened":       "ch01_aerin_glyph_awakened",
+	"approach_to_solrien":        "ch01_approach_to_solrien",
+	"footprints_glimmer":         "ch01_footprints_glimmer",
+	// --- Ch2 bgs ---
+	"walk_in_approach":           "ch02_walk_in_approach",
+	"stump_spiral":                "ch02_stump_spiral",
+	"hills_reveal_gap":           "ch02_hills_reveal_gap",
+	"first_sight_solrien":        "ch02_first_sight_solrien",
+	"threshold_stones":           "ch02_threshold_stones",
+	"threshold_inside":           "ch02_threshold_inside",
+	"walking_solrien_streets":    "ch02_walking_solrien_streets",
+	"wall_of_glyphs":             "ch02_wall_of_glyphs",
+	"wall_recognition_close":     "ch02_wall_recognition_close",
+	"pool_arrival":               "ch02_pool_arrival",
+	"pool_name":                  "ch02_pool_name",
+	"pool_memory_flash":          "ch02_pool_memory_flash",
+	"elian_arrives_pool":         "ch02_elian_arrives_pool",
+	"walking_with_elian":         "ch02_walking_with_elian",
+	"bridge_threads":             "ch02_bridge_threads",
+	"bridge_words_too_heavy":     "ch02_bridge_words_too_heavy",
+	"plaza_of_motes":             "ch02_plaza_of_motes",
+	"map_room_alone":             "ch02_map_room_alone",
+	"map_room_thistle":           "ch02_map_room_thistle",
+	"archive_establishing":       "ch02_archive_establishing",
+	"archive_ink_explosion":      "ch02_archive_ink_explosion",
+	"archive_stops_reaching":     "ch02_archive_stops_reaching",
+	"archive_plinth_wisdom":      "ch02_archive_plinth_wisdom",
+	"archive_we_remember_you":    "ch02_archive_we_remember_you",
+	"leaving_archive":            "ch02_leaving_archive",
+	"aerin_room_solrien":         "ch02_aerin_room_solrien",
+	"aerin_sleeping_room":        "ch02_aerin_sleeping_room",
+});
+
+// Inkjs path strings are dotted: "knot.stitch.index" or "knot.0.5".
+// Indices are pure numerics, knot/stitch names are identifiers; we
+// only rewrite segments that exactly match a key in the map. Indices
+// can't collide with names because identifiers can't be all-numeric.
+function migrateRenameDottedPath(s) {
+	if (typeof s !== "string" || !s) return s;
+	const parts = s.split(".");
+	for (let i = 0; i < parts.length; i++) {
+		if (OLD_TO_NEW_NAME[parts[i]]) parts[i] = OLD_TO_NEW_NAME[parts[i]];
+	}
+	return parts.join(".");
+}
+
+// Walks an inkjs state object tree in place. Path-bearing string
+// fields are rewritten by name; visitCounts/turnIndices have their
+// keys rewritten because those are also dotted paths into the story.
+function migrateInkStateInPlace(node) {
+	if (!node) return;
+	if (Array.isArray(node)) {
+		for (const child of node) migrateInkStateInPlace(child);
+		return;
+	}
+	if (typeof node !== "object") return;
+	if (typeof node.cPath === "string")                node.cPath = migrateRenameDottedPath(node.cPath);
+	if (typeof node.previousContentObject === "string") node.previousContentObject = migrateRenameDottedPath(node.previousContentObject);
+	if (typeof node.targetPath === "string")            node.targetPath = migrateRenameDottedPath(node.targetPath);
+	if (node.visitCounts && typeof node.visitCounts === "object") {
+		const updated = {};
+		for (const k of Object.keys(node.visitCounts)) updated[migrateRenameDottedPath(k)] = node.visitCounts[k];
+		node.visitCounts = updated;
+	}
+	if (node.turnIndices && typeof node.turnIndices === "object") {
+		const updated = {};
+		for (const k of Object.keys(node.turnIndices)) updated[migrateRenameDottedPath(k)] = node.turnIndices[k];
+		node.turnIndices = updated;
+	}
+	for (const key of Object.keys(node)) {
+		const v = node[key];
+		if (v !== null && typeof v === "object") migrateInkStateInPlace(v);
+	}
+}
+
+function migrateInkStateJson(stateJson) {
+	if (typeof stateJson !== "string" || !stateJson) return stateJson;
+	let parsed;
+	try { parsed = JSON.parse(stateJson); } catch (e) { return stateJson; }
+	migrateInkStateInPlace(parsed);
+	return JSON.stringify(parsed);
+}
+
+// One-shot migration of all persisted state. Idempotent — guarded by
+// SCHEMA_VERSION_KEY so re-runs are no-ops. If anything throws, we
+// drop the saves rather than crash the title screen on next load.
+function maybeRunSchemaMigration() {
+	let stored = 1;
+	try {
+		const raw = localStorage.getItem(SCHEMA_VERSION_KEY);
+		if (raw) stored = parseInt(raw, 10) || 1;
+	} catch (e) { return; }
+	if (stored >= SAVE_SCHEMA_VERSION) return;
+
+	try {
+		// Autosave: outer wrapper has a `bg` field that needs renaming;
+		// inner `state` is the inkjs JSON.
+		const rawSave = localStorage.getItem(AUTOSAVE_KEY);
+		if (rawSave) {
+			const parsed = JSON.parse(rawSave);
+			if (typeof parsed === "string") {
+				// Legacy string-only save: just an inkjs JSON blob.
+				const wrapped = { state: migrateInkStateJson(parsed), bg: "", music: "", chapter: "", lastChunk: "" };
+				localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(wrapped));
+			} else if (parsed && typeof parsed === "object") {
+				if (parsed.bg && OLD_TO_NEW_NAME[parsed.bg]) parsed.bg = OLD_TO_NEW_NAME[parsed.bg];
+				if (parsed.state) parsed.state = migrateInkStateJson(parsed.state);
+				localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(parsed));
+			}
+		}
+
+		// Chapter bookmarks: array of { name, state }. `name` is display
+		// text from the chapter: tag and is unaffected; `state` is inkjs.
+		const rawBookmarks = localStorage.getItem(CHAPTERS_KEY);
+		if (rawBookmarks) {
+			const arr = JSON.parse(rawBookmarks);
+			if (Array.isArray(arr)) {
+				for (const b of arr) {
+					if (b && typeof b === "object" && b.state) {
+						b.state = migrateInkStateJson(b.state);
+					}
+				}
+				localStorage.setItem(CHAPTERS_KEY, JSON.stringify(arr));
+			}
+		}
+
+		localStorage.setItem(SCHEMA_VERSION_KEY, String(SAVE_SCHEMA_VERSION));
+	} catch (e) {
+		// Last resort: clear what we couldn't migrate so the title
+		// screen doesn't crash trying to restore broken state.
+		console.warn("save migration failed; clearing old saves", e);
+		try { localStorage.removeItem(AUTOSAVE_KEY); } catch (_) {}
+		try { localStorage.removeItem(CHAPTERS_KEY); } catch (_) {}
+		try { localStorage.setItem(SCHEMA_VERSION_KEY, String(SAVE_SCHEMA_VERSION)); } catch (_) {}
+	}
+}
+
+maybeRunSchemaMigration();
+
 let chapterBookmarks = loadChapterBookmarks();
 let currentChapterName = "";
 // Updated in advance() before each Continue(). recordChapterBookmark

@@ -82,6 +82,7 @@
 			conn_type:     params.get("conn_type")     || "",
 			severity:      params.get("severity")      || "",
 			dropoff_mode:  params.get("dropoff_mode")  || "",
+			slow_mode:     params.get("slow_mode")     || "",
 		};
 	}
 
@@ -101,6 +102,7 @@
 		if (FILTERS.conn_type)  u.set("conn_type", FILTERS.conn_type);
 		if (FILTERS.severity)     u.set("severity", FILTERS.severity);
 		if (FILTERS.dropoff_mode) u.set("dropoff_mode", FILTERS.dropoff_mode);
+		if (FILTERS.slow_mode)    u.set("slow_mode", FILTERS.slow_mode);
 		return u.toString();
 	}
 
@@ -389,12 +391,16 @@
 	// ---- slowest cold loads ---------------------------------------
 
 	async function loadSlow() {
-		const rows = await fetchQuery("slow_assets");
+		const queryName = FILTERS.slow_mode === "perceived" ? "slow_assets_perceived" : "slow_assets";
+		const rows = await fetchQuery(queryName);
 		const tbody = document.querySelector("#slow-table tbody");
 
 		if (!rows.length) {
+			const emptyMsg = FILTERS.slow_mode === "perceived"
+				? "No reader-felt waits in this window. The pacing held."
+				: "No cold loads recorded. The cache is doing its work.";
 			tbody.innerHTML =
-				`<tr><td colspan="4" class="empty">No cold loads recorded. The cache is doing its work.</td></tr>`;
+				`<tr><td colspan="4" class="empty">${emptyMsg}</td></tr>`;
 			return;
 		}
 
@@ -466,6 +472,18 @@
 				// the Y coordinate (which lands somewhere unrelated
 				// when the table size changes).
 				setUrlAndReload({ severity: sev || null }, "sec-errors");
+			});
+		}
+	}
+
+	function initSlowModePills() {
+		const pills = document.querySelectorAll("#slow-mode-pills .filter-chip");
+		const current = FILTERS.slow_mode || "";
+		for (const pill of pills) {
+			const mode = pill.dataset.slowMode || "";
+			pill.setAttribute("aria-pressed", mode === current ? "true" : "false");
+			pill.addEventListener("click", () => {
+				setUrlAndReload({ slow_mode: mode || null }, "sec-slow");
 			});
 		}
 	}
@@ -1100,5 +1118,6 @@
 	initFilterBar();
 	initSeverityPills();
 	initDropoffModePills();
+	initSlowModePills();
 	loadAll();
 })();

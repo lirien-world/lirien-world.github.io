@@ -236,10 +236,24 @@
 					x: {
 						ticks: {
 							color: PAL.mist,
-							font: { size: 9 },
-							maxRotation: 70,
-							minRotation: 70,
+							font: { size: 11 },
+							maxRotation: 0,
+							minRotation: 0,
 							autoSkip: false,
+							// Per-bar labels are unreadable at this density;
+							// instead, surface only the first scene of each
+							// chapter as a "Chapter N" marker. Hover still
+							// reveals the exact bg name via the tooltip.
+							callback: function (value, index) {
+								const label = this.getLabelForValue(value);
+								const m = label && label.match(/^ch(\d+)_/);
+								if (!m) return "";
+								const ch = parseInt(m[1], 10);
+								if (index === 0) return `Chapter ${ch}`;
+								const prev = this.chart.data.labels[index - 1];
+								const pm = prev && prev.match(/^ch(\d+)_/);
+								return (!pm || parseInt(pm[1], 10) !== ch) ? `Chapter ${ch}` : "";
+							},
 						},
 						grid: { display: false },
 						border: { color: PAL.ruleStrong },

@@ -160,6 +160,21 @@
 		return json.results || [];
 	}
 
+	// Render an error row into a table's tbody when its loader throws —
+	// otherwise the initial "Loading…" placeholder sits forever and the
+	// failure looks like a stuck state. Used by every table-based loader
+	// via try/catch around the fetchQuery + render block.
+	function renderTableError(selector, colspan, msg) {
+		const tbody = document.querySelector(selector);
+		if (!tbody) return;
+		const safe = String(msg || "Couldn't load.")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+		tbody.innerHTML =
+			`<tr><td colspan="${colspan}" class="empty">Couldn't load — ${safe}</td></tr>`;
+	}
+
 	function fmt(n) {
 		if (n === null || n === undefined || (typeof n === "number" && isNaN(n))) return "—";
 		if (typeof n === "number" && n >= 1000) return n.toLocaleString();
@@ -391,58 +406,68 @@
 	// ---- slowest cold loads ---------------------------------------
 
 	async function loadSlow() {
-		const queryName = FILTERS.slow_mode === "perceived" ? "slow_assets_perceived" : "slow_assets";
-		const rows = await fetchQuery(queryName);
-		const tbody = document.querySelector("#slow-table tbody");
+		try {
+			const queryName = FILTERS.slow_mode === "perceived" ? "slow_assets_perceived" : "slow_assets";
+			const rows = await fetchQuery(queryName);
+			const tbody = document.querySelector("#slow-table tbody");
 
-		if (!rows.length) {
-			const emptyMsg = FILTERS.slow_mode === "perceived"
-				? "No reader-felt waits in this window. The pacing held."
-				: "No cold loads recorded. The cache is doing its work.";
-			tbody.innerHTML =
-				`<tr><td colspan="4" class="empty">${emptyMsg}</td></tr>`;
-			return;
+			if (!rows.length) {
+				const emptyMsg = FILTERS.slow_mode === "perceived"
+					? "No reader-felt waits in this window. The pacing held."
+					: "No cold loads recorded. The cache is doing its work.";
+				tbody.innerHTML =
+					`<tr><td colspan="4" class="empty">${emptyMsg}</td></tr>`;
+				return;
+			}
+
+			tbody.innerHTML = rows.map((r) => {
+				const meta = r.type ? `<span class="row-meta">${escapeHtml(r.type)}</span>` : "";
+				return `
+					<tr>
+						<td>${escapeHtml(r.name || "—")}${meta}</td>
+						<td class="num">${fmt(r.avg_ms)}</td>
+						<td class="num">${fmt(r.max_ms)}</td>
+						<td class="num">${fmt(r.samples)}</td>
+					</tr>
+				`;
+			}).join("");
+		} catch (e) {
+			if (e.message === "unauthorized") return;
+			renderTableError("#slow-table tbody", 4, e.message);
 		}
-
-		tbody.innerHTML = rows.map((r) => {
-			const meta = r.type ? `<span class="row-meta">${escapeHtml(r.type)}</span>` : "";
-			return `
-				<tr>
-					<td>${escapeHtml(r.name || "—")}${meta}</td>
-					<td class="num">${fmt(r.avg_ms)}</td>
-					<td class="num">${fmt(r.max_ms)}</td>
-					<td class="num">${fmt(r.samples)}</td>
-				</tr>
-			`;
-		}).join("");
 	}
 
 	// ---- errors and offline blocks --------------------------------
 
 	async function loadErrors() {
-		const rows = await fetchQuery("errors");
-		const tbody = document.querySelector("#errors-table tbody");
+		try {
+			const rows = await fetchQuery("errors");
+			const tbody = document.querySelector("#errors-table tbody");
 
-		if (!rows.length) {
-			tbody.innerHTML =
-				`<tr><td colspan="5" class="empty">Nothing in this severity. The room is undisturbed.</td></tr>`;
-			return;
+			if (!rows.length) {
+				tbody.innerHTML =
+					`<tr><td colspan="5" class="empty">Nothing in this severity. The room is undisturbed.</td></tr>`;
+				return;
+			}
+
+			tbody.innerHTML = rows.map((r) => {
+				const where = r.bg || r.name || "—";
+				const detail = r.message || "—";
+				const severity = r.severity || "error";
+				return `
+					<tr class="sev-${escapeHtml(severity)}">
+						<td>${escapeHtml(r.event_name)}</td>
+						<td><span class="severity-tag severity-${escapeHtml(severity)}">${escapeHtml(severity)}</span></td>
+						<td>${escapeHtml(where)}</td>
+						<td>${escapeHtml(detail)}</td>
+						<td class="num">${fmt(r.n)}</td>
+					</tr>
+				`;
+			}).join("");
+		} catch (e) {
+			if (e.message === "unauthorized") return;
+			renderTableError("#errors-table tbody", 5, e.message);
 		}
-
-		tbody.innerHTML = rows.map((r) => {
-			const where = r.bg || r.name || "—";
-			const detail = r.message || "—";
-			const severity = r.severity || "error";
-			return `
-				<tr class="sev-${escapeHtml(severity)}">
-					<td>${escapeHtml(r.event_name)}</td>
-					<td><span class="severity-tag severity-${escapeHtml(severity)}">${escapeHtml(severity)}</span></td>
-					<td>${escapeHtml(where)}</td>
-					<td>${escapeHtml(detail)}</td>
-					<td class="num">${fmt(r.n)}</td>
-				</tr>
-			`;
-		}).join("");
 	}
 
 	function initDropoffModePills() {
@@ -861,34 +886,39 @@
 	// ---- how long the pages took (latency percentiles) -----------
 
 	async function loadLatencyPercentiles() {
-		const rows = await fetchQuery("asset_load_percentiles");
-		const tbody = document.querySelector("#latency-table tbody");
-		if (!rows.length) {
-			tbody.innerHTML =
-				`<tr><td colspan="7" class="empty">No timing data yet.</td></tr>`;
-			return;
+		try {
+			const rows = await fetchQuery("asset_load_percentiles");
+			const tbody = document.querySelector("#latency-table tbody");
+			if (!rows.length) {
+				tbody.innerHTML =
+					`<tr><td colspan="7" class="empty">No timing data yet.</td></tr>`;
+				return;
+			}
+			// Sort: type asc, then state by canonical order
+			const stateOrder = { hit: 0, revalidated: 1, fresh: 2, unknown: 3 };
+			rows.sort((a, b) => {
+				const t = String(a.type || "").localeCompare(String(b.type || ""));
+				if (t !== 0) return t;
+				return (stateOrder[a.cache_state] || 9) - (stateOrder[b.cache_state] || 9);
+			});
+			tbody.innerHTML = rows.map((r) => {
+				const state = String(r.cache_state || "unknown");
+				return `
+					<tr>
+						<td>${escapeHtml(r.type || "—")}</td>
+						<td><span class="row-meta" style="margin-left:0">${escapeHtml(state)}</span></td>
+						<td class="num">${fmt(r.p50)}</td>
+						<td class="num">${fmt(r.p90)}</td>
+						<td class="num">${fmt(r.p99)}</td>
+						<td class="num">${fmt(r.max_ms)}</td>
+						<td class="num">${fmt(r.samples)}</td>
+					</tr>
+				`;
+			}).join("");
+		} catch (e) {
+			if (e.message === "unauthorized") return;
+			renderTableError("#latency-table tbody", 7, e.message);
 		}
-		// Sort: type asc, then state by canonical order
-		const stateOrder = { hit: 0, revalidated: 1, fresh: 2, unknown: 3 };
-		rows.sort((a, b) => {
-			const t = String(a.type || "").localeCompare(String(b.type || ""));
-			if (t !== 0) return t;
-			return (stateOrder[a.cache_state] || 9) - (stateOrder[b.cache_state] || 9);
-		});
-		tbody.innerHTML = rows.map((r) => {
-			const state = String(r.cache_state || "unknown");
-			return `
-				<tr>
-					<td>${escapeHtml(r.type || "—")}</td>
-					<td><span class="row-meta" style="margin-left:0">${escapeHtml(state)}</span></td>
-					<td class="num">${fmt(r.p50)}</td>
-					<td class="num">${fmt(r.p90)}</td>
-					<td class="num">${fmt(r.p99)}</td>
-					<td class="num">${fmt(r.max_ms)}</td>
-					<td class="num">${fmt(r.samples)}</td>
-				</tr>
-			`;
-		}).join("");
 	}
 
 	// ---- where the reader waited (soft wait distribution) -------
@@ -956,27 +986,32 @@
 	// ---- the wire they came through (connection breakdown) ------
 
 	async function loadConnectionBreakdown() {
-		const rows = await fetchQuery("connection_breakdown");
-		const tbody = document.querySelector("#connection-table tbody");
-		if (!rows.length) {
-			tbody.innerHTML =
-				`<tr><td colspan="5" class="empty">No connection data yet.</td></tr>`;
-			return;
+		try {
+			const rows = await fetchQuery("connection_breakdown");
+			const tbody = document.querySelector("#connection-table tbody");
+			if (!rows.length) {
+				tbody.innerHTML =
+					`<tr><td colspan="5" class="empty">No connection data yet.</td></tr>`;
+				return;
+			}
+			// Sort: known buckets first by canonical order, unknown last
+			const order = { "4g": 0, "3g": 1, "2g": 2, "slow-2g": 3, unknown: 9 };
+			rows.sort((a, b) => (order[a.conn_type] || 9) - (order[b.conn_type] || 9));
+			tbody.innerHTML = rows.map((r) => {
+				return `
+					<tr>
+						<td>${escapeHtml(String(r.conn_type || "unknown"))}</td>
+						<td class="num">${r.avg_downlink_mbps != null ? fmt(r.avg_downlink_mbps) : "—"}</td>
+						<td class="num">${r.avg_rtt_ms != null ? fmt(r.avg_rtt_ms) : "—"}</td>
+						<td class="num">${fmt(r.save_data_n || 0)}</td>
+						<td class="num">${fmt(r.sessions)}</td>
+					</tr>
+				`;
+			}).join("");
+		} catch (e) {
+			if (e.message === "unauthorized") return;
+			renderTableError("#connection-table tbody", 5, e.message);
 		}
-		// Sort: known buckets first by canonical order, unknown last
-		const order = { "4g": 0, "3g": 1, "2g": 2, "slow-2g": 3, unknown: 9 };
-		rows.sort((a, b) => (order[a.conn_type] || 9) - (order[b.conn_type] || 9));
-		tbody.innerHTML = rows.map((r) => {
-			return `
-				<tr>
-					<td>${escapeHtml(String(r.conn_type || "unknown"))}</td>
-					<td class="num">${r.avg_downlink_mbps != null ? fmt(r.avg_downlink_mbps) : "—"}</td>
-					<td class="num">${r.avg_rtt_ms != null ? fmt(r.avg_rtt_ms) : "—"}</td>
-					<td class="num">${fmt(r.save_data_n || 0)}</td>
-					<td class="num">${fmt(r.sessions)}</td>
-				</tr>
-			`;
-		}).join("");
 	}
 
 	// ---- filter UI wiring ----------------------------------------

@@ -237,8 +237,8 @@
 						ticks: {
 							color: PAL.mist,
 							font: { size: 11 },
-							maxRotation: 0,
-							minRotation: 0,
+							maxRotation: 30,
+							minRotation: 30,
 							autoSkip: false,
 							// Per-bar labels are unreadable at this density;
 							// instead, surface only the first scene of each

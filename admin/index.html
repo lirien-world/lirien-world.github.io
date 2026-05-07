@@ -170,8 +170,12 @@
 		<section class="slow" id="sec-slow">
 			<header class="section-header">
 				<h2 class="section-title">What Took Too Long</h2>
-				<p class="section-aside">Slowest cold-loaded assets, by mean fetch time. These are the pages that arrived breathing hard.</p>
+				<p class="section-aside">Network time is the wire transfer alone &mdash; useful for diagnosing the cache. Reader-perceived wait counts only moments where a reader actually sat in front of a missing background or silent music &mdash; the moments that actually felt slow.</p>
 			</header>
+			<div class="slow-pills" id="slow-mode-pills" role="tablist" aria-label="Slow loads chart mode">
+				<button type="button" class="filter-chip" data-slow-mode="">Network time</button>
+				<button type="button" class="filter-chip" data-slow-mode="perceived">Reader-perceived wait</button>
+			</div>
 			<table class="ledger" id="slow-table">
 				<thead>
 					<tr><th>Asset</th><th class="num">Avg ms</th><th class="num">Worst</th><th class="num">N</th></tr>

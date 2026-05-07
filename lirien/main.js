@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260506o";
+const ASSET_VERSION = "20260507a";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
 

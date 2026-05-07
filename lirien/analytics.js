@@ -347,11 +347,31 @@
 				const entry = entries[entries.length - 1];
 				const transfer_size     = typeof entry.transferSize    === "number" ? entry.transferSize    : null;
 				const encoded_body_size = typeof entry.encodedBodySize === "number" ? entry.encodedBodySize : null;
-				const ms = Math.round(entry.duration);
-				// Drop poisoned samples — almost always tab-backgrounding.
-				// Recording these would inflate the percentile tail with
-				// non-events. We don't even emit a placeholder; the
-				// missing sample is the most accurate report we can make.
+				const fetchStart  = typeof entry.fetchStart  === "number" ? entry.fetchStart  : null;
+				const responseEnd = typeof entry.responseEnd === "number" ? entry.responseEnd : null;
+				// `ms` is the actual cache/network delivery time —
+				// responseEnd - fetchStart — which excludes any browser-
+				// side scheduling delay (tab briefly hidden, decoder
+				// busy, request queue paused). The earlier metric was
+				// entry.duration which is responseEnd - startTime, and
+				// startTime can be a long way before fetchStart when the
+				// browser defers dispatch. With the old metric, cache
+				// hits showed up as 5+ seconds whenever the tab had
+				// briefly lost focus, even though the cache itself
+				// served the bytes instantly. The user-visible wait is
+				// still captured separately by bg_late, so we don't lose
+				// that signal — but the percentile chart wants real
+				// asset performance, not scheduling artefact.
+				let ms;
+				if (fetchStart !== null && responseEnd !== null
+				    && fetchStart > 0 && responseEnd >= fetchStart) {
+					ms = Math.round(responseEnd - fetchStart);
+				} else {
+					ms = Math.round(entry.duration);
+				}
+				// Sanity cap — even with the new metric, anything past
+				// 30s is some form of pathological state we can't
+				// usefully chart.
 				if (ms > SANITY_MAX_MS) return;
 				let cache_state = "fresh";
 				if (transfer_size === 0)                              cache_state = "hit";
@@ -359,7 +379,8 @@
 				const cache_hit = ms !== null && ms < READY_THRESHOLD_MS;
 				track("asset_load", {
 					type, name, ms,
-					cache_hit,        // user perspective: was it ready?
+					duration_ms: Math.round(entry.duration), // full user-visible wait, for diagnosis
+					cache_hit,        // user perspective: was it ready in time?
 					cache_state,      // browser perspective: hit | revalidated | fresh
 					transfer_size,
 					encoded_body_size,

@@ -1145,31 +1145,63 @@ function applyMusicTrackChange(name) {
 	incoming.gain.gain.setValueAtTime(0, now);
 
 	incoming.el.src = url;
+	const playStartedAt = performance.now();
 	const playPromise = incoming.el.play();
+	activePlayer = incoming;
+
+	// Gate the crossfade on play() actually resolving. If we faded
+	// outgoing to 0 immediately and incoming hadn't buffered yet
+	// (cold fetch on a slow connection, or on localhost via the dev
+	// server when no-store defeats the preload), the user heard the
+	// old track fade out, then silence for several seconds, then the
+	// new track snap in at full volume. By aligning the fades to the
+	// moment audio actually starts flowing, the old track holds at
+	// full volume during any buffering wait — so the worst case is
+	// "old track plays a beat longer" instead of "audible silence."
+	const startCrossfade = () => {
+		fadeGain(outgoing, 0, MUSIC_CROSSFADE_S);
+		fadeGain(incoming, MUSIC_VOLUME, MUSIC_CROSSFADE_S);
+		setTimeout(() => {
+			if (outgoing && outgoing.el && outgoing !== activePlayer) {
+				outgoing.el.pause();
+				// Explicitly release the decoded buffer so Safari's media
+				// decoder doesn't accumulate. Without this the outgoing
+				// element holds onto its prior track until GC, and rapid
+				// swaps over a session bloat the GPU/Media process.
+				releasePlayerSrc(outgoing);
+			}
+		}, (MUSIC_CROSSFADE_S * 1000) + 100);
+	};
+
 	if (playPromise) {
 		playPromise.then(() => {
-			if (window.lirienAnalytics) window.lirienAnalytics.recordAssetLoad("music", name, url);
+			const lagMs = Math.round(performance.now() - playStartedAt);
+			startCrossfade();
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.recordAssetLoad("music", name, url);
+				// music_late mirrors bg_late: only fires when the user
+				// actually waited on the wire. Below the ready threshold
+				// is "instant" by user perception — counting those would
+				// inflate the chart with non-events.
+				if (lagMs > 100) {
+					window.lirienAnalytics.track("music_late", { music: name, lag_ms: lagMs });
+				}
+			}
 		}).catch((err) => {
-			// Autoplay blocked is normal pre-gesture; only count true errors
+			// Autoplay blocked is normal pre-gesture — outgoing keeps
+			// playing in that case (we never started its fade). Real
+			// errors get logged. Either way: don't crossfade into
+			// silence.
 			if (window.lirienAnalytics && err && err.name !== "NotAllowedError") {
 				window.lirienAnalytics.recordAssetError("music", name, err.message || err.name);
 			}
 		});
+	} else {
+		// No promise (very old browsers) — fall back to the old behavior:
+		// start the crossfade immediately and hope for the best. This
+		// path is essentially unreachable on browsers we support.
+		startCrossfade();
 	}
-	activePlayer = incoming;
-
-	fadeGain(outgoing, 0, MUSIC_CROSSFADE_S);
-	fadeGain(incoming, MUSIC_VOLUME, MUSIC_CROSSFADE_S);
-	setTimeout(() => {
-		if (outgoing && outgoing.el && outgoing !== activePlayer) {
-			outgoing.el.pause();
-			// Explicitly release the decoded buffer so Safari's media
-			// decoder doesn't accumulate. Without this the outgoing
-			// element holds onto its prior track until GC, and rapid
-			// swaps over a session bloat the GPU/Media process.
-			releasePlayerSrc(outgoing);
-		}
-	}, (MUSIC_CROSSFADE_S * 1000) + 100);
 }
 
 // Tell the audio element to drop its current resource. The pause+

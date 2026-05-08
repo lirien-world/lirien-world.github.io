@@ -222,22 +222,29 @@ body{
 }
 .track-info.is-fading .track-title,.track-info.is-fading .track-caption{opacity:0;transform:translateY(0.4rem)}
 
-/* Invitation text shown before first play. No em-dash flourishes
-   here — the horizontal lines they used to draw read visually as
-   a second progress bar stacked above the real one, which looked
-   like text overlap. The italic line stands alone. */
+/* Invitation text shown before first play. Em-dash flourishes flank
+   the italic line. The .foot below has its own top padding so the
+   flourishes don't crowd the progress bar. */
 .invitation{
 	font-family:'Cormorant Garamond',serif;
 	font-size:var(--text-sm);font-style:italic;color:var(--mist);
 	letter-spacing:0.06em;
 	opacity:0;animation:reveal 1.6s ease forwards 1.4s;
-	text-align:center;
+	display:flex;align-items:center;justify-content:center;gap:0.8rem;
+}
+.invitation::before,.invitation::after{
+	content:"";display:inline-block;width:clamp(2rem,5vw,4rem);height:1px;
+	background:linear-gradient(to right,transparent,var(--ash),transparent);
 }
 .invitation.is-hidden{opacity:0;pointer-events:none;animation:none}
 
 /* ───── BOTTOM BAR (progress + controls) ───── */
 .foot{
 	display:flex;flex-direction:column;gap:0.9rem;
+	/* Explicit top padding so the progress bar doesn't crowd the
+	   invitation's em-dash flourishes above it. The grid-row gap
+	   in .frame collapses on short viewports; this padding doesn't. */
+	padding-top:clamp(1rem,3vh,2.5rem);
 	opacity:0;animation:reveal 1.6s ease forwards 1.0s;
 }
 .progress{

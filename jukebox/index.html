@@ -507,7 +507,7 @@ body{
 			</button>
 		</div>
 		<div class="controls">
-			<button class="ctrl ctrl-list" id="listBtn" type="button" aria-haspopup="dialog">All <span id="listBtnCount">sixteen</span> <span class="glyph">◆</span></button>
+			<button class="ctrl ctrl-list" id="listBtn" type="button" aria-haspopup="dialog"><span id="listBtnCount">sixteen</span> <span id="listBtnUnit">tracks</span> <span class="glyph">◆</span></button>
 		</div>
 	</footer>
 
@@ -603,6 +603,7 @@ const $prevBtn          = document.getElementById("prevBtn");
 const $nextBtn          = document.getElementById("nextBtn");
 const $listBtn          = document.getElementById("listBtn");
 const $listBtnCount     = document.getElementById("listBtnCount");
+const $listBtnUnit      = document.getElementById("listBtnUnit");
 const $drawer           = document.getElementById("drawer");
 const $drawerScrim      = document.getElementById("drawerScrim");
 const $drawerClose      = document.getElementById("drawerClose");
@@ -1037,6 +1038,7 @@ function updateCounts(){
 	const word = spellNumber(n);
 	$trackCountLabel.textContent = `${word} ${n === 1 ? "piece" : "pieces"}`;
 	$listBtnCount.textContent = word;
+	$listBtnUnit.textContent = (n === 1) ? "track" : "tracks";
 	$drawerCountLabel.textContent = capFirst(word);
 }
 

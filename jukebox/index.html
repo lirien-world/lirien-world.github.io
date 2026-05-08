@@ -114,9 +114,8 @@ body{
 
 .spiral-wrap{
 	position:relative;
-	width:min(82vh,min(96vw,820px));
+	width:min(46vh,min(60vw,420px));
 	aspect-ratio:1/1;
-	margin-top:clamp(1rem,5vh,4rem);
 	display:flex;align-items:center;justify-content:center;
 	opacity:0;animation:reveal-scale 2s ease forwards 0.6s;
 }
@@ -166,16 +165,6 @@ body{
 	   lands. Keeps rotation stable instead of wobbling around a
 	   misaligned axis. */
 	transform-origin:50% 47%;
-	/* Rotation is JS-driven from the audio's timeupdate event so the
-	   spiral's spin == the song's progress, counter-clockwise, one
-	   full revolution per track. No CSS transform transition here so
-	   the angle update is immediate and smooth.
-
-	   IMPORTANT: no drop-shadow filters here. drop-shadow on a large
-	   rotating image is paint-expensive enough that it starves audio
-	   scheduling on the main thread (popping + dropouts). Brightness
-	   and saturate are cheap pixel-multipliers; the glow lives on
-	   the .spiral-halo gradient layer next to this. */
 	transition:filter 1.2s ease,opacity 1.2s ease;
 	filter:brightness(0.78) saturate(0.85);
 	opacity:0.92;
@@ -184,7 +173,12 @@ body{
 .is-playing .spiral-img{
 	filter:brightness(1.05) saturate(1.05);
 	opacity:1;
+	/* Counter-clockwise, fixed cadence — one revolution every ~140s
+	   regardless of song length. CSS animation is GPU-composited
+	   and avoids the main-thread cost of per-frame JS transforms. */
+	animation:spiral-rotate 140s linear infinite;
 }
+@keyframes spiral-rotate{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
 
 /* track-change ripple lives on the wrap (which doesn't rotate) so it
    doesn't fight the JS-driven rotate transform on the img */
@@ -390,7 +384,7 @@ body{
 	<header class="brand">
 		<div class="brand-mark">
 			<span class="one">Chronicles of Lirien</span>
-			<span class="two">a small room for the music — on shuffle, on loop</span>
+			<span class="two">a small room for the music, spiraling around</span>
 		</div>
 		<div class="brand-meta">
 			<span id="trackCountLabel">sixteen pieces</span>
@@ -684,14 +678,9 @@ $audio.addEventListener("error", ()=>{
 });
 $audio.addEventListener("timeupdate", ()=>{
 	if (!$audio.duration || !isFinite($audio.duration)) return;
-	const ratio = $audio.currentTime / $audio.duration;   // 0..1
-	const pct = ratio * 100;
+	const pct = ($audio.currentTime / $audio.duration) * 100;
 	$progressFill.style.width = pct.toFixed(2) + "%";
 	$progress.setAttribute("aria-valuenow", pct.toFixed(0));
-	// Counter-clockwise: one full revolution per song. Spin speed
-	// equals song progress, so the spiral and the bar advance in
-	// lockstep.
-	$spiralImg.style.transform = `rotate(${(-360 * ratio).toFixed(2)}deg)`;
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -716,10 +705,11 @@ function seekFromEvent(ev){
 	const x = (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX);
 	const ratio = Math.max(0, Math.min(1, (x - rect.left) / rect.width));
 	$audio.currentTime = ratio * $audio.duration;
-	// Drive immediate visual update — timeupdate may not fire instantly
-	// while the audio engine resyncs, especially when paused.
+	// Drive immediate visual update on the bar — timeupdate may not
+	// fire instantly while the audio engine resyncs, especially when
+	// paused. The spiral's CSS animation is independent of currentTime,
+	// so seeking doesn't need to touch the spiral.
 	$progressFill.style.width = (ratio*100).toFixed(2) + "%";
-	$spiralImg.style.transform = `rotate(${(-360 * ratio).toFixed(2)}deg)`;
 }
 $progress.addEventListener("click", seekFromEvent);
 $progress.addEventListener("keydown", (ev)=>{

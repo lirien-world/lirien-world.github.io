@@ -679,9 +679,16 @@ function detectReachedChapter(){
 }
 
 function visibleIndices(){
-	// chapter is either a number (1..N for chapter tracks) or the
-	// string "minimal" (for minimal-only entries like lirien_theme,
-	// which only surface in minimal mode).
+	// chapter is one of:
+	//   number       — first chapter the track ACTUALLY PLAYS in the
+	//                  .ink source (the canonical "you've heard this"
+	//                  signal for played mode)
+	//   "unused"     — track exists as music + image but never plays
+	//                  in the .ink. Show only in "all" mode (a reader
+	//                  hasn't heard it, so it doesn't belong in
+	//                  "played"; but it's part of the catalogue and
+	//                  belongs in "all")
+	//   "minimal"    — minimal-mode-only entry (lirien_theme)
 	if (content === "minimal"){
 		return TRACKS
 			.map((_, i) => i)
@@ -693,10 +700,11 @@ function visibleIndices(){
 			.filter(i => typeof TRACKS[i].chapter === "number"
 			          && TRACKS[i].chapter <= reachedChapter);
 	}
-	// "all": every chapter track, but NOT the minimal-only entries.
+	// "all": numeric-chapter tracks + "unused" tracks. Exclude only
+	// the minimal-only entries (lirien_theme is its own thing).
 	return TRACKS
 		.map((_, i) => i)
-		.filter(i => typeof TRACKS[i].chapter === "number");
+		.filter(i => TRACKS[i].chapter !== "minimal");
 }
 
 function reshuffle(skipFirst){

@@ -259,9 +259,55 @@ body{
 }
 .is-paused .progress-fill::after{opacity:0.4}
 
+/* ───── TRANSPORT (prev / play-pause / next) ───── */
+.transport{
+	display:flex;align-items:center;justify-content:center;
+	gap:clamp(0.9rem,2.5vw,1.6rem);
+}
+.tx-btn{
+	all:unset;cursor:pointer;
+	width:46px;height:46px;border-radius:50%;
+	display:flex;align-items:center;justify-content:center;
+	color:var(--mist);
+	border:1px solid rgba(196,147,90,0.18);
+	background:rgba(8,6,15,0.32);
+	transition:color 0.35s ease,border-color 0.35s ease,
+	            background 0.35s ease,box-shadow 0.35s ease,transform 0.2s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.tx-btn:hover,.tx-btn:focus-visible{
+	color:var(--gold-bright);
+	border-color:rgba(196,147,90,0.55);
+	background:rgba(196,147,90,0.08);
+	box-shadow:0 0 18px rgba(196,147,90,0.28);
+	transform:scale(1.05);
+	outline:none;
+}
+.tx-btn:active{transform:scale(0.96)}
+.tx-btn[disabled]{opacity:0.35;pointer-events:none}
+.tx-btn svg{width:50%;height:50%;display:block}
+/* The play/pause button sits a touch larger and starts gold to
+   read as the primary action. */
+.tx-btn--play{
+	width:60px;height:60px;
+	color:var(--gold);
+	border-color:rgba(196,147,90,0.42);
+}
+.tx-btn--play:hover,.tx-btn--play:focus-visible{
+	color:var(--gold-bright);
+	border-color:rgba(224,176,112,0.7);
+	box-shadow:0 0 26px rgba(196,147,90,0.5);
+}
+.tx-btn--play svg{width:46%;height:46%}
+/* CSS-driven icon swap: play icon when paused, pause icon when
+   playing. body's is-paused/is-playing class drives the toggle. */
+.tx-btn--play .icon-pause{display:none}
+.is-playing .tx-btn--play .icon-play{display:none}
+.is-playing .tx-btn--play .icon-pause{display:block}
+
+/* ───── BOTTOM CTRL ROW (just the All-N drawer toggle) ───── */
 .controls{
 	display:flex;align-items:center;justify-content:center;
-	gap:clamp(1rem,3vw,2.5rem);flex-wrap:wrap;
 }
 .ctrl{
 	all:unset;cursor:pointer;
@@ -274,8 +320,6 @@ body{
 .ctrl:hover,.ctrl:focus-visible{color:var(--gold-bright);letter-spacing:0.42em;outline:none}
 .ctrl[disabled]{opacity:0.4;pointer-events:none}
 .ctrl .glyph{display:inline-block;margin:0 0.45em;color:var(--gold);transform:translateY(-1px)}
-.ctrl .glyph-mute{color:var(--ash)}
-.ctrl-list{margin-left:auto}
 
 /* ───── DRAWER (track list) ───── */
 .drawer-scrim{
@@ -421,10 +465,38 @@ body{
 				<div class="progress-fill" id="progressFill"></div>
 			</div>
 		</div>
+		<div class="transport">
+			<button class="tx-btn" id="prevBtn" type="button" aria-label="Previous track">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<rect x="5" y="6" width="2" height="12" rx="1" fill="currentColor"/>
+					<path d="M19 6 L8 12 L19 18 Z"
+					      fill="currentColor" stroke="currentColor" stroke-width="0.5"
+					      stroke-linejoin="round" stroke-linecap="round"/>
+				</svg>
+			</button>
+			<button class="tx-btn tx-btn--play" id="playBtn" type="button" aria-label="Play">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<g class="icon-play">
+						<path d="M7 5 L20 12 L7 19 Z"
+						      fill="currentColor" stroke="currentColor" stroke-width="0.5"
+						      stroke-linejoin="round" stroke-linecap="round"/>
+					</g>
+					<g class="icon-pause">
+						<rect x="6" y="5" width="3.5" height="14" rx="1" fill="currentColor"/>
+						<rect x="14.5" y="5" width="3.5" height="14" rx="1" fill="currentColor"/>
+					</g>
+				</svg>
+			</button>
+			<button class="tx-btn" id="nextBtn" type="button" aria-label="Next track">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M5 6 L16 12 L5 18 Z"
+					      fill="currentColor" stroke="currentColor" stroke-width="0.5"
+					      stroke-linejoin="round" stroke-linecap="round"/>
+					<rect x="17" y="6" width="2" height="12" rx="1" fill="currentColor"/>
+				</svg>
+			</button>
+		</div>
 		<div class="controls">
-			<button class="ctrl" id="prevBtn" type="button">Previous</button>
-			<button class="ctrl" id="playBtn" type="button">Begin</button>
-			<button class="ctrl" id="nextBtn" type="button">Next</button>
 			<button class="ctrl ctrl-list" id="listBtn" type="button" aria-haspopup="dialog">All <span id="listBtnCount">sixteen</span> <span class="glyph">◆</span></button>
 		</div>
 	</footer>
@@ -652,14 +724,14 @@ $audio.addEventListener("play",  ()=>{
 	started = true;
 	document.body.classList.remove("is-paused");
 	document.body.classList.add("is-playing");
-	$playBtn.textContent = "Pause";
+	$playBtn.setAttribute("aria-label","Pause");
 	$spiralBtn.setAttribute("aria-pressed","true");
 	$invitation.classList.add("is-hidden");
 });
 $audio.addEventListener("pause", ()=>{
 	document.body.classList.remove("is-playing");
 	document.body.classList.add("is-paused");
-	$playBtn.textContent = "Resume";
+	$playBtn.setAttribute("aria-label","Play");
 	$spiralBtn.setAttribute("aria-pressed","false");
 });
 $audio.addEventListener("ended", ()=>{

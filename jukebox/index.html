@@ -444,6 +444,8 @@ body{
 			<span id="trackCountLabel">sixteen pieces</span>
 			<button class="mode-toggle" id="modeToggle" type="button"
 			        aria-label="Toggle play order">mode: <span class="mode-value" id="modeValue">shuffled</span></button>
+			<button class="mode-toggle" id="contentToggle" type="button"
+			        aria-label="Toggle content scope">content: <span class="mode-value" id="contentValue">played</span></button>
 		</div>
 	</header>
 
@@ -596,6 +598,8 @@ const $trackCountLabel  = document.getElementById("trackCountLabel");
 const $drawerCountLabel = document.getElementById("drawerCountLabel");
 const $modeToggle       = document.getElementById("modeToggle");
 const $modeValue        = document.getElementById("modeValue");
+const $contentToggle    = document.getElementById("contentToggle");
+const $contentValue     = document.getElementById("contentValue");
 
 // ─────────────────────────────────────────────────────────────────
 // Queue + mode
@@ -616,9 +620,47 @@ let activeIdx = -1;   // index into TRACKS for the currently-loaded track
 let started = false;  // has the user clicked play at least once
 let activeBg = "a";   // which bg layer is currently visible
 let mode = "shuffled";
+// content: which subset of tracks/images is visible
+//   "played"  — only chapters the reader has reached in the main app
+//               (read from localStorage["lirien.save"].bg → ch??_ prefix)
+//   "all"     — every track + every chapter image
+//   "minimal" — every track playable, but the bg is locked to the
+//               Solrien hero image from the landing page so no
+//               chapter art is shown; captions are blanked
+let content = "played";
+let reachedChapter = 1;
+const HERO_BG_PATH = "../hero_banner.png";
+
+function detectReachedChapter(){
+	// Read the main app's autosave to learn how far the reader has
+	// progressed. The bg key carries a chXX_ prefix, which is the
+	// most reliable signal. Fall back to chapter 1 (the first chapter)
+	// for new visitors who haven't read anything yet — they're on
+	// the site, so chapter 1 is fair.
+	try {
+		const raw = localStorage.getItem("lirien.save");
+		if (!raw) return 1;
+		const saved = JSON.parse(raw);
+		const bg = (saved && saved.bg) || "";
+		const m = bg.match(/^ch(\d+)_/);
+		if (m) return Math.max(1, parseInt(m[1], 10));
+	} catch (e) { /* private mode / quota — ignore */ }
+	return 1;
+}
+
+function visibleIndices(){
+	if (content === "played"){
+		return TRACKS
+			.map((t, i) => i)
+			.filter(i => (TRACKS[i].chapter || 0) <= reachedChapter);
+	}
+	// "all" and "minimal" both expose every track. Minimal differs
+	// from all only in what the page paints behind the music.
+	return TRACKS.map((_, i) => i);
+}
 
 function reshuffle(skipFirst){
-	const idx = TRACKS.map((_,i)=>i);
+	const idx = visibleIndices();
 	for (let i=idx.length-1;i>0;i--){
 		const j = Math.floor(Math.random()*(i+1));
 		[idx[i],idx[j]] = [idx[j],idx[i]];
@@ -635,8 +677,11 @@ function reshuffle(skipFirst){
 
 function nextIndex(){
 	if (mode === "sequential"){
-		if (activeIdx === -1) return 0;
-		return (activeIdx + 1) % TRACKS.length;
+		const visible = visibleIndices();
+		if (!visible.length) return null;
+		const pos = visible.indexOf(activeIdx);
+		if (pos === -1) return visible[0];     // current not visible (e.g. just switched content) — start from first visible
+		return visible[(pos + 1) % visible.length];
 	}
 	// shuffled
 	queueIdx += 1;
@@ -655,6 +700,43 @@ function updateModeLabel(){
 	$modeToggle.setAttribute("aria-pressed", mode === "sequential" ? "true" : "false");
 }
 
+function toggleContent(){
+	const order = ["played", "all", "minimal"];
+	content = order[(order.indexOf(content) + 1) % order.length];
+	updateContentLabel();
+	updateCounts();
+	// Rebuild queue against the new visibility. Currently-playing
+	// track keeps playing even if it's no longer in the visible set —
+	// when it ends we'll move to the next visible track. The user
+	// just sees the drawer + brand-meta change.
+	reshuffle(activeIdx);
+	buildTracklist();
+	updateActiveRow();
+	// Refresh the bg. setBg() reads `content` and uses the hero
+	// image automatically when minimal, so we just hand it whichever
+	// per-track image is most relevant — current track if loaded,
+	// else the first queued track, else any track (it'll get
+	// ignored by minimal anyway).
+	const imageSource =
+		activeIdx >= 0          ? TRACKS[activeIdx].image :
+		queue.length > 0        ? TRACKS[queue[0]].image :
+		TRACKS[0]               ? TRACKS[0].image :
+		"";
+	setBg(imageSource);
+	applyCaptionForCurrent();
+}
+
+function updateContentLabel(){
+	$contentValue.textContent = content;
+}
+
+function applyCaptionForCurrent(){
+	if (activeIdx < 0) return;
+	const track = TRACKS[activeIdx];
+	// Minimal: blank caption (chapter context is itself a spoiler).
+	$trackCaption.textContent = (content === "minimal") ? "" : track.caption;
+}
+
 function previousIndex(){
 	if (history.length >= 2){
 		history.pop();           // pop current
@@ -667,7 +749,10 @@ function previousIndex(){
 // Loading + playback
 // ─────────────────────────────────────────────────────────────────
 function setBg(imageFile){
-	const url = ATMOS_BASE + imageFile;
+	// In minimal mode the bg is locked to the Solrien hero image
+	// from the landing page (already non-spoilery — every site
+	// visitor has seen it). The per-track image is bypassed.
+	const url = (content === "minimal") ? HERO_BG_PATH : (ATMOS_BASE + imageFile);
 	const incoming = activeBg === "a" ? $bgB : $bgA;
 	const outgoing = activeBg === "a" ? $bgA : $bgB;
 	incoming.style.backgroundImage = `url("${url}")`;
@@ -692,7 +777,9 @@ function loadTrack(idx, opts){
 	$spiralWrap.classList.add("is-changing");
 	setTimeout(()=>{
 		$trackTitle.textContent = track.title;
-		$trackCaption.textContent = track.caption;
+		// Minimal hides the chapter-context caption since that's the
+		// spoilery part; titles are kept (most are atmospheric).
+		$trackCaption.textContent = (content === "minimal") ? "" : track.caption;
 		$trackInfo.classList.remove("is-fading");
 	}, 350);
 	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
@@ -778,6 +865,7 @@ $playBtn.addEventListener("click", ()=>{
 $prevBtn.addEventListener("click", previous);
 $nextBtn.addEventListener("click", next);
 $modeToggle.addEventListener("click", toggleMode);
+$contentToggle.addEventListener("click", toggleContent);
 
 // click-to-seek on the progress bar
 function seekFromEvent(ev){
@@ -821,17 +909,22 @@ document.addEventListener("keydown", (ev)=>{
 // ─────────────────────────────────────────────────────────────────
 function buildTracklist(){
 	const frag = document.createDocumentFragment();
-	TRACKS.forEach((t,i)=>{
+	const visible = visibleIndices();
+	visible.forEach((i, displayPos) => {
+		const t = TRACKS[i];
 		const li = document.createElement("li");
 		const btn = document.createElement("button");
 		btn.type = "button";
 		btn.className = "track-row";
 		btn.dataset.idx = String(i);
+		// In minimal we drop the chapter-context caption from the
+		// drawer rows too (consistent with the now-playing strip).
+		const where = (content === "minimal") ? "" : t.caption;
 		btn.innerHTML = `
-			<span class="num">${String(i+1).padStart(2,"0")}</span>
+			<span class="num">${String(displayPos+1).padStart(2,"0")}</span>
 			<span class="meta">
 				<span class="name">${escapeHtml(t.title)}</span>
-				<span class="where">${escapeHtml(t.caption)}</span>
+				<span class="where">${escapeHtml(where)}</span>
 			</span>`;
 		btn.addEventListener("click", ()=>{
 			loadTrack(i, {play:true});
@@ -892,13 +985,14 @@ $drawerScrim.addEventListener("click", closeDrawer);
 })();
 
 // ─────────────────────────────────────────────────────────────────
-// Dynamic count labels — recompute whenever TRACKS changes (init,
-// or in the future if we ever hot-reload the manifest).
+// Dynamic count labels — recompute whenever TRACKS changes (init)
+// or visibility changes (content toggle). The brand-meta + drawer-
+// foot show the visible count; the "All ◆ N ◆" button matches.
 // ─────────────────────────────────────────────────────────────────
 function updateCounts(){
-	const n = TRACKS.length;
+	const n = visibleIndices().length;
 	const word = spellNumber(n);
-	$trackCountLabel.textContent = `${word} pieces`;
+	$trackCountLabel.textContent = `${word} ${n === 1 ? "piece" : "pieces"}`;
 	$listBtnCount.textContent = word;
 	$drawerCountLabel.textContent = capFirst(word);
 }
@@ -915,17 +1009,29 @@ function updateCounts(){
 		$trackCaption.textContent = "tracks.json missing or unreadable";
 		return;
 	}
-	updateCounts();
+	reachedChapter = detectReachedChapter();
 	updateModeLabel();
+	updateContentLabel();
+	updateCounts();
 	reshuffle();
 	buildTracklist();
-	// Prime the first bg with a placeholder image so the page isn't
-	// jarringly black before first play. Uses the first queued track's
-	// image but does NOT load its audio yet — the user has to ask first.
-	const firstIdx = queue[0];
-	const firstImage = TRACKS[firstIdx].image;
-	$bgA.style.backgroundImage = `url("${ATMOS_BASE + firstImage}")`;
-	$bgA.classList.add("is-active");
+	// Prime the first bg. In minimal mode use the hero image; otherwise
+	// use the first queued track's chapter image so the page isn't
+	// jarringly black before first play. Audio doesn't load yet — the
+	// user has to ask first.
+	if (queue.length){
+		const firstIdx = queue[0];
+		const firstImage = TRACKS[firstIdx].image;
+		const url = (content === "minimal") ? HERO_BG_PATH : (ATMOS_BASE + firstImage);
+		$bgA.style.backgroundImage = `url("${url}")`;
+		$bgA.classList.add("is-active");
+	} else {
+		// No tracks visible at all (e.g. first-time visitor + played
+		// mode + chapter parsing returned 0). Use hero image as a
+		// safe fallback.
+		$bgA.style.backgroundImage = `url("${HERO_BG_PATH}")`;
+		$bgA.classList.add("is-active");
+	}
 })();
 </script>
 </body>

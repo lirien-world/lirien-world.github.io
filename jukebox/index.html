@@ -38,9 +38,14 @@ body{
 	background-position:center;background-size:cover;background-repeat:no-repeat;
 	transition:opacity 2.4s ease;opacity:0;
 	transform:scale(1.04);will-change:transform,opacity;
+	/* No animation on the inactive layer — it's opacity:0 anyway, no
+	   point spending continuous compositor work animating something
+	   nobody can see. Drift starts when the layer becomes active. */
+}
+.bg-layer.is-active{
+	opacity:0.55;
 	animation:bg-drift 60s ease-in-out infinite alternate;
 }
-.bg-layer.is-active{opacity:0.55}
 @keyframes bg-drift{
 	0%  {transform:scale(1.04) translate(0,0)}
 	100%{transform:scale(1.10) translate(-1.2%,-1.5%)}
@@ -165,13 +170,18 @@ body{
 	   lands. Keeps rotation stable instead of wobbling around a
 	   misaligned axis. */
 	transform-origin:50% 47%;
-	transition:filter 1.2s ease,opacity 1.2s ease;
-	filter:brightness(0.78) saturate(0.85);
-	opacity:0.92;
+	/* Idle vs playing is opacity-only — no filter() on a rotating
+	   image. Filters force per-frame pixel work; opacity is a free
+	   compositor multiply. The dim state on the dark bg reads as
+	   "asleep"; the bright state on the same dark bg reads as
+	   "awake". (Tested: was brightness/saturate before, removed to
+	   protect Safari's HTMLMediaElement scheduling against compositor
+	   contention that produced mid-song pops.) */
+	transition:opacity 1.2s ease;
+	opacity:0.6;
 	will-change:transform;
 }
 .is-playing .spiral-img{
-	filter:brightness(1.05) saturate(1.05);
 	opacity:1;
 	/* Counter-clockwise, fixed cadence — one revolution every ~140s
 	   regardless of song length. CSS animation is GPU-composited
@@ -864,7 +874,10 @@ $drawerScrim.addEventListener("click", closeDrawer);
 // ─────────────────────────────────────────────────────────────────
 (function spawnMotes(){
 	const root = document.getElementById("motes");
-	const n = 14;
+	// Trimmed from 14 to 6 — each mote is its own compositor layer
+	// with an infinite animation. Six is enough to keep the page
+	// feeling alive while reducing continuous compositor cost.
+	const n = 6;
 	for (let i=0;i<n;i++){
 		const el = document.createElement("span");
 		el.className = "mote";

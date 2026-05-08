@@ -27,9 +27,15 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260508a";
+const ASSET_VERSION = "20260508b";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
-function musicUrl(name) { return MUSIC_DIR      + name + ".ogg?v=" + ASSET_VERSION; }
+// Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
+// Safari's Ogg Vorbis decoder caused buffer underruns on long-form
+// playback (audible pops, intermittent dropouts). AAC is Safari-
+// native and equally well-supported by Chrome / Firefox / Edge /
+// mobile. Files live alongside their .wav sources in assets/music/
+// and are encoded by tools/convert_audio_to_m4a.sh.
+function musicUrl(name) { return MUSIC_DIR      + name + ".m4a?v=" + ASSET_VERSION; }
 
 // ----- DOM refs -----
 

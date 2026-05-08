@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08060f">
+<title>Lirien · Jukebox</title>
+<meta name="description" content="The music of The Spiral That Remembers — on shuffle, on loop.">
+<meta name="robots" content="noindex,nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+<style>
+:root{
+	--void:#08060f;--deep:#100d1c;--mid:#1c1828;--ash:#7a7090;--mist:#a89ec0;
+	--lavender:#b8a8cc;--cream:#ede5d4;--parchment:#f5eed8;--gold:#c4935a;--gold-bright:#e0b070;
+	--space-md:clamp(3rem,6vw,6rem);--space-lg:clamp(5rem,10vw,10rem);
+	--text-xs:clamp(0.68rem,1.4vw,0.8rem);--text-sm:clamp(0.9rem,1.8vw,1.05rem);
+	--text-body:clamp(1rem,2vw,1.1rem);--text-md:clamp(1.4rem,3vw,2rem);
+	--text-lg:clamp(1.9rem,4.5vw,3rem);--text-xl:clamp(2.8rem,8vw,6rem);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+	background:var(--void);color:var(--cream);
+	font-family:'EB Garamond',Georgia,serif;font-size:var(--text-body);line-height:1.7;
+	overflow:hidden;-webkit-font-smoothing:antialiased;
+	min-height:100dvh;min-height:100vh;
+}
+
+/* ───── BACKGROUND IMAGE LAYER (two stacked, crossfade) ───── */
+.bg-stage{position:fixed;inset:0;z-index:0;background:var(--void);overflow:hidden}
+.bg-layer{
+	position:absolute;inset:-2%;
+	background-position:center;background-size:cover;background-repeat:no-repeat;
+	transition:opacity 2.4s ease;opacity:0;
+	transform:scale(1.04);will-change:transform,opacity;
+	animation:bg-drift 60s ease-in-out infinite alternate;
+}
+.bg-layer.is-active{opacity:0.55}
+@keyframes bg-drift{
+	0%  {transform:scale(1.04) translate(0,0)}
+	100%{transform:scale(1.10) translate(-1.2%,-1.5%)}
+}
+
+/* ───── TINT / VIGNETTE / GRAIN OVERLAYS ───── */
+.tint{
+	position:fixed;inset:0;z-index:1;pointer-events:none;
+	background:
+		radial-gradient(ellipse at center,rgba(8,6,15,0.35) 0%,rgba(8,6,15,0.65) 55%,rgba(8,6,15,0.92) 100%),
+		linear-gradient(180deg,rgba(8,6,15,0.55) 0%,rgba(8,6,15,0.18) 50%,rgba(8,6,15,0.75) 100%);
+}
+.grain{
+	position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0.07;mix-blend-mode:overlay;
+	background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+/* ───── DRIFTING MOTES ───── */
+.motes{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.mote{
+	position:absolute;border-radius:50%;background:var(--gold-bright);
+	opacity:0;animation:mote-shimmer var(--dur,12s) ease-in-out var(--delay,0s) infinite;
+	box-shadow:0 0 6px rgba(196,147,90,0.8),0 0 12px rgba(196,147,90,0.4);
+}
+@keyframes mote-shimmer{
+	0%,100%{opacity:0;transform:translateY(0)}
+	50%{opacity:0.55;transform:translateY(-30px)}
+}
+
+/* ───── PAGE FRAME ───── */
+.frame{
+	position:relative;z-index:3;
+	display:grid;grid-template-rows:auto 1fr auto;
+	height:100dvh;height:100vh;
+	padding:clamp(1.25rem,3vw,2.5rem) clamp(1.25rem,4vw,3rem);
+	gap:clamp(1.25rem,3vw,2.5rem);
+}
+
+/* ───── HEADER (brand) ───── */
+.brand{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;opacity:0;animation:reveal 1.6s ease forwards 0.2s}
+.brand-mark{
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.32em;text-transform:uppercase;color:var(--mist);
+	display:flex;flex-direction:column;gap:0.4rem;
+}
+.brand-mark .one{color:var(--gold);letter-spacing:0.42em}
+.brand-mark .two{font-style:italic;color:var(--mist);letter-spacing:0.18em;text-transform:none;font-size:0.78em}
+.brand-meta{
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.18em;text-transform:none;color:var(--ash);font-style:italic;
+	text-align:right;line-height:1.5;
+}
+
+/* ───── PLAYER STAGE (the spiral) ───── */
+.player{
+	display:flex;flex-direction:column;align-items:center;justify-content:center;
+	gap:clamp(1.5rem,3.5vw,3rem);
+	padding:clamp(1rem,2vw,2rem) 0;
+	min-height:0;
+}
+
+.spiral-wrap{
+	position:relative;
+	width:min(46vh,min(60vw,420px));
+	aspect-ratio:1/1;
+	display:flex;align-items:center;justify-content:center;
+	opacity:0;animation:reveal-scale 2s ease forwards 0.6s;
+}
+
+.spiral-halo{
+	position:absolute;inset:-12%;border-radius:50%;
+	background:radial-gradient(ellipse at center,
+		rgba(196,147,90,0.22) 0%,
+		rgba(196,147,90,0.08) 35%,
+		transparent 65%);
+	pointer-events:none;
+	transition:opacity 1.2s ease,transform 1.2s ease;
+	opacity:0.35;
+}
+.is-playing .spiral-halo{
+	opacity:0.85;
+	animation:halo-breathe 4.5s ease-in-out infinite;
+}
+@keyframes halo-breathe{
+	0%,100%{transform:scale(1);opacity:0.7}
+	50%{transform:scale(1.06);opacity:0.95}
+}
+
+.spiral-button{
+	all:unset;cursor:pointer;
+	width:100%;height:100%;
+	display:flex;align-items:center;justify-content:center;
+	border-radius:50%;
+	transition:transform 0.6s cubic-bezier(.2,.7,.2,1),filter 0.6s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.spiral-button:hover{transform:scale(1.03);filter:drop-shadow(0 0 24px rgba(196,147,90,0.5))}
+.spiral-button:focus-visible{outline:none;filter:drop-shadow(0 0 24px rgba(196,147,90,0.7))}
+.spiral-button:active{transform:scale(0.98)}
+
+.spiral-svg{
+	width:100%;height:100%;
+	transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter 1.2s ease;
+	filter:drop-shadow(0 0 18px rgba(196,147,90,0.18));
+}
+.is-playing .spiral-svg{
+	animation:spiral-rotate 140s linear infinite;
+	filter:drop-shadow(0 0 24px rgba(196,147,90,0.55));
+}
+@keyframes spiral-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.spiral-svg .spiral-stroke{
+	stroke:var(--gold);
+	transition:stroke 1.2s ease,opacity 1.2s ease;
+	opacity:0.6;
+}
+.is-playing .spiral-svg .spiral-stroke{stroke:var(--gold-bright);opacity:0.95}
+.spiral-svg .spiral-core{
+	fill:var(--gold);transition:fill 1.2s ease,r 0.8s ease;
+}
+.is-playing .spiral-svg .spiral-core{fill:var(--gold-bright)}
+.spiral-svg .spiral-ring{
+	stroke:var(--gold);opacity:0.18;transition:opacity 1.2s ease;
+}
+.is-playing .spiral-svg .spiral-ring{opacity:0.45}
+
+/* a soft ripple on track-change */
+.spiral-wrap.is-changing .spiral-svg{animation:spiral-pulse 1s ease}
+@keyframes spiral-pulse{
+	0%{transform:scale(1)}
+	35%{transform:scale(0.93)}
+	100%{transform:scale(1)}
+}
+
+/* ───── TRACK INFO (below spiral) ───── */
+.track-info{
+	text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.6rem;
+	max-width:min(640px,90vw);
+	min-height:5rem;
+}
+.track-title{
+	font-family:'Cormorant Garamond',serif;
+	font-size:var(--text-md);font-weight:400;font-style:italic;
+	color:var(--parchment);
+	margin:0;line-height:1.25;
+	transition:opacity 0.6s ease,transform 0.6s ease;
+	text-shadow:0 0 24px rgba(8,6,15,0.85),0 1px 2px rgba(8,6,15,0.95);
+}
+.track-caption{
+	font-family:'Cormorant Garamond',serif;
+	font-size:var(--text-xs);letter-spacing:0.32em;text-transform:uppercase;
+	color:var(--gold);margin:0;
+	text-shadow:0 0 14px rgba(196,147,90,0.4),0 1px 2px rgba(8,6,15,0.95);
+	transition:opacity 0.6s ease;
+}
+.track-info.is-fading .track-title,.track-info.is-fading .track-caption{opacity:0;transform:translateY(0.4rem)}
+
+/* invitation text shown before first play */
+.invitation{
+	font-family:'Cormorant Garamond',serif;
+	font-size:var(--text-sm);font-style:italic;color:var(--mist);
+	letter-spacing:0.06em;
+	opacity:0;animation:reveal 1.6s ease forwards 1.4s;
+	display:flex;align-items:center;gap:0.8rem;
+}
+.invitation::before,.invitation::after{
+	content:"";display:inline-block;width:clamp(2rem,5vw,4rem);height:1px;
+	background:linear-gradient(to right,transparent,var(--ash),transparent);
+}
+.invitation.is-hidden{opacity:0;pointer-events:none;animation:none}
+
+/* ───── BOTTOM BAR (progress + controls) ───── */
+.foot{
+	display:flex;flex-direction:column;gap:0.9rem;
+	opacity:0;animation:reveal 1.6s ease forwards 1.0s;
+}
+.progress{
+	position:relative;height:1px;background:rgba(122,112,144,0.25);
+	width:min(560px,86vw);margin:0 auto;overflow:hidden;
+}
+.progress-fill{
+	position:absolute;left:0;top:0;height:100%;width:0;
+	background:linear-gradient(90deg,var(--gold) 0%,var(--gold-bright) 100%);
+	box-shadow:0 0 8px rgba(196,147,90,0.6);
+	transition:width 0.25s linear;
+}
+.progress-fill::after{
+	content:"";position:absolute;right:-2px;top:-3px;width:7px;height:7px;border-radius:50%;
+	background:var(--gold-bright);box-shadow:0 0 10px rgba(196,147,90,0.9);
+	transition:opacity 0.4s ease;
+}
+.is-paused .progress-fill::after{opacity:0.4}
+
+.controls{
+	display:flex;align-items:center;justify-content:center;
+	gap:clamp(1rem,3vw,2.5rem);flex-wrap:wrap;
+}
+.ctrl{
+	all:unset;cursor:pointer;
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.32em;text-transform:uppercase;color:var(--mist);
+	padding:0.5rem 0.2rem;
+	transition:color 0.4s ease,letter-spacing 0.4s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.ctrl:hover,.ctrl:focus-visible{color:var(--gold-bright);letter-spacing:0.42em;outline:none}
+.ctrl[disabled]{opacity:0.4;pointer-events:none}
+.ctrl .glyph{display:inline-block;margin:0 0.45em;color:var(--gold);transform:translateY(-1px)}
+.ctrl .glyph-mute{color:var(--ash)}
+.ctrl-list{margin-left:auto}
+
+/* ───── DRAWER (track list) ───── */
+.drawer-scrim{
+	position:fixed;inset:0;z-index:8;background:rgba(8,6,15,0.78);
+	backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+	opacity:0;pointer-events:none;transition:opacity 0.5s ease;
+}
+.drawer-scrim.is-open{opacity:1;pointer-events:auto}
+
+.drawer{
+	position:fixed;top:0;right:0;bottom:0;z-index:9;
+	width:min(440px,92vw);
+	background:rgba(16,13,28,0.92);
+	border-left:1px solid rgba(196,147,90,0.22);
+	transform:translateX(100%);
+	transition:transform 0.6s cubic-bezier(.2,.7,.2,1);
+	display:flex;flex-direction:column;
+	padding:clamp(1.5rem,3vw,2.5rem);
+	overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.drawer.is-open{transform:translateX(0)}
+.drawer-head{
+	display:flex;justify-content:space-between;align-items:baseline;
+	margin-bottom:1.5rem;padding-bottom:1.25rem;
+	border-bottom:1px solid rgba(196,147,90,0.18);
+}
+.drawer-title{
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);
+	letter-spacing:0.42em;text-transform:uppercase;color:var(--gold);margin:0;
+}
+.drawer-close{
+	all:unset;cursor:pointer;
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.32em;text-transform:uppercase;color:var(--mist);
+	padding:0.4rem 0.6rem;transition:color 0.3s ease;
+}
+.drawer-close:hover{color:var(--gold-bright)}
+
+.tracklist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.15rem}
+.track-row{
+	all:unset;cursor:pointer;display:grid;grid-template-columns:2.2rem 1fr;align-items:baseline;
+	padding:0.7rem 0.5rem 0.7rem 0;
+	border-bottom:1px dashed rgba(122,112,144,0.18);
+	transition:background 0.3s ease,padding 0.3s ease;
+}
+.track-row:hover,.track-row:focus-visible{background:rgba(196,147,90,0.06);padding-left:0.4rem;outline:none}
+.track-row .num{
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.18em;color:var(--ash);font-variant-numeric:tabular-nums;
+}
+.track-row .meta{display:flex;flex-direction:column;gap:0.18rem;min-width:0}
+.track-row .name{
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);
+	font-style:italic;color:var(--cream);font-weight:400;line-height:1.3;
+}
+.track-row .where{
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.28em;text-transform:uppercase;color:var(--ash);
+}
+.track-row.is-active{background:rgba(196,147,90,0.1)}
+.track-row.is-active .num{color:var(--gold-bright)}
+.track-row.is-active .name{color:var(--parchment)}
+.track-row.is-active .where{color:var(--gold)}
+.track-row.is-active .num::before{content:"◆ ";color:var(--gold);letter-spacing:0;font-size:0.85em}
+
+.drawer-foot{
+	margin-top:auto;padding-top:1.5rem;
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	font-style:italic;color:var(--ash);letter-spacing:0.06em;line-height:1.6;
+}
+
+/* ───── ANIMATIONS ───── */
+@keyframes reveal{from{opacity:0;transform:translateY(0.6rem)}to{opacity:1;transform:translateY(0)}}
+@keyframes reveal-scale{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+
+/* ───── REDUCED MOTION ───── */
+@media (prefers-reduced-motion:reduce){
+	*,*::before,*::after{
+		animation-duration:0.01ms!important;animation-iteration-count:1!important;
+		transition-duration:0.01ms!important;
+	}
+	.is-playing .spiral-svg{animation:none}
+	.is-playing .spiral-halo{animation:none}
+}
+
+/* ───── SMALL SCREENS ───── */
+@media (max-width:480px){
+	.brand-meta{font-size:0.65rem}
+	.controls{gap:1.4rem}
+	.ctrl-list{margin-left:0;width:100%;text-align:center;padding-top:0.5rem}
+}
+</style>
+</head>
+<body class="is-paused">
+
+<div class="bg-stage" aria-hidden="true">
+	<div class="bg-layer is-active" id="bg-a"></div>
+	<div class="bg-layer" id="bg-b"></div>
+</div>
+<div class="tint" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="motes" id="motes" aria-hidden="true"></div>
+
+<div class="frame">
+
+	<header class="brand">
+		<div class="brand-mark">
+			<span class="one">Chronicles of Lirien</span>
+			<span class="two">a small room for the music — on shuffle, on loop</span>
+		</div>
+		<div class="brand-meta" id="brandMeta">sixteen pieces<br>order: shuffled</div>
+	</header>
+
+	<main class="player">
+		<div class="spiral-wrap" id="spiralWrap">
+			<div class="spiral-halo" aria-hidden="true"></div>
+			<button class="spiral-button" id="spiralBtn"
+			        type="button" aria-label="Play or pause" aria-pressed="false">
+				<svg class="spiral-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+					<polyline class="spiral-stroke" points="16.00,15.00 16.13,14.91 16.27,14.83 16.44,14.78 16.62,14.75 16.82,14.74 17.02,14.77 17.23,14.82 17.43,14.91 17.64,15.03 17.83,15.19 18.00,15.37 18.16,15.59 18.29,15.83 18.40,16.10 18.47,16.39 18.50,16.70 18.50,17.02 18.45,17.35 18.36,17.68 18.23,18.01 18.05,18.33 17.83,18.63 17.56,18.91 17.25,19.16 16.91,19.38 16.53,19.56 16.12,19.70 15.68,19.79 15.23,19.82 14.76,19.80 14.29,19.73 13.82,19.59 13.36,19.40 12.92,19.14 12.50,18.83 12.12,18.46 11.77,18.05 11.47,17.58 11.22,17.07 11.03,16.52 10.90,15.95 10.84,15.35 10.85,14.74 10.94,14.12 11.10,13.50 11.34,12.90 11.65,12.32 12.03,11.77 12.48,11.26 13.00,10.80 13.58,10.40 14.21,10.06 14.88,9.80 15.60,9.61 16.34,9.51 17.10,9.49 17.87,9.57 18.64,9.73 19.39,9.99 20.11,10.34 20.81,10.77 21.45,11.30 22.04,11.90 22.56,12.57 23.00,13.31 23.36,14.11 23.63,14.95 23.80,15.84 23.86,16.74 23.83,17.66 23.68,18.58 23.42,19.49 23.05,20.37 22.58,21.22 22.01,22.01 21.34,22.74 20.58,23.39 19.75,23.96 18.84,24.44 17.87,24.80 16.86,25.06 15.81,25.20 14.74,25.21 13.66,25.10 12.60,24.87 11.55,24.51 10.55,24.02 9.60,23.42 8.71,22.70 7.91,21.88 7.20,20.96 6.60,19.95 6.11,18.87 5.75,17.73 5.51,16.55 5.42,15.33 5.47,14.11 5.66,12.88 6.00,11.67 6.47,10.50 7.09,9.38 7.84,8.33 8.71,7.37 9.69,6.50 10.78,5.75 11.96,5.13 13.21,4.64 14.52,4.29 15.88,4.10 17.25,4.07 18.64,4.19 20.01,4.48 21.35,4.93 22.64,5.53 23.87,6.29 25.00,7.18 26.03,8.22 26.95,9.37 27.73,10.63 28.36,11.98" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+					<circle class="spiral-core" cx="16" cy="16" r="1.4"/>
+					<circle class="spiral-ring" cx="16" cy="16" r="14" stroke-width="0.4" fill="none"/>
+				</svg>
+			</button>
+		</div>
+
+		<div class="track-info" id="trackInfo">
+			<h1 class="track-title" id="trackTitle">A small room of music</h1>
+			<p class="track-caption" id="trackCaption">Touch the spiral to begin</p>
+		</div>
+
+		<div class="invitation" id="invitation">
+			<span>the spiral plays when you ask it to</span>
+		</div>
+	</main>
+
+	<footer class="foot">
+		<div class="progress" aria-hidden="true">
+			<div class="progress-fill" id="progressFill"></div>
+		</div>
+		<div class="controls">
+			<button class="ctrl" id="prevBtn" type="button">Previous</button>
+			<button class="ctrl" id="playBtn" type="button">Begin</button>
+			<button class="ctrl" id="nextBtn" type="button">Next</button>
+			<button class="ctrl ctrl-list" id="listBtn" type="button" aria-haspopup="dialog">All sixteen <span class="glyph">◆</span></button>
+		</div>
+	</footer>
+
+</div>
+
+<div class="drawer-scrim" id="drawerScrim" aria-hidden="true"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Track list" aria-hidden="true">
+	<div class="drawer-head">
+		<h2 class="drawer-title">The Music</h2>
+		<button class="drawer-close" id="drawerClose" type="button">Close</button>
+	</div>
+	<ol class="tracklist" id="tracklist"></ol>
+	<div class="drawer-foot">
+		Sixteen pieces written for <em>The Spiral That Remembers</em>. They play in
+		shuffled order, never repeating until each has been heard. Touch any
+		title to step there directly.
+	</div>
+</aside>
+
+<audio id="audio" preload="auto" crossorigin="anonymous"></audio>
+
+<script>
+"use strict";
+
+// ─────────────────────────────────────────────────────────────────
+// Track manifest. Each entry binds the music file to a chapter
+// atmosphere image (so listening is also a montage through the
+// book's images) and gives the piece a presented title + motif.
+// ─────────────────────────────────────────────────────────────────
+
+const TRACKS = [
+	{file:"world_waking.ogg",            title:"The World Wakes",
+	 caption:"Chapter One — Aerin awakens",
+	 image:"ch01_aerin_awakens.png"},
+	{file:"ash_plains.ogg",              title:"Ash Plains",
+	 caption:"Chapter One — the displaced hollow",
+	 image:"ch01_ash_hollow_panorama.png"},
+	{file:"thistle_1.ogg",               title:"Thistle, Mischief",
+	 caption:"the foxglitch, awake",
+	 image:"ch03_waking_with_thistle.png"},
+	{file:"thistle_2.ogg",               title:"Thistle, Quiet",
+	 caption:"the foxglitch, listening",
+	 image:"ch03_thistle_rest.png"},
+	{file:"thistle_theme.ogg",           title:"Thistle's Theme",
+	 caption:"the companion",
+	 image:"ch03_thistle_joke.png"},
+	{file:"solrien_1.ogg",               title:"Approach to Solrien",
+	 caption:"Chapter One — first sight",
+	 image:"ch01_approach_to_solrien.png"},
+	{file:"solrien_2.ogg",               title:"Streets That Remember",
+	 caption:"Chapter Two — walking the city",
+	 image:"ch02_first_sight_solrien.png"},
+	{file:"solrien_morning.ogg",         title:"Morning in Solrien",
+	 caption:"Chapter Three — the threshold",
+	 image:"ch03_solrien_morning.png"},
+	{file:"solrien_morning_shifted.ogg", title:"The City, Made Up Its Mind",
+	 caption:"Chapter Three — next morning",
+	 image:"ch03_next_morning.png"},
+	{file:"solrien_night.ogg",           title:"Solrien at Night",
+	 caption:"the city, after",
+	 image:"ch03_evening_with_shard.png"},
+	{file:"quiet_room.ogg",              title:"A Quiet Room",
+	 caption:"Chapter Three — the tone-scribe's tower",
+	 image:"ch03_tonescribe_room.png"},
+	{file:"warm_transition.ogg",         title:"Warm Transition",
+	 caption:"between rooms",
+	 image:"ch03_tonescribe_tea.png"},
+	{file:"ysolde_theme.ogg",            title:"Ysolde",
+	 caption:"Chapter Three — the threshold figure",
+	 image:"ch03_ysolde_first_appearance.png"},
+	{file:"archive.ogg",                 title:"The Archive",
+	 caption:"Chapter Two — the resonance shell",
+	 image:"ch02_archive_establishing.png"},
+	{file:"archive_gravitas.ogg",        title:"Archive Gravitas",
+	 caption:"Chapter Three — the cost",
+	 image:"ch03_archive_fading_figure.png"},
+	{file:"corrupted_areas.ogg",         title:"Where the Substrate Wore Through",
+	 caption:"the corrupted regions",
+	 image:"ch01_displacement.png"},
+];
+
+const MUSIC_BASE = "../lirien/music/";
+const ATMOS_BASE = "../lirien/atmosphere/";
+
+// ─────────────────────────────────────────────────────────────────
+// DOM
+// ─────────────────────────────────────────────────────────────────
+const $audio        = document.getElementById("audio");
+const $bgA          = document.getElementById("bg-a");
+const $bgB          = document.getElementById("bg-b");
+const $spiralBtn    = document.getElementById("spiralBtn");
+const $spiralWrap   = document.getElementById("spiralWrap");
+const $trackInfo    = document.getElementById("trackInfo");
+const $trackTitle   = document.getElementById("trackTitle");
+const $trackCaption = document.getElementById("trackCaption");
+const $invitation   = document.getElementById("invitation");
+const $progressFill = document.getElementById("progressFill");
+const $playBtn      = document.getElementById("playBtn");
+const $prevBtn      = document.getElementById("prevBtn");
+const $nextBtn      = document.getElementById("nextBtn");
+const $listBtn      = document.getElementById("listBtn");
+const $drawer       = document.getElementById("drawer");
+const $drawerScrim  = document.getElementById("drawerScrim");
+const $drawerClose  = document.getElementById("drawerClose");
+const $tracklist    = document.getElementById("tracklist");
+
+// ─────────────────────────────────────────────────────────────────
+// Shuffle: per-pass Fisher-Yates so each track plays once before
+// any repeats. Reshuffle when the queue is exhausted.
+// ─────────────────────────────────────────────────────────────────
+let queue = [];
+let queueIdx = -1;
+let history = [];     // visited-order, for Previous
+let activeIdx = -1;   // index into TRACKS for the currently-loaded track
+let started = false;  // has the user clicked play at least once
+let activeBg = "a";   // which bg layer is currently visible
+
+function reshuffle(skipFirst){
+	const idx = TRACKS.map((_,i)=>i);
+	for (let i=idx.length-1;i>0;i--){
+		const j = Math.floor(Math.random()*(i+1));
+		[idx[i],idx[j]] = [idx[j],idx[i]];
+	}
+	// Avoid landing the freshly-shuffled queue's first element on the
+	// track that just finished (otherwise back-to-back same track on
+	// shuffle wraparound).
+	if (skipFirst != null && idx.length > 1 && idx[0] === skipFirst){
+		[idx[0],idx[1]] = [idx[1],idx[0]];
+	}
+	queue = idx;
+	queueIdx = -1;
+}
+
+function nextIndex(){
+	queueIdx += 1;
+	if (queueIdx >= queue.length) reshuffle(activeIdx);
+	return queue[queueIdx];
+}
+
+function previousIndex(){
+	if (history.length >= 2){
+		history.pop();           // pop current
+		return history.pop();    // and step to prior
+	}
+	return null;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Loading + playback
+// ─────────────────────────────────────────────────────────────────
+function setBg(imageFile){
+	const url = ATMOS_BASE + imageFile;
+	const incoming = activeBg === "a" ? $bgB : $bgA;
+	const outgoing = activeBg === "a" ? $bgA : $bgB;
+	incoming.style.backgroundImage = `url("${url}")`;
+	// double-RAF so the transition fires after the background-image
+	// has had a chance to layout in some engines
+	requestAnimationFrame(()=>requestAnimationFrame(()=>{
+		incoming.classList.add("is-active");
+		outgoing.classList.remove("is-active");
+		activeBg = activeBg === "a" ? "b" : "a";
+	}));
+}
+
+function loadTrack(idx, opts){
+	opts = opts || {};
+	if (idx == null || idx < 0 || idx >= TRACKS.length) return;
+	const track = TRACKS[idx];
+	activeIdx = idx;
+	if (history[history.length-1] !== idx) history.push(idx);
+
+	// fade text out, then update + fade in
+	$trackInfo.classList.add("is-fading");
+	$spiralWrap.classList.add("is-changing");
+	setTimeout(()=>{
+		$trackTitle.textContent = track.title;
+		$trackCaption.textContent = track.caption;
+		$trackInfo.classList.remove("is-fading");
+	}, 350);
+	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
+
+	setBg(track.image);
+	updateActiveRow();
+
+	$audio.src = MUSIC_BASE + track.file;
+	if (opts.play !== false){
+		const p = $audio.play();
+		if (p && p.catch) p.catch(()=>{ /* autoplay may block; silent */ });
+	}
+}
+
+function play(){
+	if (activeIdx < 0){
+		loadTrack(nextIndex(), {play:true});
+		return;
+	}
+	const p = $audio.play();
+	if (p && p.catch) p.catch(()=>{});
+}
+
+function pause(){ $audio.pause(); }
+function togglePlay(){ $audio.paused ? play() : pause(); }
+
+function next(){ loadTrack(nextIndex(), {play:!$audio.paused}); }
+function previous(){
+	const idx = previousIndex();
+	if (idx == null){ $audio.currentTime = 0; return; }
+	loadTrack(idx, {play:!$audio.paused});
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Audio events drive UI state
+// ─────────────────────────────────────────────────────────────────
+$audio.addEventListener("play",  ()=>{
+	started = true;
+	document.body.classList.remove("is-paused");
+	document.body.classList.add("is-playing");
+	$playBtn.textContent = "Pause";
+	$spiralBtn.setAttribute("aria-pressed","true");
+	$invitation.classList.add("is-hidden");
+});
+$audio.addEventListener("pause", ()=>{
+	document.body.classList.remove("is-playing");
+	document.body.classList.add("is-paused");
+	$playBtn.textContent = "Resume";
+	$spiralBtn.setAttribute("aria-pressed","false");
+});
+$audio.addEventListener("ended", ()=>{ next(); });
+$audio.addEventListener("error", ()=>{
+	// move past a bad file — never get stuck on a single track
+	console.warn("[jukebox] audio error, advancing", $audio.src);
+	setTimeout(next, 250);
+});
+$audio.addEventListener("timeupdate", ()=>{
+	if (!$audio.duration || !isFinite($audio.duration)) return;
+	const pct = ($audio.currentTime / $audio.duration) * 100;
+	$progressFill.style.width = pct.toFixed(2) + "%";
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Controls
+// ─────────────────────────────────────────────────────────────────
+$spiralBtn.addEventListener("click", ()=>{
+	if (!started){ play(); return; }
+	togglePlay();
+});
+$playBtn.addEventListener("click", ()=>{
+	if (!started){ play(); return; }
+	togglePlay();
+});
+$prevBtn.addEventListener("click", previous);
+$nextBtn.addEventListener("click", next);
+
+// keyboard
+document.addEventListener("keydown", (ev)=>{
+	if (ev.target && /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+	if (ev.code === "Space"){ ev.preventDefault(); $spiralBtn.click(); }
+	else if (ev.code === "ArrowRight") next();
+	else if (ev.code === "ArrowLeft")  previous();
+	else if (ev.code === "Escape" && $drawer.classList.contains("is-open")) closeDrawer();
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Drawer + track list
+// ─────────────────────────────────────────────────────────────────
+function buildTracklist(){
+	const frag = document.createDocumentFragment();
+	TRACKS.forEach((t,i)=>{
+		const li = document.createElement("li");
+		const btn = document.createElement("button");
+		btn.type = "button";
+		btn.className = "track-row";
+		btn.dataset.idx = String(i);
+		btn.innerHTML = `
+			<span class="num">${String(i+1).padStart(2,"0")}</span>
+			<span class="meta">
+				<span class="name">${escapeHtml(t.title)}</span>
+				<span class="where">${escapeHtml(t.caption)}</span>
+			</span>`;
+		btn.addEventListener("click", ()=>{
+			loadTrack(i, {play:true});
+			closeDrawer();
+		});
+		li.appendChild(btn);
+		frag.appendChild(li);
+	});
+	$tracklist.innerHTML = "";
+	$tracklist.appendChild(frag);
+}
+function updateActiveRow(){
+	$tracklist.querySelectorAll(".track-row").forEach((row)=>{
+		row.classList.toggle("is-active", Number(row.dataset.idx) === activeIdx);
+	});
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function openDrawer(){
+	$drawer.classList.add("is-open");
+	$drawerScrim.classList.add("is-open");
+	$drawer.setAttribute("aria-hidden","false");
+	$drawerScrim.setAttribute("aria-hidden","false");
+	$drawerClose.focus();
+}
+function closeDrawer(){
+	$drawer.classList.remove("is-open");
+	$drawerScrim.classList.remove("is-open");
+	$drawer.setAttribute("aria-hidden","true");
+	$drawerScrim.setAttribute("aria-hidden","true");
+	$listBtn.focus();
+}
+$listBtn.addEventListener("click", openDrawer);
+$drawerClose.addEventListener("click", closeDrawer);
+$drawerScrim.addEventListener("click", closeDrawer);
+
+// ─────────────────────────────────────────────────────────────────
+// Drifting motes
+// ─────────────────────────────────────────────────────────────────
+(function spawnMotes(){
+	const root = document.getElementById("motes");
+	const n = 14;
+	for (let i=0;i<n;i++){
+		const el = document.createElement("span");
+		el.className = "mote";
+		const size = 2 + Math.random()*3;
+		el.style.width = size+"px";
+		el.style.height = size+"px";
+		el.style.left = (Math.random()*100).toFixed(2)+"%";
+		el.style.top  = (Math.random()*100).toFixed(2)+"%";
+		el.style.setProperty("--dur", (8 + Math.random()*14).toFixed(1)+"s");
+		el.style.setProperty("--delay", (-Math.random()*15).toFixed(1)+"s");
+		root.appendChild(el);
+	}
+})();
+
+// ─────────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────────
+reshuffle();
+buildTracklist();
+// Prime the first bg with a placeholder image so the page isn't
+// jarringly black before first play. We use the first queued track's
+// image but DON'T load its audio yet — the user has to ask first.
+{
+	const firstIdx = queue[0];
+	const firstImage = TRACKS[firstIdx].image;
+	$bgA.style.backgroundImage = `url("${ATMOS_BASE + firstImage}")`;
+	$bgA.classList.add("is-active");
+}
+</script>
+</body>
+</html>

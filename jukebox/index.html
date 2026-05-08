@@ -92,7 +92,17 @@ body{
 	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
 	letter-spacing:0.18em;text-transform:none;color:var(--ash);font-style:italic;
 	text-align:right;line-height:1.5;
+	display:flex;flex-direction:column;align-items:flex-end;gap:0.05rem;
 }
+.brand-meta .mode-toggle{
+	all:unset;cursor:pointer;color:var(--ash);
+	font-style:italic;letter-spacing:inherit;font-size:inherit;font-family:inherit;
+	transition:color 0.3s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.brand-meta .mode-toggle:hover,.brand-meta .mode-toggle:focus-visible{color:var(--mist);outline:none}
+.brand-meta .mode-toggle:hover .mode-value,.brand-meta .mode-toggle:focus-visible .mode-value{color:var(--gold-bright)}
+.brand-meta .mode-value{color:var(--gold);transition:color 0.3s ease}
 
 /* ───── PLAYER STAGE (the spiral) ───── */
 .player{
@@ -104,29 +114,36 @@ body{
 
 .spiral-wrap{
 	position:relative;
-	width:min(46vh,min(60vw,420px));
+	width:min(82vh,min(96vw,820px));
 	aspect-ratio:1/1;
+	margin-top:clamp(1rem,5vh,4rem);
 	display:flex;align-items:center;justify-content:center;
 	opacity:0;animation:reveal-scale 2s ease forwards 0.6s;
 }
 
+/* The halo is the spiral's glow. It's a static radial-gradient div
+   (cheap, GPU-composited) rather than drop-shadow filters on the
+   image itself — drop-shadow on an 820px rotating image was causing
+   audio buffer underruns, since the main thread spent every paint
+   frame re-blurring the shadow and starved audio scheduling. */
 .spiral-halo{
-	position:absolute;inset:-12%;border-radius:50%;
+	position:absolute;inset:-15%;border-radius:50%;
 	background:radial-gradient(ellipse at center,
-		rgba(196,147,90,0.22) 0%,
-		rgba(196,147,90,0.08) 35%,
-		transparent 65%);
+		rgba(196,147,90,0.30) 0%,
+		rgba(196,147,90,0.14) 28%,
+		rgba(196,147,90,0.05) 50%,
+		transparent 70%);
 	pointer-events:none;
-	transition:opacity 1.2s ease,transform 1.2s ease;
-	opacity:0.35;
+	transition:opacity 1.2s ease;
+	opacity:0.5;
 }
 .is-playing .spiral-halo{
-	opacity:0.85;
+	opacity:1;
 	animation:halo-breathe 4.5s ease-in-out infinite;
 }
 @keyframes halo-breathe{
-	0%,100%{transform:scale(1);opacity:0.7}
-	50%{transform:scale(1.06);opacity:0.95}
+	0%,100%{transform:scale(1);opacity:0.85}
+	50%{transform:scale(1.08);opacity:1}
 }
 
 .spiral-button{
@@ -149,23 +166,33 @@ body{
 	   lands. Keeps rotation stable instead of wobbling around a
 	   misaligned axis. */
 	transform-origin:50% 47%;
-	transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter 1.2s ease,opacity 1.2s ease;
-	filter:drop-shadow(0 0 18px rgba(196,147,90,0.22)) brightness(0.85) saturate(0.85);
-	opacity:0.85;
+	/* Rotation is JS-driven from the audio's timeupdate event so the
+	   spiral's spin == the song's progress, counter-clockwise, one
+	   full revolution per track. No CSS transform transition here so
+	   the angle update is immediate and smooth.
+
+	   IMPORTANT: no drop-shadow filters here. drop-shadow on a large
+	   rotating image is paint-expensive enough that it starves audio
+	   scheduling on the main thread (popping + dropouts). Brightness
+	   and saturate are cheap pixel-multipliers; the glow lives on
+	   the .spiral-halo gradient layer next to this. */
+	transition:filter 1.2s ease,opacity 1.2s ease;
+	filter:brightness(0.78) saturate(0.85);
+	opacity:0.92;
+	will-change:transform;
 }
 .is-playing .spiral-img{
-	animation:spiral-rotate 140s linear infinite;
-	filter:drop-shadow(0 0 28px rgba(196,147,90,0.65)) drop-shadow(0 0 60px rgba(224,176,112,0.25)) brightness(1.05) saturate(1.05);
+	filter:brightness(1.05) saturate(1.05);
 	opacity:1;
 }
-@keyframes spiral-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-/* a soft ripple on track-change */
-.spiral-wrap.is-changing .spiral-img{animation:spiral-pulse 1s ease}
+/* track-change ripple lives on the wrap (which doesn't rotate) so it
+   doesn't fight the JS-driven rotate transform on the img */
+.spiral-wrap.is-changing{animation:spiral-pulse 1s ease}
 @keyframes spiral-pulse{
-	0%{transform:rotate(var(--r,0deg)) scale(1)}
-	35%{transform:rotate(var(--r,0deg)) scale(0.93)}
-	100%{transform:rotate(var(--r,0deg)) scale(1)}
+	0%{transform:scale(1)}
+	35%{transform:scale(0.94)}
+	100%{transform:scale(1)}
 }
 
 /* ───── TRACK INFO (below spiral) ───── */
@@ -211,8 +238,18 @@ body{
 	opacity:0;animation:reveal 1.6s ease forwards 1.0s;
 }
 .progress{
-	position:relative;height:1px;background:rgba(122,112,144,0.25);
-	width:min(560px,86vw);margin:0 auto;overflow:hidden;
+	position:relative;height:18px;width:min(560px,86vw);margin:0 auto;
+	cursor:pointer;display:flex;align-items:center;
+	-webkit-tap-highlight-color:transparent;
+}
+.progress:focus-visible{outline:none}
+.progress-track{
+	position:relative;width:100%;height:1px;
+	background:rgba(122,112,144,0.28);
+	transition:background 0.3s ease,height 0.3s ease;
+}
+.progress:hover .progress-track,.progress:focus-visible .progress-track{
+	background:rgba(196,147,90,0.45);height:2px;
 }
 .progress-fill{
 	position:absolute;left:0;top:0;height:100%;width:0;
@@ -221,7 +258,8 @@ body{
 	transition:width 0.25s linear;
 }
 .progress-fill::after{
-	content:"";position:absolute;right:-2px;top:-3px;width:7px;height:7px;border-radius:50%;
+	content:"";position:absolute;right:-3px;top:50%;transform:translateY(-50%);
+	width:7px;height:7px;border-radius:50%;
 	background:var(--gold-bright);box-shadow:0 0 10px rgba(196,147,90,0.9);
 	transition:opacity 0.4s ease;
 }
@@ -354,7 +392,11 @@ body{
 			<span class="one">Chronicles of Lirien</span>
 			<span class="two">a small room for the music — on shuffle, on loop</span>
 		</div>
-		<div class="brand-meta" id="brandMeta">sixteen pieces<br>order: shuffled</div>
+		<div class="brand-meta">
+			<span id="trackCountLabel">sixteen pieces</span>
+			<button class="mode-toggle" id="modeToggle" type="button"
+			        aria-label="Toggle play order">mode: <span class="mode-value" id="modeValue">shuffled</span></button>
+		</div>
 	</header>
 
 	<main class="player">
@@ -377,14 +419,19 @@ body{
 	</main>
 
 	<footer class="foot">
-		<div class="progress" aria-hidden="true">
-			<div class="progress-fill" id="progressFill"></div>
+		<div class="progress" id="progress"
+		     role="slider" aria-label="Track position"
+		     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+		     tabindex="0">
+			<div class="progress-track">
+				<div class="progress-fill" id="progressFill"></div>
+			</div>
 		</div>
 		<div class="controls">
 			<button class="ctrl" id="prevBtn" type="button">Previous</button>
 			<button class="ctrl" id="playBtn" type="button">Begin</button>
 			<button class="ctrl" id="nextBtn" type="button">Next</button>
-			<button class="ctrl ctrl-list" id="listBtn" type="button" aria-haspopup="dialog">All sixteen <span class="glyph">◆</span></button>
+			<button class="ctrl ctrl-list" id="listBtn" type="button" aria-haspopup="dialog">All <span id="listBtnCount">sixteen</span> <span class="glyph">◆</span></button>
 		</div>
 	</footer>
 
@@ -398,7 +445,7 @@ body{
 	</div>
 	<ol class="tracklist" id="tracklist"></ol>
 	<div class="drawer-foot">
-		Sixteen pieces written for <em>The Spiral That Remembers</em>. They play in
+		<span id="drawerCountLabel">Sixteen</span> pieces written for <em>The Spiral That Remembers</em>. They play in
 		shuffled order, never repeating until each has been heard. Touch any
 		title to step there directly.
 	</div>
@@ -410,90 +457,82 @@ body{
 "use strict";
 
 // ─────────────────────────────────────────────────────────────────
-// Track manifest. Each entry binds the music file to a chapter
-// atmosphere image (so listening is also a montage through the
-// book's images) and gives the piece a presented title + motif.
+// Track manifest. Loaded from tracks.json (sibling file). Each entry
+// binds the music file to a chapter atmosphere image (so listening
+// is also a montage through the book's images) and gives the piece
+// a presented title + motif.
 // ─────────────────────────────────────────────────────────────────
 
-const TRACKS = [
-	{file:"world_waking.ogg",            title:"The World Wakes",
-	 caption:"Chapter One — Aerin awakens",
-	 image:"ch01_aerin_awakens.png"},
-	{file:"ash_plains.ogg",              title:"Ash Plains",
-	 caption:"Chapter One — the displaced hollow",
-	 image:"ch01_ash_hollow_panorama.png"},
-	{file:"thistle_1.ogg",               title:"Thistle, Mischief",
-	 caption:"the foxglitch, awake",
-	 image:"ch03_waking_with_thistle.png"},
-	{file:"thistle_2.ogg",               title:"Thistle, Quiet",
-	 caption:"the foxglitch, listening",
-	 image:"ch03_thistle_rest.png"},
-	{file:"thistle_theme.ogg",           title:"Thistle's Theme",
-	 caption:"the companion",
-	 image:"ch03_thistle_joke.png"},
-	{file:"solrien_1.ogg",               title:"Approach to Solrien",
-	 caption:"Chapter One — first sight",
-	 image:"ch01_approach_to_solrien.png"},
-	{file:"solrien_2.ogg",               title:"Streets That Remember",
-	 caption:"Chapter Two — walking the city",
-	 image:"ch02_first_sight_solrien.png"},
-	{file:"solrien_morning.ogg",         title:"Morning in Solrien",
-	 caption:"Chapter Three — the threshold",
-	 image:"ch03_solrien_morning.png"},
-	{file:"solrien_morning_shifted.ogg", title:"The City, Made Up Its Mind",
-	 caption:"Chapter Three — next morning",
-	 image:"ch03_next_morning.png"},
-	{file:"solrien_night.ogg",           title:"Solrien at Night",
-	 caption:"the city, after",
-	 image:"ch03_evening_with_shard.png"},
-	{file:"quiet_room.ogg",              title:"A Quiet Room",
-	 caption:"Chapter Three — the tone-scribe's tower",
-	 image:"ch03_tonescribe_room.png"},
-	{file:"warm_transition.ogg",         title:"Warm Transition",
-	 caption:"between rooms",
-	 image:"ch03_tonescribe_tea.png"},
-	{file:"ysolde_theme.ogg",            title:"Ysolde",
-	 caption:"Chapter Three — the threshold figure",
-	 image:"ch03_ysolde_first_appearance.png"},
-	{file:"archive.ogg",                 title:"The Archive",
-	 caption:"Chapter Two — the resonance shell",
-	 image:"ch02_archive_establishing.png"},
-	{file:"archive_gravitas.ogg",        title:"Archive Gravitas",
-	 caption:"Chapter Three — the cost",
-	 image:"ch03_archive_fading_figure.png"},
-	{file:"corrupted_areas.ogg",         title:"Where the Substrate Wore Through",
-	 caption:"the corrupted regions",
-	 image:"ch01_displacement.png"},
-];
+let TRACKS = [];
 
 const MUSIC_BASE = "../lirien/music/";
 const ATMOS_BASE = "../lirien/atmosphere/";
 
+async function loadTracks(){
+	const resp = await fetch("tracks.json", {cache:"no-store"});
+	if (!resp.ok) throw new Error(`tracks.json: ${resp.status}`);
+	TRACKS = await resp.json();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Number → English word, for the "sixteen pieces" / "All sixteen ◆"
+// labels. Covers 0–99 which is all we'll ever realistically need;
+// falls back to the digit string for anything larger.
+// ─────────────────────────────────────────────────────────────────
+const ONES = ["zero","one","two","three","four","five","six","seven","eight","nine",
+              "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen",
+              "seventeen","eighteen","nineteen"];
+const TENS = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+function spellNumber(n){
+	if (n < 20) return ONES[n];
+	if (n < 100){
+		const t = Math.floor(n/10), o = n%10;
+		return o === 0 ? TENS[t] : `${TENS[t]}-${ONES[o]}`;
+	}
+	return String(n);
+}
+function capFirst(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
 // ─────────────────────────────────────────────────────────────────
 // DOM
 // ─────────────────────────────────────────────────────────────────
-const $audio        = document.getElementById("audio");
-const $bgA          = document.getElementById("bg-a");
-const $bgB          = document.getElementById("bg-b");
-const $spiralBtn    = document.getElementById("spiralBtn");
-const $spiralWrap   = document.getElementById("spiralWrap");
-const $trackInfo    = document.getElementById("trackInfo");
-const $trackTitle   = document.getElementById("trackTitle");
-const $trackCaption = document.getElementById("trackCaption");
-const $invitation   = document.getElementById("invitation");
-const $progressFill = document.getElementById("progressFill");
-const $playBtn      = document.getElementById("playBtn");
-const $prevBtn      = document.getElementById("prevBtn");
-const $nextBtn      = document.getElementById("nextBtn");
-const $listBtn      = document.getElementById("listBtn");
-const $drawer       = document.getElementById("drawer");
-const $drawerScrim  = document.getElementById("drawerScrim");
-const $drawerClose  = document.getElementById("drawerClose");
-const $tracklist    = document.getElementById("tracklist");
+const $audio            = document.getElementById("audio");
+const $bgA              = document.getElementById("bg-a");
+const $bgB              = document.getElementById("bg-b");
+const $spiralBtn        = document.getElementById("spiralBtn");
+const $spiralWrap       = document.getElementById("spiralWrap");
+const $spiralImg        = document.querySelector(".spiral-img");
+const $trackInfo        = document.getElementById("trackInfo");
+const $trackTitle       = document.getElementById("trackTitle");
+const $trackCaption     = document.getElementById("trackCaption");
+const $invitation       = document.getElementById("invitation");
+const $progress         = document.getElementById("progress");
+const $progressFill     = document.getElementById("progressFill");
+const $playBtn          = document.getElementById("playBtn");
+const $prevBtn          = document.getElementById("prevBtn");
+const $nextBtn          = document.getElementById("nextBtn");
+const $listBtn          = document.getElementById("listBtn");
+const $listBtnCount     = document.getElementById("listBtnCount");
+const $drawer           = document.getElementById("drawer");
+const $drawerScrim      = document.getElementById("drawerScrim");
+const $drawerClose      = document.getElementById("drawerClose");
+const $tracklist        = document.getElementById("tracklist");
+const $trackCountLabel  = document.getElementById("trackCountLabel");
+const $drawerCountLabel = document.getElementById("drawerCountLabel");
+const $modeToggle       = document.getElementById("modeToggle");
+const $modeValue        = document.getElementById("modeValue");
 
 // ─────────────────────────────────────────────────────────────────
-// Shuffle: per-pass Fisher-Yates so each track plays once before
-// any repeats. Reshuffle when the queue is exhausted.
+// Queue + mode
+//
+// Two play modes, switchable from the brand-meta in the corner:
+//
+//   "shuffled"   — per-pass Fisher-Yates: each track plays exactly
+//                  once before any repeats, then reshuffles.
+//   "sequential" — play in TRACKS array order, looping at the end.
+//
+// History tracks visited-order regardless of mode, so Previous walks
+// back the way you came.
 // ─────────────────────────────────────────────────────────────────
 let queue = [];
 let queueIdx = -1;
@@ -501,6 +540,7 @@ let history = [];     // visited-order, for Previous
 let activeIdx = -1;   // index into TRACKS for the currently-loaded track
 let started = false;  // has the user clicked play at least once
 let activeBg = "a";   // which bg layer is currently visible
+let mode = "shuffled";
 
 function reshuffle(skipFirst){
 	const idx = TRACKS.map((_,i)=>i);
@@ -519,9 +559,25 @@ function reshuffle(skipFirst){
 }
 
 function nextIndex(){
+	if (mode === "sequential"){
+		if (activeIdx === -1) return 0;
+		return (activeIdx + 1) % TRACKS.length;
+	}
+	// shuffled
 	queueIdx += 1;
 	if (queueIdx >= queue.length) reshuffle(activeIdx);
 	return queue[queueIdx];
+}
+
+function toggleMode(){
+	mode = (mode === "shuffled") ? "sequential" : "shuffled";
+	if (mode === "shuffled") reshuffle(activeIdx);
+	updateModeLabel();
+}
+
+function updateModeLabel(){
+	$modeValue.textContent = mode;
+	$modeToggle.setAttribute("aria-pressed", mode === "sequential" ? "true" : "false");
 }
 
 function previousIndex(){
@@ -620,14 +676,22 @@ $audio.addEventListener("ended", ()=>{
 	loadTrack(nextIndex(), {play:true});
 });
 $audio.addEventListener("error", ()=>{
-	// move past a bad file — never get stuck on a single track
-	console.warn("[jukebox] audio error, advancing", $audio.src);
-	setTimeout(next, 250);
+	// Move past a bad file — never get stuck on a single track. Use
+	// `started` (not !$audio.paused) because an errored audio reads
+	// paused=true, which would otherwise stop the queue dead.
+	console.warn("[jukebox] audio error, advancing", $audio.error, $audio.src);
+	setTimeout(()=>loadTrack(nextIndex(), {play: started}), 500);
 });
 $audio.addEventListener("timeupdate", ()=>{
 	if (!$audio.duration || !isFinite($audio.duration)) return;
-	const pct = ($audio.currentTime / $audio.duration) * 100;
+	const ratio = $audio.currentTime / $audio.duration;   // 0..1
+	const pct = ratio * 100;
 	$progressFill.style.width = pct.toFixed(2) + "%";
+	$progress.setAttribute("aria-valuenow", pct.toFixed(0));
+	// Counter-clockwise: one full revolution per song. Spin speed
+	// equals song progress, so the spiral and the bar advance in
+	// lockstep.
+	$spiralImg.style.transform = `rotate(${(-360 * ratio).toFixed(2)}deg)`;
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -643,13 +707,41 @@ $playBtn.addEventListener("click", ()=>{
 });
 $prevBtn.addEventListener("click", previous);
 $nextBtn.addEventListener("click", next);
+$modeToggle.addEventListener("click", toggleMode);
 
-// keyboard
+// click-to-seek on the progress bar
+function seekFromEvent(ev){
+	if (!$audio.duration || !isFinite($audio.duration)) return;
+	const rect = $progress.getBoundingClientRect();
+	const x = (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX);
+	const ratio = Math.max(0, Math.min(1, (x - rect.left) / rect.width));
+	$audio.currentTime = ratio * $audio.duration;
+	// Drive immediate visual update — timeupdate may not fire instantly
+	// while the audio engine resyncs, especially when paused.
+	$progressFill.style.width = (ratio*100).toFixed(2) + "%";
+	$spiralImg.style.transform = `rotate(${(-360 * ratio).toFixed(2)}deg)`;
+}
+$progress.addEventListener("click", seekFromEvent);
+$progress.addEventListener("keydown", (ev)=>{
+	// Arrow keys when the bar has focus seek by ±5%.
+	if (!$audio.duration || !isFinite($audio.duration)) return;
+	if (ev.code === "ArrowLeft" || ev.code === "ArrowRight"){
+		ev.preventDefault();
+		const delta = (ev.code === "ArrowRight" ? 1 : -1) * 0.05;
+		const ratio = Math.max(0, Math.min(1, ($audio.currentTime / $audio.duration) + delta));
+		$audio.currentTime = ratio * $audio.duration;
+	}
+});
+
+// keyboard (global). Arrow keys on the focused progress bar mean
+// "seek" — handled by the slider's own listener — so we skip them
+// here when the bar has focus.
 document.addEventListener("keydown", (ev)=>{
 	if (ev.target && /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+	const onSlider = ev.target === $progress;
 	if (ev.code === "Space"){ ev.preventDefault(); $spiralBtn.click(); }
-	else if (ev.code === "ArrowRight") next();
-	else if (ev.code === "ArrowLeft")  previous();
+	else if (ev.code === "ArrowRight" && !onSlider) next();
+	else if (ev.code === "ArrowLeft"  && !onSlider) previous();
 	else if (ev.code === "Escape" && $drawer.classList.contains("is-open")) closeDrawer();
 });
 
@@ -726,19 +818,41 @@ $drawerScrim.addEventListener("click", closeDrawer);
 })();
 
 // ─────────────────────────────────────────────────────────────────
+// Dynamic count labels — recompute whenever TRACKS changes (init,
+// or in the future if we ever hot-reload the manifest).
+// ─────────────────────────────────────────────────────────────────
+function updateCounts(){
+	const n = TRACKS.length;
+	const word = spellNumber(n);
+	$trackCountLabel.textContent = `${word} pieces`;
+	$listBtnCount.textContent = word;
+	$drawerCountLabel.textContent = capFirst(word);
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────────────────────────
-reshuffle();
-buildTracklist();
-// Prime the first bg with a placeholder image so the page isn't
-// jarringly black before first play. We use the first queued track's
-// image but DON'T load its audio yet — the user has to ask first.
-{
+(async function init(){
+	try {
+		await loadTracks();
+	} catch (err) {
+		console.error("[jukebox] failed to load tracks.json", err);
+		$trackTitle.textContent = "Could not load the music";
+		$trackCaption.textContent = "tracks.json missing or unreadable";
+		return;
+	}
+	updateCounts();
+	updateModeLabel();
+	reshuffle();
+	buildTracklist();
+	// Prime the first bg with a placeholder image so the page isn't
+	// jarringly black before first play. Uses the first queued track's
+	// image but does NOT load its audio yet — the user has to ask first.
 	const firstIdx = queue[0];
 	const firstImage = TRACKS[firstIdx].image;
 	$bgA.style.backgroundImage = `url("${ATMOS_BASE + firstImage}")`;
 	$bgA.classList.add("is-active");
-}
+})();
 </script>
 </body>
 </html>

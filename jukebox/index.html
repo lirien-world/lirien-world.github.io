@@ -223,7 +223,8 @@ body{
 .track-info.is-fading .track-title,.track-info.is-fading .track-caption{opacity:0;transform:translateY(0.4rem)}
 
 /* Invitation text shown before first play. Em-dash flourishes flank
-   the italic line. The .foot below has its own top padding so the
+   the italic line. Margin-top gives breathing room above the gold
+   caption, and the .foot below has its own top padding so the
    flourishes don't crowd the progress bar. */
 .invitation{
 	font-family:'Cormorant Garamond',serif;
@@ -231,6 +232,7 @@ body{
 	letter-spacing:0.06em;
 	opacity:0;animation:reveal 1.6s ease forwards 1.4s;
 	display:flex;align-items:center;justify-content:center;gap:0.8rem;
+	margin-top:clamp(0.4rem,1.4vh,1rem);
 }
 .invitation::before,.invitation::after{
 	content:"";display:inline-block;width:clamp(2rem,5vw,4rem);height:1px;
@@ -244,7 +246,7 @@ body{
 	/* Explicit top padding so the progress bar doesn't crowd the
 	   invitation's em-dash flourishes above it. The grid-row gap
 	   in .frame collapses on short viewports; this padding doesn't. */
-	padding-top:clamp(1rem,3vh,2.5rem);
+	padding-top:clamp(1.75rem,4.5vh,3.5rem);
 	opacity:0;animation:reveal 1.6s ease forwards 1.0s;
 }
 .progress{

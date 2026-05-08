@@ -222,17 +222,16 @@ body{
 }
 .track-info.is-fading .track-title,.track-info.is-fading .track-caption{opacity:0;transform:translateY(0.4rem)}
 
-/* invitation text shown before first play */
+/* Invitation text shown before first play. No em-dash flourishes
+   here — the horizontal lines they used to draw read visually as
+   a second progress bar stacked above the real one, which looked
+   like text overlap. The italic line stands alone. */
 .invitation{
 	font-family:'Cormorant Garamond',serif;
 	font-size:var(--text-sm);font-style:italic;color:var(--mist);
 	letter-spacing:0.06em;
 	opacity:0;animation:reveal 1.6s ease forwards 1.4s;
-	display:flex;align-items:center;gap:0.8rem;
-}
-.invitation::before,.invitation::after{
-	content:"";display:inline-block;width:clamp(2rem,5vw,4rem);height:1px;
-	background:linear-gradient(to right,transparent,var(--ash),transparent);
+	text-align:center;
 }
 .invitation.is-hidden{opacity:0;pointer-events:none;animation:none}
 

@@ -46,5 +46,10 @@
    "image":"ch03_archive_fading_figure.png"},
   {"file":"corrupted_areas.m4a",         "chapter":1, "title":"Where the Substrate Wore Through",
    "caption":"the corrupted regions",
-   "image":"ch01_displacement.png"}
+   "image":"ch01_displacement.png"},
+
+  {"file":"../lirien_theme.mp3",         "chapter":"minimal", "title":"Lirien",
+   "caption":"",
+   "image":"",
+   "loop":true}
 ]

@@ -545,6 +545,20 @@ let TRACKS = [];
 const MUSIC_BASE = "../lirien/music/";
 const ATMOS_BASE = "../lirien/atmosphere/";
 
+// Entries in tracks.json may use either a bare filename (resolved
+// against MUSIC_BASE / ATMOS_BASE) or a path starting with "../"
+// when the asset lives outside the lirien/ runtime tree (e.g. the
+// minimal-mode lirien_theme.mp3 lives in website/ alongside the
+// landing page). Detect and pass through.
+function trackAudioUrl(track){
+	if (!track || !track.file) return "";
+	return track.file.startsWith("../") ? track.file : (MUSIC_BASE + track.file);
+}
+function trackImageUrl(track){
+	if (!track || !track.image) return HERO_BG_PATH;
+	return track.image.startsWith("../") ? track.image : (ATMOS_BASE + track.image);
+}
+
 async function loadTracks(){
 	const resp = await fetch("tracks.json", {cache:"no-store"});
 	if (!resp.ok) throw new Error(`tracks.json: ${resp.status}`);
@@ -625,38 +639,54 @@ let mode = "shuffled";
 //               (read from localStorage["lirien.save"].bg → ch??_ prefix)
 //   "all"     — every track + every chapter image
 //   "minimal" — every track playable, but the bg is locked to the
-//               Solrien hero image from the landing page so no
-//               chapter art is shown; captions are blanked
+//               wide Solrien vista (already on the landing page,
+//               non-spoilery); captions are blanked
+//
+// Default behavior:
+//   - reader with autosave    → "played"  (their reached chapters)
+//   - new visitor (no save)   → "minimal" (the wide Solrien vista,
+//                                          all tracks accessible,
+//                                          no chapter spoilers)
 let content = "played";
 let reachedChapter = 1;
-const HERO_BG_PATH = "../hero_banner.png";
+const HERO_BG_PATH = "../solrien_wide.png";
 
 function detectReachedChapter(){
 	// Read the main app's autosave to learn how far the reader has
 	// progressed. The bg key carries a chXX_ prefix, which is the
-	// most reliable signal. Fall back to chapter 1 (the first chapter)
-	// for new visitors who haven't read anything yet — they're on
-	// the site, so chapter 1 is fair.
+	// most reliable signal. Returns 0 if there's no save at all —
+	// the caller treats that as the new-visitor case and defaults
+	// to minimal mode rather than restricting to chapter 1.
 	try {
 		const raw = localStorage.getItem("lirien.save");
-		if (!raw) return 1;
+		if (!raw) return 0;
 		const saved = JSON.parse(raw);
 		const bg = (saved && saved.bg) || "";
 		const m = bg.match(/^ch(\d+)_/);
 		if (m) return Math.max(1, parseInt(m[1], 10));
 	} catch (e) { /* private mode / quota — ignore */ }
-	return 1;
+	return 0;
 }
 
 function visibleIndices(){
+	// chapter is either a number (1..N for chapter tracks) or the
+	// string "minimal" (for minimal-only entries like lirien_theme,
+	// which only surface in minimal mode).
+	if (content === "minimal"){
+		return TRACKS
+			.map((_, i) => i)
+			.filter(i => TRACKS[i].chapter === "minimal");
+	}
 	if (content === "played"){
 		return TRACKS
-			.map((t, i) => i)
-			.filter(i => (TRACKS[i].chapter || 0) <= reachedChapter);
+			.map((_, i) => i)
+			.filter(i => typeof TRACKS[i].chapter === "number"
+			          && TRACKS[i].chapter <= reachedChapter);
 	}
-	// "all" and "minimal" both expose every track. Minimal differs
-	// from all only in what the page paints behind the music.
-	return TRACKS.map((_, i) => i);
+	// "all": every chapter track, but NOT the minimal-only entries.
+	return TRACKS
+		.map((_, i) => i)
+		.filter(i => typeof TRACKS[i].chapter === "number");
 }
 
 function reshuffle(skipFirst){
@@ -749,10 +779,20 @@ function previousIndex(){
 // Loading + playback
 // ─────────────────────────────────────────────────────────────────
 function setBg(imageFile){
-	// In minimal mode the bg is locked to the Solrien hero image
-	// from the landing page (already non-spoilery — every site
-	// visitor has seen it). The per-track image is bypassed.
-	const url = (content === "minimal") ? HERO_BG_PATH : (ATMOS_BASE + imageFile);
+	// In minimal mode the bg is locked to the wide Solrien vista
+	// (already on the landing page, non-spoilery). For chapter
+	// modes, resolve the per-track image; if it's an empty string
+	// we fall back to the same vista.
+	let url;
+	if (content === "minimal"){
+		url = HERO_BG_PATH;
+	} else if (!imageFile){
+		url = HERO_BG_PATH;
+	} else if (imageFile.startsWith("../")){
+		url = imageFile;
+	} else {
+		url = ATMOS_BASE + imageFile;
+	}
 	const incoming = activeBg === "a" ? $bgB : $bgA;
 	const outgoing = activeBg === "a" ? $bgA : $bgB;
 	incoming.style.backgroundImage = `url("${url}")`;
@@ -787,7 +827,11 @@ function loadTrack(idx, opts){
 	setBg(track.image);
 	updateActiveRow();
 
-	$audio.src = MUSIC_BASE + track.file;
+	$audio.src = trackAudioUrl(track);
+	// Per-track loop flag — currently used only for the minimal-
+	// mode lirien_theme so it loops cleanly without a tiny gap on
+	// the `ended` → next() roundtrip.
+	$audio.loop = !!track.loop;
 	if (opts.play !== false){
 		const p = $audio.play();
 		if (p && p.catch) p.catch(()=>{ /* autoplay may block; silent */ });
@@ -1009,29 +1053,34 @@ function updateCounts(){
 		$trackCaption.textContent = "tracks.json missing or unreadable";
 		return;
 	}
-	reachedChapter = detectReachedChapter();
+	const detected = detectReachedChapter();
+	if (detected === 0){
+		// New visitor: default to minimal so the page looks complete
+		// and non-spoilery from the first paint. reachedChapter stays
+		// at 1 so if they switch to "played" later they still get the
+		// chapter-1 set as a soft entry point.
+		content = "minimal";
+		reachedChapter = 1;
+	} else {
+		reachedChapter = detected;
+		// content stays "played" — the default
+	}
 	updateModeLabel();
 	updateContentLabel();
 	updateCounts();
 	reshuffle();
 	buildTracklist();
-	// Prime the first bg. In minimal mode use the hero image; otherwise
-	// use the first queued track's chapter image so the page isn't
-	// jarringly black before first play. Audio doesn't load yet — the
-	// user has to ask first.
-	if (queue.length){
-		const firstIdx = queue[0];
-		const firstImage = TRACKS[firstIdx].image;
-		const url = (content === "minimal") ? HERO_BG_PATH : (ATMOS_BASE + firstImage);
-		$bgA.style.backgroundImage = `url("${url}")`;
-		$bgA.classList.add("is-active");
-	} else {
-		// No tracks visible at all (e.g. first-time visitor + played
-		// mode + chapter parsing returned 0). Use hero image as a
-		// safe fallback.
-		$bgA.style.backgroundImage = `url("${HERO_BG_PATH}")`;
-		$bgA.classList.add("is-active");
-	}
+	// Prime the first bg. In minimal mode use the wide Solrien vista;
+	// otherwise use the first queued track's chapter image so the
+	// page isn't jarringly black before first play. Audio doesn't
+	// load yet — the user has to ask first.
+	const primeUrl = (content === "minimal")
+		? HERO_BG_PATH
+		: (queue.length
+			? (ATMOS_BASE + TRACKS[queue[0]].image)
+			: HERO_BG_PATH);
+	$bgA.style.backgroundImage = `url("${primeUrl}")`;
+	$bgA.classList.add("is-active");
 })();
 </script>
 </body>

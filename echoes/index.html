@@ -616,8 +616,16 @@ body{
 		</div>
 
 		<div class="track-info" id="trackInfo">
-			<h1 class="track-title" id="trackTitle" data-i18n="echoes.title.default">A small room of music</h1>
-			<p class="track-caption" id="trackCaption" data-i18n="echoes.caption.default">Touch the spiral to begin</p>
+			<!--
+				No data-i18n here on purpose: these elements are JS-driven
+				once a track is selected. If we tagged them, applyLang()
+				would clobber the playing track's text with the default
+				placeholder on every language switch. The default text is
+				rendered by JS via renderTrackInfo() when no track is
+				active, and re-rendered on language change.
+			-->
+			<h1 class="track-title" id="trackTitle">A small room of music</h1>
+			<p class="track-caption" id="trackCaption">Touch the spiral to begin</p>
 		</div>
 
 		<div class="player-controls">
@@ -727,7 +735,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-230620";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-231212";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;
@@ -1337,9 +1345,44 @@ function updateContentLabel(){
 	$contentValue.textContent = (window.lirienT && window.lirienT("echoes.content." + content)) || content;
 }
 
+// Resolve a track's caption in the current language. Track titles
+// stay English universally (they're proper-noun song titles like
+// "Ash Plains" / "Thistle's Theme" — translating would feel as
+// wrong as translating "Bohemian Rhapsody"). Captions DO translate
+// — they're descriptive subtitles ("Chapter Three — the threshold")
+// and the Spanish locale needs them in Spanish to feel coherent.
+function currentLang(){
+	return (document.documentElement && document.documentElement.lang) || "en";
+}
+function captionFor(track, lang){
+	if (!track) return "";
+	if (lang !== "en"){
+		const localized = track["caption_" + lang];
+		if (localized) return localized;
+	}
+	return track.caption || "";
+}
+// Single source of truth for what the title/caption block shows.
+// When no track is active, render the i18n defaults; when one is,
+// render the track's title (always English) + captionFor() in the
+// current locale. Called on track change and on language switch.
+function renderTrackInfo(){
+	const lang = currentLang();
+	if (activeIdx < 0){
+		$trackTitle.textContent =
+			(window.lirienT && window.lirienT("echoes.title.default")) || "A small room of music";
+		$trackCaption.textContent =
+			(window.lirienT && window.lirienT("echoes.caption.default")) || "Touch the spiral to begin";
+		return;
+	}
+	const t = TRACKS[activeIdx];
+	$trackTitle.textContent = t.title || "";
+	$trackCaption.textContent = captionFor(t, lang);
+}
+
 function applyCaptionForCurrent(){
 	if (activeIdx < 0) return;
-	$trackCaption.textContent = TRACKS[activeIdx].caption;
+	$trackCaption.textContent = captionFor(TRACKS[activeIdx], currentLang());
 }
 
 // (Old previousIndex via history removed — deterministic queue
@@ -1395,7 +1438,7 @@ function loadTrack(idx, opts){
 	$spiralWrap.classList.add("is-changing");
 	setTimeout(()=>{
 		$trackTitle.textContent = track.title;
-		$trackCaption.textContent = track.caption;
+		$trackCaption.textContent = captionFor(track, currentLang());
 		$trackInfo.classList.remove("is-fading");
 	}, 350);
 	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
@@ -1785,12 +1828,23 @@ window.echoesRefreshDynamicLabels = function(){
 	if (typeof updateModeLabel === "function") updateModeLabel();
 	if (typeof updateContentLabel === "function") updateContentLabel();
 	if (typeof updateCounts === "function") updateCounts();
+	// Re-render the title/caption pair so the playing track's caption
+	// flips to the new locale (and the default-state placeholder flips
+	// too when no track is active).
+	if (typeof renderTrackInfo === "function") renderTrackInfo();
 };
 
 // ─────────────────────────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────────────────────────
 (async function init(){
+	// Render default placeholders in the current locale immediately,
+	// so first paint matches the chosen language. (The i18n module
+	// boots before this script defines renderTrackInfo, so its
+	// initial applyLang() can't reach these elements anymore — we
+	// rendered them statically as English in the HTML, so do it
+	// here on the first init tick.)
+	renderTrackInfo();
 	try {
 		await loadTracks();
 	} catch (err) {

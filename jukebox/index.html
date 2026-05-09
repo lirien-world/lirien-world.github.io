@@ -811,7 +811,72 @@ function visibleIndices(){
 		.filter(i => TRACKS[i].chapter !== "minimal");
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Deterministic shuffle, persisted for the session.
+//
+// "Session OR day, whichever comes first" semantics:
+//   - sessionStorage is naturally cleared when the tab closes →
+//     fresh shuffle next visit, regardless of date.
+//   - We also stamp the queue with the current local date; if the
+//     stored date no longer matches today (left a tab open across
+//     midnight), we regenerate.
+//
+// Within a session, the queue is GENERATED ONCE per (content mode,
+// visible-set fingerprint) and looped. Exhausting it doesn't
+// re-shuffle — it wraps back to the start. That makes "previous"
+// always step backward through a stable, predictable order.
+// ─────────────────────────────────────────────────────────────────
+const QUEUE_STORAGE_KEY = "lirien.jukebox.queue";
+
+function localDateStamp(){
+	const d = new Date();
+	const y = d.getFullYear();
+	const m = String(d.getMonth() + 1).padStart(2, "0");
+	const dd = String(d.getDate()).padStart(2, "0");
+	return `${y}-${m}-${dd}`;
+}
+
+// A short fingerprint of the visible set — sorted, comma-joined indices.
+// If the visible set changes (content mode toggled), the fingerprint
+// changes and we regenerate the queue rather than using a stale order.
+function visibleFingerprint(){
+	return visibleIndices().slice().sort((a,b) => a-b).join(",");
+}
+
+function loadStoredQueue(){
+	try {
+		const raw = sessionStorage.getItem(QUEUE_STORAGE_KEY);
+		if (!raw) return null;
+		const blob = JSON.parse(raw);
+		if (blob.date !== localDateStamp()) return null;        // crossed midnight
+		if (blob.fingerprint !== visibleFingerprint()) return null; // visible set changed
+		return blob;
+	} catch (e) { return null; }
+}
+
+function persistQueue(){
+	try {
+		sessionStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify({
+			date: localDateStamp(),
+			fingerprint: visibleFingerprint(),
+			content,
+			queue,
+			queueIdx,
+		}));
+	} catch (e) { /* private mode / quota — silent */ }
+}
+
 function reshuffle(skipFirst){
+	// Try to restore an in-progress queue first. If it still matches
+	// the visible set + date, we're a same-session reload (or a
+	// page navigation back to the jukebox) and we should pick up
+	// where the user left off.
+	const restored = loadStoredQueue();
+	if (restored && Array.isArray(restored.queue)){
+		queue = restored.queue;
+		queueIdx = (typeof restored.queueIdx === "number") ? restored.queueIdx : -1;
+		return;
+	}
 	const idx = visibleIndices();
 	for (let i=idx.length-1;i>0;i--){
 		const j = Math.floor(Math.random()*(i+1));
@@ -825,6 +890,7 @@ function reshuffle(skipFirst){
 	}
 	queue = idx;
 	queueIdx = -1;
+	persistQueue();
 }
 
 function nextIndex(){
@@ -835,9 +901,25 @@ function nextIndex(){
 		if (pos === -1) return visible[0];     // current not visible (e.g. just switched content) — start from first visible
 		return visible[(pos + 1) % visible.length];
 	}
-	// shuffled
-	queueIdx += 1;
-	if (queueIdx >= queue.length) reshuffle(activeIdx);
+	// shuffled — wrap through the same fixed queue rather than
+	// re-shuffling. Deterministic for the session.
+	queueIdx = (queueIdx + 1) % queue.length;
+	persistQueue();
+	return queue[queueIdx];
+}
+
+function previousQueueIndex(){
+	if (mode === "sequential"){
+		const visible = visibleIndices();
+		if (!visible.length) return null;
+		const pos = visible.indexOf(activeIdx);
+		if (pos === -1) return visible[visible.length - 1];
+		return visible[(pos - 1 + visible.length) % visible.length];
+	}
+	// shuffled — step back one in the fixed queue, wrapping if
+	// we're at the start.
+	queueIdx = (queueIdx - 1 + queue.length) % queue.length;
+	persistQueue();
 	return queue[queueIdx];
 }
 
@@ -889,13 +971,8 @@ function applyCaptionForCurrent(){
 	$trackCaption.textContent = (content === "minimal") ? "" : track.caption;
 }
 
-function previousIndex(){
-	if (history.length >= 2){
-		history.pop();           // pop current
-		return history.pop();    // and step to prior
-	}
-	return null;
-}
+// (Old previousIndex via history removed — deterministic queue
+//  walks back via previousQueueIndex() above.)
 
 // ─────────────────────────────────────────────────────────────────
 // Loading + playback
@@ -932,7 +1009,15 @@ function loadTrack(idx, opts){
 	if (idx == null || idx < 0 || idx >= TRACKS.length) return;
 	const track = TRACKS[idx];
 	activeIdx = idx;
-	if (history[history.length-1] !== idx) history.push(idx);
+	// Sync queueIdx so the deterministic queue's notion of "current"
+	// matches the track that's actually playing — covers the case
+	// where the user picked a track from the drawer instead of
+	// using next/previous.
+	const queuePos = queue.indexOf(idx);
+	if (queuePos !== -1){
+		queueIdx = queuePos;
+		persistQueue();
+	}
 
 	// fade text out, then update + fade in
 	$trackInfo.classList.add("is-fading");
@@ -973,8 +1058,20 @@ function pause(){ $audio.pause(); }
 function togglePlay(){ $audio.paused ? play() : pause(); }
 
 function next(){ loadTrack(nextIndex(), {play:!$audio.paused}); }
+
+// Smart back: convention from Spotify / Apple Music — if we're
+// more than 3s into the current track, "back" restarts the
+// current track; otherwise it goes to the previous track in
+// the queue.
+const PREVIOUS_RESTART_THRESHOLD_S = 3;
 function previous(){
-	const idx = previousIndex();
+	if ($audio.currentTime > PREVIOUS_RESTART_THRESHOLD_S){
+		$audio.currentTime = 0;
+		// Drive the bar fill immediately — paused timeupdate is lazy.
+		$progressFill.style.width = "0%";
+		return;
+	}
+	const idx = previousQueueIndex();
 	if (idx == null){ $audio.currentTime = 0; return; }
 	loadTrack(idx, {play:!$audio.paused});
 }

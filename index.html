@@ -123,22 +123,25 @@
        motes that rise out of the surface like sparks. Idle is alive
        but quiet; hover opens the portal: glow blooms, spiral
        accelerates, motes rise faster. */
+    /* DARK PORTAL aesthetic: button is a dark-navy slot in the page,
+       a dense spiral of luminous gold filaments rotates inside it.
+       The text sits in cream above the lot. Reads instantly on every
+       overlap because the base is dark and the text is bright. */
     .cta-portal{position:relative;display:inline-block;isolation:isolate}
-    .cta-button{position:relative;display:inline-flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.42em;text-transform:uppercase;font-weight:500;color:rgba(38,20,8,.92);text-decoration:none;border:none;cursor:pointer;padding:clamp(1.05rem,2.4vw,1.35rem) clamp(2.4rem,5.5vw,3.8rem);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);overflow:hidden;background:radial-gradient(ellipse 100% 160% at 50% 55%,rgba(240,195,130,1) 0%,rgba(205,155,90,1) 55%,rgba(150,100,55,1) 100%);filter:drop-shadow(0 0 18px rgba(228,178,110,.3)) drop-shadow(0 4px 14px rgba(0,0,0,.42));transition:filter .7s cubic-bezier(.2,.7,.2,1),letter-spacing .7s cubic-bezier(.2,.7,.2,1),transform .35s cubic-bezier(.2,.7,.2,1)}
-    /* The spiral is the cutout — void colour showing through the gold,
-       like the spiral has been physically carved out of the button.
-       Outside the trapezoid silhouette it doesn't exist; inside, it
-       is the dominant visual. SVG fills the button with
-       preserveAspectRatio=slice — the wide button becomes a letterbox
-       window onto the circular spiral, cropping top/bottom so what
-       you see is a horizontal strip through the spiral's heart. The
-       SVG is enlarged via transform:scale so the visible strip shows
-       a meaningful portion of the spiral, not just the centre coil. */
-    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(8,6,15,.88);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 70s linear infinite;z-index:0}
-    .cta-label{position:relative;z-index:1;text-shadow:0 1px 0 rgba(255,232,175,.5),0 -1px 0 rgba(60,30,12,.35)}
-    @keyframes cta-spin{from{transform:scale(2.2) rotate(0deg)}to{transform:scale(2.2) rotate(-360deg)}}
-    .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 38px rgba(255,220,150,.7)) drop-shadow(0 6px 18px rgba(0,0,0,.5));transform:translateY(-1px)}
-    .cta-button:hover .cta-spiral{animation-duration:18s;color:rgba(8,6,15,.92)}
+    .cta-button{position:relative;display:inline-flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.42em;text-transform:uppercase;font-weight:500;color:rgba(255,245,220,.97);text-decoration:none;border:none;cursor:pointer;padding:clamp(1.05rem,2.4vw,1.35rem) clamp(2.4rem,5.5vw,3.8rem);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);overflow:hidden;background:radial-gradient(ellipse 110% 160% at 50% 55%,rgba(40,28,56,1) 0%,rgba(20,14,30,1) 55%,rgba(8,6,15,1) 100%);filter:drop-shadow(0 0 22px rgba(228,178,110,.32)) drop-shadow(0 4px 14px rgba(0,0,0,.5));transition:filter .7s cubic-bezier(.2,.7,.2,1),letter-spacing .7s cubic-bezier(.2,.7,.2,1),transform .35s cubic-bezier(.2,.7,.2,1)}
+    /* Luminous spiral: gold filaments, denser turns, soft glow. The SVG
+       fills the button via slice-fit; transform:scale enlarges the
+       visible strip so the spiral fills the dark window instead of
+       sitting tiny in its centre. */
+    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(255,220,150,.85);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 6px rgba(255,220,150,.45))}
+    /* Label: cream over the dark portal. text-shadow gives a warm
+       halo so letters read as illuminated even where a spiral arm
+       passes directly behind them, plus a tiny dark shadow that
+       lifts them from the gold of those arms. */
+    .cta-label{position:relative;z-index:1;color:rgba(255,245,220,.98);text-shadow:0 0 12px rgba(255,220,150,.55),0 0 4px rgba(8,6,15,.85),0 1px 0 rgba(8,6,15,.6)}
+    @keyframes cta-spin{from{transform:scale(1.5) rotate(0deg)}to{transform:scale(1.5) rotate(-360deg)}}
+    .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 42px rgba(255,220,150,.6)) drop-shadow(0 6px 18px rgba(0,0,0,.55));transform:translateY(-1px)}
+    .cta-button:hover .cta-spiral{animation-duration:24s;color:rgba(255,235,180,.95);filter:drop-shadow(0 0 10px rgba(255,220,150,.7))}
     .cta-button:focus-visible{outline:none;filter:drop-shadow(0 0 38px rgba(255,232,175,.85)) drop-shadow(0 6px 18px rgba(0,0,0,.5))}
     .cta-button:active{transform:translateY(0) scale(.97);transition:transform .12s ease}
     /* Motes: small embers that rise out of the button continuously, faster on hover */
@@ -484,7 +487,7 @@
     <span class="cta-portal">
       <a href="lirien/index.html" class="cta-button">
         <svg class="cta-spiral" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <path d="M 50 50 L 50.08 49.6 L 50.31 49.25 L 50.68 48.99 L 51.16 48.87 L 51.7 48.9 L 52.26 49.1 L 52.79 49.5 L 53.24 50.06 L 53.56 50.79 L 53.7 51.64 L 53.64 52.58 L 53.33 53.54 L 52.78 54.47 L 51.99 55.31 L 50.96 56 L 49.74 56.48 L 48.37 56.69 L 46.91 56.6 L 45.43 56.19 L 43.99 55.44 L 42.69 54.35 L 41.59 52.96 L 40.77 51.29 L 40.3 49.42 L 40.21 47.41 L 40.55 45.35 L 41.33 43.33 L 42.56 41.44 L 44.19 39.79 L 46.2 38.46 L 48.51 37.53 L 51.03 37.08 L 53.67 37.15 L 56.33 37.77 L 58.87 38.94 L 61.19 40.65 L 63.17 42.85 L 64.71 45.48 L 65.72 48.43 L 66.12 51.61 L 65.87 54.88 L 64.95 58.11 L 63.37 61.17 L 61.15 63.9 L 58.37 66.19 L 55.12 67.92 L 51.51 68.98 L 47.69 69.3 L 43.79 68.85 L 39.99 67.61 L 36.44 65.59 L 33.31 62.85 L 30.74 59.48 L 28.85 55.59 L 27.76 51.33 L 27.54 46.85 L 28.22 42.34 L 29.81 37.98 L 32.28 33.96 L 35.56 30.45 L 39.53 27.62 L 44.06 25.6 L 48.99 24.5 L 54.11 24.4 L 59.22 25.34 L 64.13 27.3 L 68.61 30.25 L 72.48 34.08 L 75.55 38.67 L 77.68 43.85 L 78.75 49.43 L 78.7 55.19 L 77.48 60.91 L 75.13 66.34 L 71.69 71.27 L 67.29 75.47 L 62.08 78.76 L 56.24 80.97 L 50 82" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M 50 50 L 50.05 49.81 L 50.2 49.65 L 50.43 49.58 L 50.7 49.6 L 50.98 49.75 L 51.21 50.02 L 51.36 50.39 L 51.38 50.83 L 51.26 51.31 L 50.97 51.77 L 50.52 52.16 L 49.94 52.42 L 49.25 52.51 L 48.51 52.4 L 47.79 52.07 L 47.15 51.51 L 46.66 50.76 L 46.37 49.86 L 46.34 48.85 L 46.6 47.83 L 47.15 46.87 L 47.97 46.05 L 49.03 45.46 L 50.26 45.17 L 51.57 45.21 L 52.88 45.62 L 54.07 46.38 L 55.06 47.48 L 55.73 48.85 L 56.04 50.4 L 55.91 52.03 L 55.35 53.61 L 54.35 55.04 L 52.98 56.18 L 51.3 56.94 L 49.43 57.24 L 47.49 57.03 L 45.63 56.29 L 43.98 55.06 L 42.69 53.4 L 41.85 51.41 L 41.57 49.22 L 41.87 46.97 L 42.78 44.84 L 44.25 42.98 L 46.2 41.54 L 48.5 40.64 L 51.02 40.37 L 53.57 40.78 L 55.97 41.87 L 58.04 43.59 L 59.62 45.83 L 60.58 48.45 L 60.81 51.29 L 60.29 54.14 L 59.01 56.81 L 57.05 59.08 L 54.51 60.79 L 51.57 61.8 L 48.41 62 L 45.25 61.35 L 42.33 59.88 L 39.86 57.66 L 38.03 54.82 L 36.98 51.55 L 36.83 48.07 L 37.6 44.62 L 39.28 41.45 L 41.76 38.79 L 44.9 36.84 L 48.49 35.76 L 52.29 35.66 L 56.04 36.57 L 59.46 38.46 L 62.31 41.21 L 64.36 44.65 L 65.46 48.57 L 65.5 52.69 L 64.44 56.72 L 62.34 60.39 L 59.32 63.42 L 55.56 65.57 L 51.32 66.69 L 46.89 66.65 L 42.56 65.45 L 38.66 63.12 L 35.46 59.82 L 33.21 55.75 L 32.09 51.18 L 32.2 46.43 L 33.57 41.82 L 36.12 37.68 L 39.71 34.32 L 44.09 31.99 L 48.99 30.87 L 54.06 31.07 L 58.95 32.6 L 63.32 35.39 L 66.84 39.27 L 69.25 43.97 L 70.35 49.19 L 70.06 54.58 L 68.34 59.75 L 65.31 64.33 L 61.15 68 L 56.12 70.48 L 50.57 71.57 L 44.87 71.17 L 39.43 69.28 L 34.63 65.99 L 30.81 61.53 L 28.27 56.18 L 27.21 50.3 L 27.73 44.29 L 29.81 38.58 L 33.35 33.57 L 38.11 29.62 L 43.79 27.03 L 50 26" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span class="cta-label">Walk the Spiral</span>
       </a>

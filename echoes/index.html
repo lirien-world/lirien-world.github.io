@@ -225,9 +225,16 @@ body{
 	transition:transform 0.6s cubic-bezier(.2,.7,.2,1),filter 0.6s ease;
 	-webkit-tap-highlight-color:transparent;
 }
-.spiral-button:hover{transform:scale(1.03);filter:drop-shadow(0 0 24px rgba(196,147,90,0.5))}
+@media (hover:hover) and (pointer:fine){
+	.spiral-button:hover{transform:scale(1.03);filter:drop-shadow(0 0 24px rgba(196,147,90,0.5))}
+}
 .spiral-button:focus-visible{outline:none;filter:drop-shadow(0 0 24px rgba(196,147,90,0.7))}
 .spiral-button:active{transform:scale(0.98)}
+@keyframes spiral-tap-ack{
+	0%   {filter:drop-shadow(0 0 24px rgba(196,147,90,0.5));}
+	100% {filter:drop-shadow(0 0 0 rgba(196,147,90,0));}
+}
+.spiral-button.tap-ack{animation:spiral-tap-ack 1s ease-out}
 
 .spiral-img{
 	display:block;width:100%;height:100%;object-fit:contain;user-select:none;
@@ -385,7 +392,23 @@ body.is-playing .progress{
 	            background 0.35s ease,box-shadow 0.35s ease,transform 0.2s ease;
 	-webkit-tap-highlight-color:transparent;
 }
-.tx-btn:hover,.tx-btn:focus-visible{
+/* Hover styles are gated behind (hover:hover) so iOS Safari
+   doesn't stick the hover state on after a tap (sticky-hover
+   bug — tap fires :hover and it stays glued until the user
+   taps elsewhere). On touch devices, the .tap-ack class added
+   by JS runs a glow-then-fade animation instead, giving brief
+   acknowledgment without the lingering glow. Keyboard users
+   still get :focus-visible. */
+@media (hover:hover) and (pointer:fine){
+	.tx-btn:hover{
+		color:var(--gold-bright);
+		border-color:rgba(196,147,90,0.55);
+		background:rgba(196,147,90,0.08);
+		box-shadow:0 0 18px rgba(196,147,90,0.28);
+		transform:scale(1.05);
+	}
+}
+.tx-btn:focus-visible{
 	color:var(--gold-bright);
 	border-color:rgba(196,147,90,0.55);
 	background:rgba(196,147,90,0.08);
@@ -403,10 +426,31 @@ body.is-playing .progress{
 	color:var(--gold);
 	border-color:rgba(196,147,90,0.42);
 }
-.tx-btn--play:hover,.tx-btn--play:focus-visible{
+@media (hover:hover) and (pointer:fine){
+	.tx-btn--play:hover{
+		color:var(--gold-bright);
+		border-color:rgba(224,176,112,0.7);
+		box-shadow:0 0 26px rgba(196,147,90,0.5);
+	}
+}
+.tx-btn--play:focus-visible{
 	color:var(--gold-bright);
 	border-color:rgba(224,176,112,0.7);
 	box-shadow:0 0 26px rgba(196,147,90,0.5);
+	outline:none;
+}
+
+/* Tap acknowledgment — a brief glow that fades out, applied via
+   the .tap-ack class added by JS on click (and removed on
+   animation end). Touch users get a clear "I heard you" without
+   the iOS sticky-hover lingering forever. The keyframes fade
+   from full hover-equivalent glow to none over 1s. */
+@keyframes tx-btn-tap-ack{
+	0%   {box-shadow:0 0 26px rgba(196,147,90,0.5); border-color:rgba(224,176,112,0.7);}
+	100% {box-shadow:0 0 0 rgba(196,147,90,0); border-color:rgba(196,147,90,0.42);}
+}
+.tx-btn.tap-ack,.tx-btn--play.tap-ack{
+	animation:tx-btn-tap-ack 1s ease-out;
 }
 .tx-btn--play svg{width:46%;height:46%}
 /* CSS-driven icon swap: play icon when paused, pause icon when
@@ -427,9 +471,17 @@ body.is-playing .progress{
 	transition:color 0.4s ease,letter-spacing 0.4s ease;
 	-webkit-tap-highlight-color:transparent;
 }
-.ctrl:hover,.ctrl:focus-visible{color:var(--gold-bright);letter-spacing:0.42em;outline:none}
+@media (hover:hover) and (pointer:fine){
+	.ctrl:hover{color:var(--gold-bright);letter-spacing:0.42em}
+}
+.ctrl:focus-visible{color:var(--gold-bright);letter-spacing:0.42em;outline:none}
 .ctrl[disabled]{opacity:0.4;pointer-events:none}
 .ctrl .glyph{display:inline-block;margin:0 0.45em;color:var(--gold);transform:translateY(-1px)}
+@keyframes ctrl-tap-ack{
+	0%   {color:var(--gold-bright); letter-spacing:0.42em;}
+	100% {color:var(--mist);        letter-spacing:0.32em;}
+}
+.ctrl.tap-ack{animation:ctrl-tap-ack 1s ease-out}
 
 /* ───── DRAWER (track list) ───── */
 .drawer-scrim{
@@ -785,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-001457";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-002004";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;
@@ -1641,16 +1693,41 @@ function resetPrefetchMarkers(){
 // ─────────────────────────────────────────────────────────────────
 // Controls
 // ─────────────────────────────────────────────────────────────────
+// Brief glow-then-fade acknowledgment on tap. Touch devices used
+// to keep the :hover-state glow stuck on the button after a tap
+// (iOS sticky-hover bug); we now gate :hover behind (hover:hover)
+// so it only fires on real hover devices, and apply this short
+// animation class on click so touch users still get visible
+// feedback. animationend self-removes the class so successive
+// taps re-trigger the animation.
+function ackTap(el){
+	if (!el) return;
+	el.classList.remove("tap-ack");
+	void el.offsetWidth;  /* force reflow so animation re-fires */
+	el.classList.add("tap-ack");
+}
+function bindTapAck(el){
+	if (!el) return;
+	el.addEventListener("animationend", (e)=>{
+		if (e.animationName && e.animationName.endsWith("-tap-ack")){
+			el.classList.remove("tap-ack");
+		}
+	});
+}
+[$spiralBtn,$playBtn,$prevBtn,$nextBtn,$listBtn].forEach(bindTapAck);
+
 $spiralBtn.addEventListener("click", ()=>{
+	ackTap($spiralBtn);
 	if (!started){ play(); return; }
 	togglePlay();
 });
 $playBtn.addEventListener("click", ()=>{
+	ackTap($playBtn);
 	if (!started){ play(); return; }
 	togglePlay();
 });
-$prevBtn.addEventListener("click", previous);
-$nextBtn.addEventListener("click", next);
+$prevBtn.addEventListener("click", ()=>{ ackTap($prevBtn); previous(); });
+$nextBtn.addEventListener("click", ()=>{ ackTap($nextBtn); next(); });
 $modeToggle.addEventListener("click", toggleMode);
 $contentToggle.addEventListener("click", toggleContent);
 
@@ -1832,7 +1909,7 @@ function closeDrawer(){
 	$drawerScrim.setAttribute("aria-hidden","true");
 	$listBtn.focus();
 }
-$listBtn.addEventListener("click", openDrawer);
+$listBtn.addEventListener("click", ()=>{ ackTap($listBtn); openDrawer(); });
 $drawerClose.addEventListener("click", closeDrawer);
 $drawerScrim.addEventListener("click", closeDrawer);
 

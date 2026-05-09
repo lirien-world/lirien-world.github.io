@@ -51,8 +51,8 @@
    "caption":"the foxglitch, listening",
    "image":"ch03_thistle_rest.png"},
 
-  {"file":"../lirien_theme.mp3",         "chapter":"minimal", "title":"Lirien",
-   "caption":"",
+  {"file":"../lirien_theme.mp3",         "chapter":"minimal", "title":"Lirien Remembers",
+   "caption":"the theme song for Lirien",
    "image":"",
    "loop":true}
 ]

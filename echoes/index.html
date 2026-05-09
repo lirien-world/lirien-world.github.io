@@ -847,36 +847,44 @@ function visibleIndices(){
 	//                  fallback when ink-position lookup fails.
 	//   "unused"     — track exists as music + image but never plays
 	//                  in the .ink. Show only in "all" mode.
-	//   "minimal"    — minimal-mode-only entry (lirien_theme).
-	if (content === "minimal"){
-		return TRACKS
-			.map((_, i) => i)
-			.filter(i => TRACKS[i].chapter === "minimal");
-	}
-	if (content === "played"){
-		// Primary path: ink-position-aware filter via the progression
-		// manifest. A track is "heard" iff its earliest # music: tag
-		// in test.ink fires at or before the user's current knot.
-		const userLine = detectUserInkLine();
-		if (userLine > 0){
-			const heard = tracksHeardByLine(userLine);
-			return TRACKS
-				.map((_, i) => i)
-				.filter(i => heard.has(TRACKS[i].file));
-		}
-		// Fallback: chapter-level filter for cases where the
-		// progression manifest didn't load, the user's saved knot
-		// isn't in our knot map, or the saved state is malformed.
-		return TRACKS
-			.map((_, i) => i)
-			.filter(i => typeof TRACKS[i].chapter === "number"
-			          && TRACKS[i].chapter <= reachedChapter);
-	}
-	// "all": numeric-chapter tracks + "unused" tracks. Exclude only
-	// the minimal-only entries (lirien_theme is its own thing).
-	return TRACKS
+	//   "minimal"    — the theme song (lirien_remembers). Always
+	//                  surfaces — in minimal it's the ONLY track;
+	//                  in played + all it's an always-available
+	//                  anchor on top of the chapter set.
+	const minimalIdxs = TRACKS
 		.map((_, i) => i)
-		.filter(i => TRACKS[i].chapter !== "minimal");
+		.filter(i => TRACKS[i].chapter === "minimal");
+
+	if (content === "minimal") return minimalIdxs;
+
+	if (content === "all"){
+		// Everything: numeric-chapter + "unused" + "minimal" anchor.
+		return TRACKS.map((_, i) => i);
+	}
+
+	// "played": always include the theme song. Add heard tracks on top
+	// (precise via ink position; coarse via chapter fallback only if
+	// there's actually a save). No save = ONLY the theme song.
+	const played = [...minimalIdxs];
+	const userLine = detectUserInkLine();
+	if (userLine > 0){
+		const heard = tracksHeardByLine(userLine);
+		TRACKS.forEach((t, i) => {
+			if (t.chapter !== "minimal" && heard.has(t.file)) played.push(i);
+		});
+	} else {
+		// Fallback chapter-level. Re-detect to distinguish "no save" (0)
+		// from a save with progress — the global reachedChapter is
+		// pinned to 1 even with no save (soft entry on toggle to
+		// "played"), so it can't tell us "save vs no save" by itself.
+		const detectedCh = detectReachedChapter();
+		if (detectedCh > 0){
+			TRACKS.forEach((t, i) => {
+				if (typeof t.chapter === "number" && t.chapter <= detectedCh) played.push(i);
+			});
+		}
+	}
+	return played;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1052,9 +1060,7 @@ function updateContentLabel(){
 
 function applyCaptionForCurrent(){
 	if (activeIdx < 0) return;
-	const track = TRACKS[activeIdx];
-	// Minimal: blank caption (chapter context is itself a spoiler).
-	$trackCaption.textContent = (content === "minimal") ? "" : track.caption;
+	$trackCaption.textContent = TRACKS[activeIdx].caption;
 }
 
 // (Old previousIndex via history removed — deterministic queue
@@ -1110,9 +1116,7 @@ function loadTrack(idx, opts){
 	$spiralWrap.classList.add("is-changing");
 	setTimeout(()=>{
 		$trackTitle.textContent = track.title;
-		// Minimal hides the chapter-context caption since that's the
-		// spoilery part; titles are kept (most are atmospheric).
-		$trackCaption.textContent = (content === "minimal") ? "" : track.caption;
+		$trackCaption.textContent = track.caption;
 		$trackInfo.classList.remove("is-fading");
 	}, 350);
 	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
@@ -1121,10 +1125,12 @@ function loadTrack(idx, opts){
 	updateActiveRow();
 
 	$audio.src = trackAudioUrl(track);
-	// Per-track loop flag — currently used only for the minimal-
-	// mode lirien_theme so it loops cleanly without a tiny gap on
-	// the `ended` → next() roundtrip.
-	$audio.loop = !!track.loop;
+	// Per-track loop flag, but only honoured in minimal mode. Lirien
+	// Remembers carries loop:true so it loops cleanly without a tiny
+	// gap on the `ended` → next() roundtrip when it's the sole queue
+	// entry. In played/all it sits in the rotation like any other
+	// track and must yield to next() on `ended`.
+	$audio.loop = !!track.loop && content === "minimal";
 	// New track means new "ahead-of" reference point — clear the
 	// prefetch markers so the next 2 (relative to the new position)
 	// can be queued up when we hit 80% again.
@@ -1398,9 +1404,7 @@ function buildTracklist(){
 		btn.type = "button";
 		btn.className = "track-row";
 		btn.dataset.idx = String(trackIdx);
-		// In minimal we drop the chapter-context caption from the
-		// drawer rows too (consistent with the now-playing strip).
-		const where = (content === "minimal") ? "" : t.caption;
+		const where = t.caption;
 		btn.innerHTML = `
 			<span class="num">${String(queuePos+1).padStart(2,"0")}</span>
 			<span class="meta">

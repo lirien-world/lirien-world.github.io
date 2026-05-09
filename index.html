@@ -131,20 +131,20 @@
     .cta-button{position:relative;display:inline-flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.42em;text-transform:uppercase;font-weight:500;color:rgba(255,245,220,.97);text-decoration:none;border:none;cursor:pointer;padding:clamp(1.05rem,2.4vw,1.35rem) clamp(2.4rem,5.5vw,3.8rem);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);overflow:hidden;background:radial-gradient(ellipse 110% 160% at 50% 55%,rgba(40,28,56,1) 0%,rgba(20,14,30,1) 55%,rgba(8,6,15,1) 100%);filter:drop-shadow(0 0 22px rgba(228,178,110,.32)) drop-shadow(0 4px 14px rgba(0,0,0,.5));transition:filter .7s cubic-bezier(.2,.7,.2,1),letter-spacing .7s cubic-bezier(.2,.7,.2,1),transform .35s cubic-bezier(.2,.7,.2,1)}
     /* Luminous spiral: gold filaments, denser turns, soft glow. The SVG
        fills the button via slice-fit; transform:scale enlarges the
-       visible strip so the spiral fills the dark window instead of
-       sitting tiny in its centre. */
-    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(255,220,150,.85);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 6px rgba(255,220,150,.45))}
-    /* Label spotlight: a soft dark radial gradient layered ABOVE the
-       spiral but below the label. Creates a localised dimming around
-       the text so the spiral arms passing directly behind letters get
-       muted, while the spiral elsewhere stays bright. No hard rect/
-       pill — the gradient fades to transparent at the edges so the
-       spiral reads clearly there. */
-    .cta-button::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 75% at 50% 50%,rgba(8,6,15,.78) 0%,rgba(8,6,15,.45) 35%,transparent 75%);pointer-events:none;z-index:1}
-    /* Label: cream over the dark spotlight. text-shadow stays as
-       belt-and-braces — warm halo + tight dark lift on top of the
-       spotlight backing. */
-    .cta-label{position:relative;z-index:2;color:rgba(255,245,220,.98);text-shadow:0 0 14px rgba(255,220,150,.6),0 0 4px rgba(8,6,15,.95),0 1px 1px rgba(8,6,15,.7)}
+       visible strip. CSS mask physically hides the spiral in the
+       central ellipse where the text lives — guarantees no arms behind
+       any letter. Spiral remains bright at the rim and reads as a
+       pattern that "wraps around" the text. */
+    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(255,220,150,.85);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 6px rgba(255,220,150,.45));mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%)}
+    /* Label spotlight: heavier dark radial behind the label, fades to
+       transparent at the rim where the spiral takes over. With the
+       spiral now masked out of this region, the spotlight is layering
+       over the bare button bg — pure dark backing for the letters. */
+    .cta-button::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 75% 80% at 50% 50%,rgba(8,6,15,.92) 0%,rgba(8,6,15,.65) 35%,rgba(8,6,15,.25) 65%,transparent 85%);pointer-events:none;z-index:1}
+    /* Label: bright parchment with a stacked dark outline. Multiple
+       1-2px black shadows stack to a thick dark halo around every
+       letter — reads on any conceivable backdrop. */
+    .cta-label{position:relative;z-index:2;color:rgba(255,250,235,1);text-shadow:0 0 4px rgba(8,6,15,1),0 0 4px rgba(8,6,15,1),0 0 2px rgba(8,6,15,1),0 1px 0 rgba(8,6,15,1),0 0 14px rgba(255,220,150,.45)}
     @keyframes cta-spin{from{transform:scale(1.5) rotate(0deg)}to{transform:scale(1.5) rotate(-360deg)}}
     .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 42px rgba(255,220,150,.6)) drop-shadow(0 6px 18px rgba(0,0,0,.55));transform:translateY(-1px)}
     .cta-button:hover .cta-spiral{animation-duration:24s;color:rgba(255,235,180,.95);filter:drop-shadow(0 0 10px rgba(255,220,150,.7))}

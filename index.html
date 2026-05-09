@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Chronicles of Lirien — The Spiral That Remembers</title>
   <!-- Favicons -->
   <link rel="icon" href="/favicon-v3.ico" sizes="any">
@@ -80,15 +80,15 @@
     #mobile-nav .lang-switcher-mobile .lang-item[aria-pressed="true"]{color:var(--gold-bright);text-shadow:0 0 10px rgba(196,147,90,.45)}
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}
     .nav-links a:hover{color:var(--gold)}
-    @media(max-width:480px){
+    @media(max-width:900px){
       .nav-links{display:none;animation:none;opacity:1}
       .nav-mark{display:none}
-      .nav-right > .lang-switcher{display:none}    /* desktop dropdown hidden on mobile — mobile-nav overlay has its own */
+      .nav-right > .lang-switcher{display:none}    /* desktop dropdown hidden — mobile-nav overlay has its own switcher */
       .hamburger{display:flex;opacity:1}
       .nav-links.open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,6,15,.97);justify-content:center;align-items:center;gap:2.5rem;z-index:200;animation:none;opacity:1}
       .nav-links.open a{font-size:1.4rem;letter-spacing:.2em}
     }
-    @media(min-width:481px){.hamburger{display:none}}
+    @media(min-width:901px){.hamburger{display:none}}
     .hero{position:relative;width:100%;height:100svh;min-height:600px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
     .hero-image{position:absolute;inset:0;background-image:url('hero_banner.png');background-size:cover;background-position:center 40%;animation:slow-zoom 50s ease-in-out infinite alternate}
     @keyframes slow-zoom{to{transform:scale(1.05)}}
@@ -593,7 +593,7 @@
 
 
   function updateNav() {
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 900) {
       hamburger.style.display = 'flex';
       document.getElementById('nav-links').style.display = 'none';
     } else {
@@ -620,7 +620,7 @@
   });
 
   const container = document.getElementById('particles');
-  const isMobile = window.innerWidth < 768;
+  const isMobile = window.innerWidth < 900;
   const count = isMobile ? 15 : 32;
   for (let i = 0; i < count; i++) {
     const p = document.createElement('div');

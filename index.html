@@ -135,7 +135,7 @@
        central ellipse where the text lives — guarantees no arms behind
        any letter. Spiral remains bright at the rim and reads as a
        pattern that "wraps around" the text. */
-    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(255,220,150,.85);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 6px rgba(255,220,150,.45));mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%)}
+    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(240,196,128,.95);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 7px rgba(240,196,128,.6));mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%)}
     /* Label spotlight: heavier dark radial behind the label, fades to
        transparent at the rim where the spiral takes over. With the
        spiral now masked out of this region, the spotlight is layering
@@ -147,7 +147,7 @@
     .cta-label{position:relative;z-index:2;color:rgba(255,250,235,1);text-shadow:0 0 4px rgba(8,6,15,1),0 0 4px rgba(8,6,15,1),0 0 2px rgba(8,6,15,1),0 1px 0 rgba(8,6,15,1),0 0 14px rgba(255,220,150,.45)}
     @keyframes cta-spin{from{transform:scale(1.5) rotate(0deg)}to{transform:scale(1.5) rotate(-360deg)}}
     .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 42px rgba(255,220,150,.6)) drop-shadow(0 6px 18px rgba(0,0,0,.55));transform:translateY(-1px)}
-    .cta-button:hover .cta-spiral{animation-duration:24s;color:rgba(255,235,180,.95);filter:drop-shadow(0 0 10px rgba(255,220,150,.7))}
+    .cta-button:hover .cta-spiral{animation-duration:24s;color:rgba(250,215,150,1);filter:drop-shadow(0 0 11px rgba(240,196,128,.8))}
     .cta-button:focus-visible{outline:none;filter:drop-shadow(0 0 38px rgba(255,232,175,.85)) drop-shadow(0 6px 18px rgba(0,0,0,.5))}
     .cta-button:active{transform:translateY(0) scale(.97);transition:transform .12s ease}
     /* Motes: small embers that rise out of the button continuously, faster on hover */

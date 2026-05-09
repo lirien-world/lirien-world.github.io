@@ -57,8 +57,8 @@
 			<button class="drawer-close" type="button" data-close-drawer>Close</button>
 		</div>
 		<div class="drawer-body">
-			<section class="drawer-section is-open">
-				<button class="drawer-section-summary" type="button" aria-expanded="true">
+			<section class="drawer-section">
+				<button class="drawer-section-summary" type="button" aria-expanded="false">
 					<span class="drawer-section-title">Chapters</span>
 					<span class="drawer-section-caret" aria-hidden="true"></span>
 				</button>
@@ -198,7 +198,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-004914";
+		const BUILD_VERSION = "20260510-005843";
 		let inFlight = false;
 		async function check(){
 			if (inFlight) return;

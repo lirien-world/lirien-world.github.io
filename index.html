@@ -124,15 +124,21 @@
        but quiet; hover opens the portal: glow blooms, spiral
        accelerates, motes rise faster. */
     .cta-portal{position:relative;display:inline-block;isolation:isolate}
-    .cta-button{position:relative;display:inline-flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.42em;text-transform:uppercase;font-weight:500;color:rgba(38,20,8,.92);text-decoration:none;border:none;cursor:pointer;padding:clamp(1.05rem,2.4vw,1.35rem) clamp(2.4rem,5.5vw,3.8rem);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);overflow:hidden;background:radial-gradient(ellipse 75% 130% at 50% 65%,rgba(255,230,165,.96) 0%,rgba(228,178,110,1) 35%,rgba(168,108,55,1) 75%,rgba(110,68,30,1) 100%);filter:drop-shadow(0 0 18px rgba(228,178,110,.3)) drop-shadow(0 4px 14px rgba(0,0,0,.42));transition:filter .7s cubic-bezier(.2,.7,.2,1),letter-spacing .7s cubic-bezier(.2,.7,.2,1),transform .35s cubic-bezier(.2,.7,.2,1)}
-    .cta-button::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 72%,rgba(255,245,205,.55) 0%,rgba(255,220,150,.22) 32%,transparent 66%);animation:cta-breath 4.8s ease-in-out infinite;pointer-events:none;z-index:0}
-    .cta-spiral{position:absolute;top:50%;left:50%;height:88%;aspect-ratio:1;transform:translate(-50%,-50%);color:rgba(40,22,8,.20);pointer-events:none;animation:cta-spin 60s linear infinite;z-index:0}
+    .cta-button{position:relative;display:inline-flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.42em;text-transform:uppercase;font-weight:500;color:rgba(38,20,8,.92);text-decoration:none;border:none;cursor:pointer;padding:clamp(1.05rem,2.4vw,1.35rem) clamp(2.4rem,5.5vw,3.8rem);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);overflow:hidden;background:radial-gradient(ellipse 100% 160% at 50% 55%,rgba(240,195,130,1) 0%,rgba(205,155,90,1) 55%,rgba(150,100,55,1) 100%);filter:drop-shadow(0 0 18px rgba(228,178,110,.3)) drop-shadow(0 4px 14px rgba(0,0,0,.42));transition:filter .7s cubic-bezier(.2,.7,.2,1),letter-spacing .7s cubic-bezier(.2,.7,.2,1),transform .35s cubic-bezier(.2,.7,.2,1)}
+    /* The spiral is the cutout — void colour showing through the gold,
+       like the spiral has been physically carved out of the button.
+       Outside the trapezoid silhouette it doesn't exist; inside, it
+       is the dominant visual. SVG fills the button with
+       preserveAspectRatio=slice — the wide button becomes a letterbox
+       window onto the circular spiral, cropping top/bottom so what
+       you see is a horizontal strip through the spiral's heart. The
+       SVG is enlarged via transform:scale so the visible strip shows
+       a meaningful portion of the spiral, not just the centre coil. */
+    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(8,6,15,.88);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 70s linear infinite;z-index:0}
     .cta-label{position:relative;z-index:1;text-shadow:0 1px 0 rgba(255,232,175,.5),0 -1px 0 rgba(60,30,12,.35)}
-    @keyframes cta-breath{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.95;transform:scale(1.12)}}
-    @keyframes cta-spin{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+    @keyframes cta-spin{from{transform:scale(2.2) rotate(0deg)}to{transform:scale(2.2) rotate(-360deg)}}
     .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 38px rgba(255,220,150,.7)) drop-shadow(0 6px 18px rgba(0,0,0,.5));transform:translateY(-1px)}
-    .cta-button:hover::before{animation-duration:1.8s;opacity:1}
-    .cta-button:hover .cta-spiral{animation-duration:14s;color:rgba(40,22,8,.32)}
+    .cta-button:hover .cta-spiral{animation-duration:18s;color:rgba(8,6,15,.92)}
     .cta-button:focus-visible{outline:none;filter:drop-shadow(0 0 38px rgba(255,232,175,.85)) drop-shadow(0 6px 18px rgba(0,0,0,.5))}
     .cta-button:active{transform:translateY(0) scale(.97);transition:transform .12s ease}
     /* Motes: small embers that rise out of the button continuously, faster on hover */
@@ -477,7 +483,7 @@
   <div class="reveal">
     <span class="cta-portal">
       <a href="lirien/index.html" class="cta-button">
-        <svg class="cta-spiral" viewBox="0 0 100 100" aria-hidden="true">
+        <svg class="cta-spiral" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <path d="M 50 50 L 50.08 49.6 L 50.31 49.25 L 50.68 48.99 L 51.16 48.87 L 51.7 48.9 L 52.26 49.1 L 52.79 49.5 L 53.24 50.06 L 53.56 50.79 L 53.7 51.64 L 53.64 52.58 L 53.33 53.54 L 52.78 54.47 L 51.99 55.31 L 50.96 56 L 49.74 56.48 L 48.37 56.69 L 46.91 56.6 L 45.43 56.19 L 43.99 55.44 L 42.69 54.35 L 41.59 52.96 L 40.77 51.29 L 40.3 49.42 L 40.21 47.41 L 40.55 45.35 L 41.33 43.33 L 42.56 41.44 L 44.19 39.79 L 46.2 38.46 L 48.51 37.53 L 51.03 37.08 L 53.67 37.15 L 56.33 37.77 L 58.87 38.94 L 61.19 40.65 L 63.17 42.85 L 64.71 45.48 L 65.72 48.43 L 66.12 51.61 L 65.87 54.88 L 64.95 58.11 L 63.37 61.17 L 61.15 63.9 L 58.37 66.19 L 55.12 67.92 L 51.51 68.98 L 47.69 69.3 L 43.79 68.85 L 39.99 67.61 L 36.44 65.59 L 33.31 62.85 L 30.74 59.48 L 28.85 55.59 L 27.76 51.33 L 27.54 46.85 L 28.22 42.34 L 29.81 37.98 L 32.28 33.96 L 35.56 30.45 L 39.53 27.62 L 44.06 25.6 L 48.99 24.5 L 54.11 24.4 L 59.22 25.34 L 64.13 27.3 L 68.61 30.25 L 72.48 34.08 L 75.55 38.67 L 77.68 43.85 L 78.75 49.43 L 78.7 55.19 L 77.48 60.91 L 75.13 66.34 L 71.69 71.27 L 67.29 75.47 L 62.08 78.76 L 56.24 80.97 L 50 82" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span class="cta-label">Walk the Spiral</span>

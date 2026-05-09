@@ -61,7 +61,8 @@
        N languages: add an entry to the LANGUAGES array in the script
        and a corresponding ".<code>" key to each translation entry. */
     .lang-switcher{position:relative;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;opacity:0;animation:fade-in 2s ease forwards .8s}
-    .lang-toggle{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .55rem;color:var(--mist);transition:color .3s ease}
+    .lang-toggle{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .55rem;color:var(--mist);transition:color .3s ease;font-weight:500}
+    .lang-toggle [data-lang-current]{letter-spacing:.18em}
     .lang-toggle:hover,.lang-toggle:focus-visible,.lang-toggle.open{color:var(--gold-bright);outline:none}
     .lang-caret{width:.55em;height:.32em;opacity:.55;transition:transform .3s ease,opacity .3s ease}
     .lang-toggle.open .lang-caret{transform:rotate(180deg);opacity:.85}
@@ -71,11 +72,11 @@
     .lang-item:hover,.lang-item:focus-visible{color:var(--gold-bright);background:rgba(196,147,90,.08);outline:none}
     .lang-item[aria-pressed="true"]{color:var(--gold)}
     .lang-item[aria-pressed="true"] .lang-code{color:var(--gold-bright);text-shadow:0 0 8px rgba(196,147,90,.45)}
-    .lang-item .lang-code{letter-spacing:.32em;min-width:1.6em}
+    .lang-item .lang-code{letter-spacing:.18em;font-weight:500;min-width:1.6em}
     .lang-item .lang-name{font-style:italic;font-size:.95em;letter-spacing:.06em;text-transform:none;color:inherit;opacity:.85}
     /* Mobile-nav has its own simpler list-style switcher inside the
        overlay (no dropdown — it sits inline with the menu items). */
-    #mobile-nav .lang-switcher-mobile{margin-top:1rem;padding-top:1.5rem;border-top:1px solid rgba(196,147,90,.18);display:flex;gap:1.2rem;justify-content:center;align-items:baseline;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.32em;text-transform:uppercase}
+    #mobile-nav .lang-switcher-mobile{margin-top:1rem;padding-top:1.5rem;border-top:1px solid rgba(196,147,90,.18);display:flex;gap:1.2rem;justify-content:center;align-items:baseline;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase;font-weight:500}
     #mobile-nav .lang-switcher-mobile .lang-item{padding:.6rem .9rem;color:var(--ash);width:auto}
     #mobile-nav .lang-switcher-mobile .lang-item[aria-pressed="true"]{color:var(--gold-bright);text-shadow:0 0 10px rgba(196,147,90,.45)}
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}

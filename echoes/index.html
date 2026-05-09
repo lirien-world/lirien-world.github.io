@@ -322,6 +322,18 @@ body{
 	   interpreting them as page-scroll — required for drag-to-seek
 	   on touch devices. */
 	touch-action:none;user-select:none;-webkit-user-select:none;
+	/* Float-down on playback start. When idle, the invitation sits
+	   between the seekbar and the transport; when playback begins
+	   the invitation fades out and the seekbar glides downward
+	   into the empty space, landing more visually centered between
+	   caption above and transport below. Same easing curve as the
+	   page reveal animations, so the motion reads as part of the
+	   same visual language. Symmetric — pausing glides it back. */
+	transform:translateY(0);
+	transition:transform 0.8s cubic-bezier(.2,.7,.2,1);
+}
+body.is-playing .progress{
+	transform:translateY(clamp(0.7rem,2.2vh,1.6rem));
 }
 .progress:focus-visible{outline:none}
 .progress-track{
@@ -763,7 +775,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-235658";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-000348";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

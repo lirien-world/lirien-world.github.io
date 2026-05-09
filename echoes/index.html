@@ -298,6 +298,12 @@ body{
 	letter-spacing:0.06em;
 	opacity:0;animation:reveal 1.6s ease forwards 1.4s;
 	display:flex;align-items:center;justify-content:center;gap:0.8rem;
+	/* Transition so the invitation fades out on play AND fades
+	   back in on pause — symmetric with the seekbar's glide. The
+	   initial-paint reveal still runs via the animation above
+	   (one-shot, forwards-locked); after that the transition
+	   handles all state changes. */
+	transition:opacity 0.7s ease;
 }
 .invitation::before,.invitation::after{
 	content:"";display:inline-block;width:clamp(2rem,5vw,4rem);height:1px;
@@ -779,7 +785,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-000721";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-001457";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;
@@ -1555,6 +1561,11 @@ $audio.addEventListener("pause", ()=>{
 	document.body.classList.add("is-paused");
 	$playBtn.setAttribute("aria-label","Play");
 	$spiralBtn.setAttribute("aria-pressed","false");
+	// Bring the invitation italic back when playback pauses —
+	// keeps the layout symmetric (seekbar glides up, invitation
+	// fades back in to fill the empty slot above the transport).
+	// CSS transition handles the fade.
+	$invitation.classList.remove("is-hidden");
 });
 $audio.addEventListener("ended", ()=>{
 	// `paused` flips to true the instant a track ends naturally, so

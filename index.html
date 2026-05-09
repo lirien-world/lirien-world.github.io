@@ -184,14 +184,14 @@
        fixed spiral via stroke-dashoffset animation: long dashes travel
        outward through the filaments. The spiral stays put; light moves
        through it. Reads alive without reading like a turning wheel. */
-    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(252,198,118,1);pointer-events:none;transform-origin:50% 50%;transform:scale(1.5);z-index:0;filter:drop-shadow(0 0 2px rgba(255,225,160,1)) drop-shadow(0 0 6px rgba(252,198,118,.9)) drop-shadow(0 0 16px rgba(252,198,118,.7)) drop-shadow(0 0 32px rgba(252,198,118,.4));mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%)}
+    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(252,198,118,1);pointer-events:none;transform-origin:50% 50%;transform:scale(1.5);z-index:0;filter:drop-shadow(0 0 2px rgba(255,225,160,1)) drop-shadow(0 0 6px rgba(252,198,118,.9)) drop-shadow(0 0 16px rgba(252,198,118,.7)) drop-shadow(0 0 32px rgba(252,198,118,.4));mask-image:radial-gradient(ellipse 95% 110% at 50% 50%,rgba(0,0,0,.10) 0%,rgba(0,0,0,.30) 25%,rgba(0,0,0,.60) 55%,rgba(0,0,0,.88) 80%,black 100%);-webkit-mask-image:radial-gradient(ellipse 95% 110% at 50% 50%,rgba(0,0,0,.10) 0%,rgba(0,0,0,.30) 25%,rgba(0,0,0,.60) 55%,rgba(0,0,0,.88) 80%,black 100%)}
     .cta-spiral path{stroke-dasharray:18 22;animation:cta-flow 6s linear infinite}
     @keyframes cta-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-40}}
-    /* Label spotlight: heavier dark radial behind the label, fades to
-       transparent at the rim where the spiral takes over. With the
-       spiral now masked out of this region, the spotlight is layering
-       over the bare button bg — pure dark backing for the letters. */
-    .cta-button::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 75% 80% at 50% 50%,rgba(8,6,15,.92) 0%,rgba(8,6,15,.65) 35%,rgba(8,6,15,.25) 65%,transparent 85%);pointer-events:none;z-index:1}
+    /* (Spotlight pseudo removed — the soft-gradient mask on the spiral
+       now provides a smooth fade-to-bg in the centre where text lives,
+       without the harsh elliptical edge the spotlight was creating.
+       Stacked text-shadow on the label handles the residual contrast
+       where dim spiral arms still pass behind letters.) */
     /* Label: bright parchment with a stacked dark outline. Multiple
        1-2px black shadows stack to a thick dark halo around every
        letter — reads on any conceivable backdrop. */
@@ -295,7 +295,7 @@
     <div class="music-bar"></div>
     <div class="music-bar"></div>
   </div>
-  <span class="music-label">Music</span>
+  <span class="music-label" data-i18n="music.label">Music</span>
 </button>
 
 <div class="spiral-bg" aria-hidden="true">
@@ -647,18 +647,21 @@
   music.volume = 0.4;
 
   btn.addEventListener('click', () => {
+    const labelEl = btn.querySelector('.music-label');
     if (!playing) {
       music.play().then(() => {
         playing = true;
         btn.classList.remove('muted');
-        btn.querySelector('.music-label').textContent = 'Mute';
+        labelEl.textContent = (window.lirienT && window.lirienT('music.mute')) || 'Mute';
+        labelEl.setAttribute('data-i18n', 'music.mute');
         btn.setAttribute('aria-label', 'Mute background music');
       }).catch((e) => { console.warn('Audio play failed:', e); });
     } else {
       music.pause();
       playing = false;
       btn.classList.add('muted');
-      btn.querySelector('.music-label').textContent = 'Music';
+      labelEl.textContent = (window.lirienT && window.lirienT('music.label')) || 'Music';
+      labelEl.setAttribute('data-i18n', 'music.label');
       btn.setAttribute('aria-label', 'Play background music');
     }
   });
@@ -760,6 +763,9 @@
     "closing.message":   { en: "If the world found you —<br>we'd like to know.",
                            es: "Si el mundo te encontró —<br>nos gustaría saberlo." },
 
+    "music.label":       { en: "Music",                          es: "Música" },
+    "music.mute":        { en: "Mute",                           es: "Silenciar" },
+
     "footer.mark":       { en: "Chronicles of Lirien — Book One", es: "Crónicas de Lirien — Libro I" },
     "footer.quote":      { en: "Belonging is not something that happens to you —<br>it is something you have to stop preventing.",
                            es: "Pertenecer no es algo que te suceda —<br>es algo que tienes que dejar de impedir." },
@@ -806,6 +812,15 @@
       b.setAttribute("aria-expanded", "false");
     });
   }
+
+  // Public translation helper for code outside this IIFE that needs
+  // strings on demand (e.g. JS that toggles button labels).
+  window.lirienT = function (key) {
+    const lang = document.documentElement.lang || "en";
+    const entry = TR[key];
+    if (!entry) return key;
+    return entry[lang] != null ? entry[lang] : (entry.en != null ? entry.en : key);
+  };
 
   // Apply on boot
   applyLang(detectLang());

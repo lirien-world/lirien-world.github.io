@@ -582,6 +582,46 @@ body{
 "use strict";
 
 // ─────────────────────────────────────────────────────────────────
+// Service worker — cache-as-you-go for audio + images. Registered
+// up-front so anything fetched later this session benefits. Honors
+// ?clear-cache (or ?nocache) by sending a purge message and then
+// reloading once the cache is empty.
+// ─────────────────────────────────────────────────────────────────
+(function setupServiceWorker(){
+	if (!("serviceWorker" in navigator)) return;
+	const params = new URLSearchParams(location.search);
+	const wantsPurge = params.has("clear-cache") || params.has("nocache");
+
+	navigator.serviceWorker.register("sw.js").then((reg) => {
+		// If the user asked to clear cache, message the active worker
+		// and reload to a clean URL once it's done.
+		if (!wantsPurge) return;
+		const send = () => {
+			const target = reg.active || navigator.serviceWorker.controller;
+			if (!target){
+				// Worker isn't ready yet — try again on the next tick.
+				navigator.serviceWorker.addEventListener("controllerchange", send, { once: true });
+				return;
+			}
+			target.postMessage({ type: "purge" });
+		};
+		send();
+	}).catch((err) => {
+		console.warn("[jukebox] sw register failed", err);
+	});
+
+	if (wantsPurge){
+		navigator.serviceWorker.addEventListener("message", (ev) => {
+			if (ev.data && ev.data.type === "purged"){
+				// Strip the cache-busting params and reload to a clean URL.
+				const cleanUrl = location.pathname + location.hash;
+				location.replace(cleanUrl);
+			}
+		});
+	}
+})();
+
+// ─────────────────────────────────────────────────────────────────
 // Track manifest. Loaded from tracks.json (sibling file). Each entry
 // binds the music file to a chapter atmosphere image (so listening
 // is also a montage through the book's images) and gives the piece

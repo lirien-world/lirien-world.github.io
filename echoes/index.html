@@ -1422,7 +1422,20 @@ function openDrawer(){
 	$drawerScrim.classList.add("is-open");
 	$drawer.setAttribute("aria-hidden","false");
 	$drawerScrim.setAttribute("aria-hidden","false");
-	$drawerClose.focus();
+	// {preventScroll:true} so focus() doesn't yank the drawer's
+	// scroll back to the top of the list — we want the active
+	// row centered, not the close button visible.
+	$drawerClose.focus({preventScroll:true});
+	// Center the currently-playing row in the drawer's scroll
+	// viewport. Useful on mobile (especially landscape) where the
+	// list is taller than the screen and the active row is often
+	// off-screen by default. Runs after open so layout is settled.
+	requestAnimationFrame(scrollActiveTrackIntoView);
+}
+function scrollActiveTrackIntoView(){
+	const row = $tracklist.querySelector(".track-row.is-active");
+	if (!row) return;
+	row.scrollIntoView({block:"center", inline:"nearest", behavior:"auto"});
 }
 function closeDrawer(){
 	$drawer.classList.remove("is-open");

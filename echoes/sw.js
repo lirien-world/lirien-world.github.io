@@ -30,13 +30,13 @@
 //   fetch        → cache-first for asset URLs; passthrough for HTML
 //   message      → handle "purge" command from page
 
-const CACHE_NAME = "lirien-jukebox-v1";
+const CACHE_NAME = "lirien-jukebox-v2";
 
 // URL patterns we cache. Keep this conservative — anything not
 // matched here goes straight to network (and through Cloudflare's
 // regular caching).
 const CACHEABLE_RE = /\.(m4a|mp3|ogg|wav|png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i;
-const CACHEABLE_PATH_RE = /\/(?:lirien\/(?:music|atmosphere)|jukebox)\//;
+const CACHEABLE_PATH_RE = /\/(?:lirien\/(?:music|atmosphere)|echoes|jukebox)\//;
 
 function shouldCache(url){
 	const u = new URL(url);

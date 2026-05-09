@@ -53,6 +53,12 @@ body{
 	   introduce a side-scroll. */
 	overflow-x:hidden;overflow-y:auto;
 	min-height:100vh;min-height:100dvh;
+	/* Kill iOS double-tap-zoom site-wide. Single-tap still fires
+	   immediately (also kills the legacy 300ms delay) and pinch-zoom
+	   is preserved for accessibility. The drawer slider's
+	   `touch-action:none` for drag-to-seek still wins on its own
+	   element via specificity. */
+	touch-action:manipulation;
 }
 
 /* ───── BACKGROUND IMAGE LAYER (two stacked, crossfade) ───── */

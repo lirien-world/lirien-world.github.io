@@ -275,7 +275,7 @@ html, body {
 	right: 80px;
 	bottom: 56px;
 	top: 50%;
-	background: rgba(11, 11, 18, 0.55);
+	background: rgba(11, 11, 18, 0.62);
 	border-radius: 12px;
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -287,6 +287,18 @@ html, body {
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;
+	/* Depth + warmth. The prose panel was previously a flat translucent
+	 * rectangle, which read as a dialog box rather than a held page.
+	 * Now: an outer drop shadow lifts it off the background image; a
+	 * subtle inner gold rim suggests reflected candle-light along the
+	 * edge of parchment; a faint inner top highlight gives the panel
+	 * an "edge of paper" accent. The combination reads as a held
+	 * object with material presence rather than a translucent overlay. */
+	box-shadow:
+		0 24px 64px rgba(0, 0, 0, 0.55),
+		0 6px 18px rgba(0, 0, 0, 0.38),
+		inset 0 0 0 1px rgba(196, 147, 90, 0.14),
+		inset 0 1px 0 rgba(245, 238, 216, 0.07);
 }
 .prose::-webkit-scrollbar { width: 8px; }
 .prose::-webkit-scrollbar-track { background: transparent; }
@@ -469,27 +481,24 @@ html, body {
 }
 .chrome-btn.tap-ack { animation: chrome-btn-tap-ack 1s ease-out; }
 
-.settings-btn { right: 12px; }
-.chapters-btn { right: 56px; }
-.chapters-btn::before,
-.settings-btn::before {
+.menu-btn {
+	right: 14px;
+	width: 32px;
+	height: 32px;
+}
+/* Subtle three-line glyph — the most universally readable "menu"
+ * symbol. Strokes are thin (1.5px) and lightly dimmed by default
+ * so the chrome doesn't compete with the prose; on hover/focus/
+ * tap the .chrome-btn color transition lifts it to gold-bright. */
+.menu-btn::before {
 	content: '';
 	display: block;
 	width: 100%;
 	height: 100%;
-	background-size: contain;
+	background-size: 22px 22px;
 	background-repeat: no-repeat;
 	background-position: center;
-}
-/* Currentcolor on stroke so the SVG icon picks up the .chrome-btn
- * color (and its hover/focus/tap-ack transitions) automatically.
- * Encoded as 'currentColor' in the URL — Chrome and Safari both
- * resolve this against the parent's `color` property. */
-.chapters-btn::before {
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>");
-}
-.settings-btn::before {
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'><path d='M4 7h16'/><path d='M4 12h16'/><path d='M4 17h16'/></svg>");
 }
 
 /* ----- drawer chrome (settings + chapters) -----
@@ -613,6 +622,74 @@ html, body {
 }
 .drawer-action--danger { color: var(--ash); }
 .drawer-action[hidden] { display: none; }
+
+/* ----- accordion sections inside the drawer -----
+ *
+ * One drawer holds Chapters + Reading-speed + Text-size + Music.
+ * Each section is a click-to-expand block. The body uses the
+ * grid-template-rows 0fr ↔ 1fr trick to animate to/from the
+ * content's natural height — the standard CSS-only "animate
+ * height auto" pattern.
+ */
+.drawer-section {
+	border-bottom: 1px solid rgba(196, 147, 90, 0.12);
+}
+.drawer-section:last-child { border-bottom: none; }
+
+.drawer-section-summary {
+	all: unset;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.85rem 0.4rem;
+	font-family: 'Cormorant Garamond', serif;
+	font-weight: 400;
+	font-size: 0.85rem;
+	letter-spacing: 0.32em;
+	text-transform: uppercase;
+	color: var(--mist);
+	transition: color 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+	.drawer-section-summary:hover { color: var(--gold-bright); }
+}
+.drawer-section-summary:focus-visible { outline: none; color: var(--gold-bright); }
+.drawer-section.is-open .drawer-section-summary { color: var(--gold); }
+
+.drawer-section-caret {
+	width: 9px;
+	height: 9px;
+	border-right: 1.5px solid currentColor;
+	border-bottom: 1.5px solid currentColor;
+	transform: rotate(45deg) translate(-2px, -2px);
+	transition: transform 0.4s cubic-bezier(.2, .7, .2, 1);
+	opacity: 0.7;
+}
+.drawer-section.is-open .drawer-section-caret {
+	transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.drawer-section-body {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 0.45s cubic-bezier(.2, .7, .2, 1);
+	overflow: hidden;
+}
+.drawer-section.is-open .drawer-section-body {
+	grid-template-rows: 1fr;
+}
+.drawer-section-content {
+	overflow: hidden;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.05rem;
+	padding-bottom: 0.6rem;
+}
 
 .chapter-list {
 	display: flex;

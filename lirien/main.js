@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510a";
+const ASSET_VERSION = "20260510b";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -47,41 +47,40 @@ const $continueHint = document.getElementById("continue-hint");
 const $offlineHint = document.getElementById("offline-hint");
 const $choices = document.getElementById("choices");
 const $chapterTitle = document.getElementById("chapter-title");
-const $settingsBtn = document.getElementById("settings-btn");
-const $settingsPanel = document.getElementById("settings-panel");
-const $chaptersBtn = document.getElementById("chapters-btn");
-const $chaptersPanel = document.getElementById("chapters-panel");
+const $menuBtn = document.getElementById("menu-btn");
+const $menuPanel = document.getElementById("menu-panel");
 const $drawerScrim = document.getElementById("drawer-scrim");
+// Backwards-compat aliases — most call sites and `bind*Menu` use
+// these names. After the chapters + settings merge into one drawer,
+// both names point at the same DOM node.
+const $settingsBtn = $menuBtn;
+const $settingsPanel = $menuPanel;
+const $chaptersBtn = $menuBtn;
+const $chaptersPanel = $menuPanel;
 
-// Drawer open/close helpers. The two drawers (.settings-panel and
-// .chapters-panel) share one backdrop scrim and are mutually
-// exclusive — opening one closes the other. Animations are CSS-
-// driven via the .is-open class on both the drawer and the scrim;
-// JS just toggles class state.
+// Drawer open/close helpers. There's now one drawer (#menu-panel)
+// holding accordion sections for Chapters / Reading speed / Text
+// size / Music. Animations are CSS-driven via .is-open classes on
+// both the drawer and the scrim; JS just toggles class state.
 function openDrawer(drawer) {
-	if (!drawer) return;
-	const other = drawer === $settingsPanel ? $chaptersPanel : $settingsPanel;
-	if (other) {
-		other.classList.remove("is-open");
-		other.setAttribute("aria-hidden", "true");
-	}
-	drawer.classList.add("is-open");
-	drawer.setAttribute("aria-hidden", "false");
+	const target = drawer || $menuPanel;
+	if (!target) return;
+	target.classList.add("is-open");
+	target.setAttribute("aria-hidden", "false");
 	if ($drawerScrim) $drawerScrim.classList.add("is-open");
 }
 function closeDrawer(drawer) {
-	if (drawer) {
-		drawer.classList.remove("is-open");
-		drawer.setAttribute("aria-hidden", "true");
+	const target = drawer || $menuPanel;
+	if (target) {
+		target.classList.remove("is-open");
+		target.setAttribute("aria-hidden", "true");
 	}
 	if ($drawerScrim) $drawerScrim.classList.remove("is-open");
 }
-function closeAllDrawers() {
-	closeDrawer($settingsPanel);
-	closeDrawer($chaptersPanel);
-}
+function closeAllDrawers() { closeDrawer($menuPanel); }
 function isDrawerOpen(drawer) {
-	return drawer && drawer.classList.contains("is-open");
+	const target = drawer || $menuPanel;
+	return target && target.classList.contains("is-open");
 }
 
 // Brief glow-then-fade tap acknowledgment for chrome buttons. Same
@@ -107,6 +106,36 @@ document.addEventListener("animationend", (ev) => {
 	if (ev.animationName === "chrome-btn-tap-ack") {
 		ev.target.classList.remove("tap-ack");
 	}
+});
+
+// Single menu button — opens the unified drawer and refreshes the
+// inner sections' state (chapter list, current selections) so the
+// view is always live.
+if ($menuBtn) {
+	$menuBtn.addEventListener("click", () => {
+		ackTap($menuBtn);
+		if (isDrawerOpen($menuPanel)) {
+			closeDrawer($menuPanel);
+		} else {
+			openDrawer($menuPanel);
+			if (typeof renderChapterList === "function") renderChapterList();
+			if (typeof updateReturnRecentVisibility === "function") updateReturnRecentVisibility();
+			if (typeof refreshSelectionMarkers === "function") refreshSelectionMarkers();
+		}
+	});
+}
+
+// Accordion sections inside the drawer. Click a section's summary
+// to toggle .is-open; CSS animates the body's grid-template-rows
+// from 0fr to 1fr (the canonical "animate height auto" trick).
+// aria-expanded stays in sync for screen readers.
+document.addEventListener("click", (ev) => {
+	const summary = ev.target.closest(".drawer-section-summary");
+	if (!summary) return;
+	const section = summary.closest(".drawer-section");
+	if (!section) return;
+	const open = section.classList.toggle("is-open");
+	summary.setAttribute("aria-expanded", open ? "true" : "false");
 });
 const $chapterList = document.getElementById("chapter-list");
 const $restartBtn = document.getElementById("restart-btn");
@@ -1373,15 +1402,6 @@ function bindAdvanceInput() {
 // ----- settings menu -----
 
 function bindSettingsMenu() {
-	$settingsBtn.addEventListener("click", () => {
-		ackTap($settingsBtn);
-		if (isDrawerOpen($settingsPanel)) {
-			closeDrawer($settingsPanel);
-		} else {
-			openDrawer($settingsPanel);
-			refreshSelectionMarkers();
-		}
-	});
 	for (const btn of $settingsPanel.querySelectorAll(".speed-btn")) {
 		btn.addEventListener("click", () => {
 			const m = parseFloat(btn.dataset.multiplier);
@@ -1439,20 +1459,6 @@ function bindSettingsMenu() {
 // just resets the inkjs state and re-runs the start.
 
 function bindChaptersMenu() {
-	$chaptersBtn.addEventListener("click", () => {
-		ackTap($chaptersBtn);
-		if (isDrawerOpen($chaptersPanel)) {
-			closeDrawer($chaptersPanel);
-		} else {
-			openDrawer($chaptersPanel);
-			// Render on open so previously-saved bookmarks appear even
-			// if no chapter: tag has fired yet this session, and so any
-			// late-session changes are reflected.
-			renderChapterList();
-			updateReturnRecentVisibility();
-		}
-	});
-
 	$restartBtn.addEventListener("click", () => {
 		showConfirm({
 			title: "Restart from beginning?",

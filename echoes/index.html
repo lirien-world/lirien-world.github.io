@@ -271,7 +271,6 @@ body{
 	letter-spacing:0.06em;
 	opacity:0;animation:reveal 1.6s ease forwards 1.4s;
 	display:flex;align-items:center;justify-content:center;gap:0.8rem;
-	margin-top:clamp(0.4rem,1.4vh,1rem);
 }
 .invitation::before,.invitation::after{
 	content:"";display:inline-block;width:clamp(2rem,5vw,4rem);height:1px;
@@ -282,9 +281,9 @@ body{
 /* ───── BOTTOM BAR (progress + controls) ───── */
 .foot{
 	display:flex;flex-direction:column;gap:0.9rem;
-	/* Explicit top padding so the progress bar doesn't crowd the
-	   invitation's em-dash flourishes above it. The grid-row gap
-	   in .frame collapses on short viewports; this padding doesn't. */
+	/* Explicit top padding so the progress bar isn't pulled tight
+	   against the player above. The grid-row gap in .frame collapses
+	   on short viewports; this padding doesn't. */
 	padding-top:clamp(2.05rem,calc(4.5vh + 5px),3.81rem);
 	opacity:0;animation:reveal 1.6s ease forwards 1.0s;
 }
@@ -510,7 +509,6 @@ body{
 	.spiral-wrap{width:min(30vh,55vw,320px)}
 	.player{gap:clamp(0.6rem,1.5vh,1.2rem);padding:clamp(0.3rem,0.8vh,0.8rem) 0}
 	.track-info{min-height:0;gap:0.4rem}
-	.invitation{margin-top:0.2rem}
 	.foot{padding-top:clamp(0.5rem,1.5vh,1.2rem);gap:0.6rem}
 }
 
@@ -544,7 +542,7 @@ body{
 	.player{gap:clamp(0.25rem,0.8vh,0.5rem);padding:0}
 	.track-info{gap:0.15rem}
 	.track-caption{font-size:0.85em}
-	.invitation{margin-top:0.05rem;font-size:0.85em}
+	.invitation{font-size:0.85em}
 	.foot{padding-top:0.25rem;gap:0.35rem}
 	.controls{gap:1rem}
 	.ctrl-list{padding-top:0.2rem}
@@ -605,9 +603,6 @@ body{
 		<div class="track-info" id="trackInfo">
 			<h1 class="track-title" id="trackTitle" data-i18n="echoes.title.default">A small room of music</h1>
 			<p class="track-caption" id="trackCaption" data-i18n="echoes.caption.default">Touch the spiral to begin</p>
-			<div class="invitation" id="invitation">
-				<span data-i18n="echoes.invitation">the spiral plays when you ask it to</span>
-			</div>
 		</div>
 	</main>
 
@@ -619,6 +614,9 @@ body{
 			<div class="progress-track">
 				<div class="progress-fill" id="progressFill"></div>
 			</div>
+		</div>
+		<div class="invitation" id="invitation">
+			<span data-i18n="echoes.invitation">the spiral plays when you ask it to</span>
 		</div>
 		<div class="transport">
 			<button class="tx-btn" id="prevBtn" type="button" aria-label="Previous track">
@@ -711,7 +709,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-225119";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-230142";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

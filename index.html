@@ -68,8 +68,8 @@
     .footer-lang-toggle:hover,.footer-lang-toggle:focus-visible,.footer-lang-toggle.open{color:var(--gold-bright);outline:none}
     .footer-lang-caret{width:.55em;height:.32em;opacity:.55;transition:transform .3s ease,opacity .3s ease}
     .footer-lang-toggle.open .footer-lang-caret{transform:rotate(180deg);opacity:.85}
-    .footer-lang-dropdown{position:absolute;bottom:calc(100% + .35rem);left:0;background:rgba(10,8,18,.95);border:1px solid rgba(196,147,90,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:.2rem 0;box-shadow:0 -10px 28px rgba(0,0,0,.55);opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity .25s ease,transform .25s ease;z-index:120;line-height:1}
-    .footer-lang-dropdown.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+    .footer-lang-dropdown{position:absolute;bottom:calc(100% + .35rem);left:50%;background:rgba(10,8,18,.95);border:1px solid rgba(196,147,90,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:.2rem 0;box-shadow:0 -10px 28px rgba(0,0,0,.55);opacity:0;pointer-events:none;transform:translate(-50%,6px);transition:opacity .25s ease,transform .25s ease;z-index:120;line-height:1}
+    .footer-lang-dropdown.open{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
     .footer-lang-item{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:.55rem;padding:.45rem .75rem;color:var(--ash);transition:color .3s ease,background .3s ease;width:100%;box-sizing:border-box;white-space:nowrap;line-height:1.1;font-weight:500}
     .footer-lang-item:hover,.footer-lang-item:focus-visible{color:var(--gold-bright);background:rgba(196,147,90,.08);outline:none}
     .footer-lang-item[aria-pressed="true"]{color:var(--gold)}
@@ -206,10 +206,8 @@
     .cta-portal:hover .cta-mote{animation-duration:4.5s}
     @media(prefers-reduced-motion:reduce){.cta-button::before,.cta-spiral path,.cta-mote{animation:none}.cta-mote{opacity:0}}
     .cta-note{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;color:var(--ash);margin-top:1.5rem;display:block}
-    footer{padding:clamp(2rem,5vw,4rem) clamp(1.5rem,5vw,4rem);border-top:1px solid rgba(58,53,72,.4);display:flex;justify-content:space-between;align-items:center;gap:2rem;flex-wrap:wrap}
-    .footer-mark{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.28em;text-transform:uppercase;color:var(--ash)}
-    .footer-quote{font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--ash);line-height:1.65}
-    @media(max-width:600px){footer{flex-direction:column;text-align:center}.footer-quote{text-align:center}}
+    footer{padding:clamp(2rem,5vw,4rem) clamp(1.5rem,5vw,4rem);border-top:1px solid rgba(58,53,72,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;text-align:center}
+    .footer-quote{font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--ash);line-height:1.65;text-align:center;max-width:32rem}
     @keyframes fade-up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fade-in{from{opacity:0}to{opacity:1}}
     .reveal{opacity:0;transform:translateY(28px);transition:opacity .9s ease,transform .9s ease}
@@ -552,6 +550,7 @@
 </section>
 
 <footer>
+  <p class="footer-quote" data-i18n-html="footer.quote">Belonging is not something that happens to you —<br>it is something you have to stop preventing.</p>
   <div class="footer-lang" role="group" aria-label="Language">
     <button class="footer-lang-toggle" type="button" data-lang-toggle aria-haspopup="listbox" aria-expanded="false">
       <span data-lang-current>EN</span>
@@ -568,8 +567,6 @@
       </button>
     </div>
   </div>
-  <div class="footer-mark" data-i18n="footer.mark">Chronicles of Lirien — Book One</div>
-  <p class="footer-quote" data-i18n-html="footer.quote">Belonging is not something that happens to you —<br>it is something you have to stop preventing.</p>
 </footer>
 
 <script>

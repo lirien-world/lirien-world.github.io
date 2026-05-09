@@ -56,17 +56,26 @@
     nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:clamp(1rem,3vw,2rem) clamp(1.5rem,5vw,4rem);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(8,6,15,.95) 0%,transparent 100%);opacity:1!important}
     .nav-mark{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;color:var(--mist);opacity:0;animation:fade-in 2s ease forwards .5s}
     .nav-links{display:flex;gap:clamp(1.2rem,3vw,2.5rem);list-style:none;opacity:0;animation:fade-in 2s ease forwards .8s}
-    /* Language switcher lives in the footer — out of the visual journey,
-       conventional placement, auto-detection handles 95% of cases.
-       Extensible: add a new <button data-lang-set="..."> to the
-       footer markup and an entry to LANGUAGES in the i18n script. */
-    .footer-lang{display:inline-flex;align-items:baseline;gap:.55rem;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase}
-    .footer-lang-item{all:unset;cursor:pointer;color:var(--ash);transition:color .3s ease;font-weight:500;padding:.2rem .35rem}
-    .footer-lang-item:hover,.footer-lang-item:focus-visible{color:var(--gold-bright);outline:none}
+    /* Language switcher lives in the footer — first flex child so it
+       sits on the LEFT (or top of the column on mobile), well away
+       from the floating Music button at bottom-right. Dropdown opens
+       UPWARD because we're at the bottom of the page.
+       Extensible to N languages: add an entry to LANGUAGES in the
+       i18n script + a new <button data-lang-set="..."> in the
+       dropdown markup. */
+    .footer-lang{position:relative;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.18em;text-transform:uppercase}
+    .footer-lang-toggle{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .6rem;color:var(--ash);transition:color .3s ease;font-weight:500}
+    .footer-lang-toggle:hover,.footer-lang-toggle:focus-visible,.footer-lang-toggle.open{color:var(--gold-bright);outline:none}
+    .footer-lang-caret{width:.55em;height:.32em;opacity:.55;transition:transform .3s ease,opacity .3s ease}
+    .footer-lang-toggle.open .footer-lang-caret{transform:rotate(180deg);opacity:.85}
+    .footer-lang-dropdown{position:absolute;bottom:calc(100% + .35rem);left:0;background:rgba(10,8,18,.95);border:1px solid rgba(196,147,90,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:.2rem 0;box-shadow:0 -10px 28px rgba(0,0,0,.55);opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity .25s ease,transform .25s ease;z-index:120;line-height:1}
+    .footer-lang-dropdown.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+    .footer-lang-item{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:.55rem;padding:.45rem .75rem;color:var(--ash);transition:color .3s ease,background .3s ease;width:100%;box-sizing:border-box;white-space:nowrap;line-height:1.1;font-weight:500}
+    .footer-lang-item:hover,.footer-lang-item:focus-visible{color:var(--gold-bright);background:rgba(196,147,90,.08);outline:none}
     .footer-lang-item[aria-pressed="true"]{color:var(--gold)}
-    .footer-lang-item[aria-pressed="true"] .lang-code{text-shadow:0 0 8px rgba(196,147,90,.4)}
-    .footer-lang-item .lang-name{font-style:italic;font-weight:400;letter-spacing:.06em;text-transform:none;opacity:.78;margin-left:.4em}
-    .footer-lang-sep{color:var(--ash);opacity:.35;font-size:.9em}
+    .footer-lang-item[aria-pressed="true"] .lang-code{color:var(--gold-bright);text-shadow:0 0 8px rgba(196,147,90,.4)}
+    .footer-lang-item .lang-code{letter-spacing:.18em;min-width:1.6em}
+    .footer-lang-item .lang-name{font-style:italic;font-size:.95em;letter-spacing:.06em;text-transform:none;color:inherit;opacity:.85;font-weight:400}
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}
     .nav-links a:hover{color:var(--gold)}
     @media(max-width:900px){
@@ -543,17 +552,24 @@
 </section>
 
 <footer>
+  <div class="footer-lang" role="group" aria-label="Language">
+    <button class="footer-lang-toggle" type="button" data-lang-toggle aria-haspopup="listbox" aria-expanded="false">
+      <span data-lang-current>EN</span>
+      <svg class="footer-lang-caret" viewBox="0 0 8 4" aria-hidden="true">
+        <path d="M0 4 L4 0 L8 4" fill="none" stroke="currentColor" stroke-width="0.7"/>
+      </svg>
+    </button>
+    <div class="footer-lang-dropdown" role="listbox" aria-label="Choose language">
+      <button class="footer-lang-item" type="button" data-lang-set="en" role="option">
+        <span class="lang-code">EN</span><span class="lang-name">English</span>
+      </button>
+      <button class="footer-lang-item" type="button" data-lang-set="es" role="option">
+        <span class="lang-code">ES</span><span class="lang-name">Español</span>
+      </button>
+    </div>
+  </div>
   <div class="footer-mark" data-i18n="footer.mark">Chronicles of Lirien — Book One</div>
   <p class="footer-quote" data-i18n-html="footer.quote">Belonging is not something that happens to you —<br>it is something you have to stop preventing.</p>
-  <div class="footer-lang" role="group" aria-label="Language">
-    <button class="footer-lang-item" type="button" data-lang-set="en" role="option">
-      <span class="lang-code">EN</span><span class="lang-name">English</span>
-    </button>
-    <span class="footer-lang-sep" aria-hidden="true">·</span>
-    <button class="footer-lang-item" type="button" data-lang-set="es" role="option">
-      <span class="lang-code">ES</span><span class="lang-name">Español</span>
-    </button>
-  </div>
 </footer>
 
 <script>
@@ -788,11 +804,39 @@
   // Apply on boot
   applyLang(detectLang());
 
-  // Switcher: click delegation. Any [data-lang-set] button anywhere
-  // in the page (currently the footer pair) sets the language.
+  function closeAllDropdowns() {
+    document.querySelectorAll(".footer-lang-dropdown.open").forEach(d => d.classList.remove("open"));
+    document.querySelectorAll("[data-lang-toggle].open").forEach(b => {
+      b.classList.remove("open");
+      b.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  // Switcher: click delegation. Any [data-lang-set] button sets
+  // the language and closes the dropdown. [data-lang-toggle]
+  // toggles the dropdown panel. Click outside closes.
   document.addEventListener("click", (e) => {
     const setBtn = e.target.closest("[data-lang-set]");
-    if (setBtn) setLang(setBtn.getAttribute("data-lang-set"));
+    if (setBtn) {
+      setLang(setBtn.getAttribute("data-lang-set"));
+      closeAllDropdowns();
+      return;
+    }
+    const toggleBtn = e.target.closest("[data-lang-toggle]");
+    if (toggleBtn) {
+      const dropdown = toggleBtn.parentElement.querySelector(".footer-lang-dropdown");
+      if (dropdown) {
+        const open = dropdown.classList.toggle("open");
+        toggleBtn.classList.toggle("open", open);
+        toggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      return;
+    }
+    closeAllDropdowns();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllDropdowns();
   });
 })();
 </script>

@@ -655,6 +655,40 @@ body{
 "use strict";
 
 // ─────────────────────────────────────────────────────────────────
+// PWA freshness check. iOS standalone (Add to Home Screen) caches
+// HTML + JS at install time and won't refresh on its own — users
+// would be stuck on whatever build was live the day they installed.
+// Compare a baked BUILD_VERSION against /version.json on boot AND
+// every time the PWA returns to foreground; reload silently on
+// mismatch. localStorage survives the reload so saves are intact.
+// Bump the version with tools/bump_pwa_version.sh echoes after
+// each /echoes/ deploy that needs to propagate to existing PWAs.
+// ─────────────────────────────────────────────────────────────────
+(function pwaFreshnessCheck(){
+	const BUILD_VERSION = "20260509-193553";  // bump on echoes/ deploys
+	let inFlight = false;
+	async function check(){
+		if (inFlight) return;
+		inFlight = true;
+		try {
+			const r = await fetch("/version.json?t=" + Date.now(), {cache:"no-store"});
+			if (!r.ok) return;
+			const data = await r.json();
+			const live = data.echoes;
+			if (live && live !== BUILD_VERSION){
+				console.log("[freshness] stale build " + BUILD_VERSION + " → " + live + ", reloading");
+				location.reload();
+			}
+		} catch (e) { /* offline — try again next visibility change */ }
+		finally { inFlight = false; }
+	}
+	setTimeout(check, 1500);  // initial check after first paint
+	document.addEventListener("visibilitychange", () => {
+		if (!document.hidden) check();
+	});
+})();
+
+// ─────────────────────────────────────────────────────────────────
 // Service worker — cache-as-you-go for audio + images. Registered
 // up-front so anything fetched later this session benefits. Honors
 // ?clear-cache (or ?nocache) by sending a purge message and then

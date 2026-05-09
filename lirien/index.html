@@ -161,6 +161,34 @@
 		<div id="dev-list" class="dev-list"></div>
 		<div class="dev-footer">backtick (<code>`</code>) toggles &middot; esc closes &middot; depth-first across branches</div>
 	</div>
+	<script>
+	// PWA freshness check — see comments in echoes/index.html. Bump
+	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
+	// /lirien/ deploy that needs to propagate to existing PWAs.
+	(function pwaFreshnessCheck(){
+		const BUILD_VERSION = "20260509-193553";
+		let inFlight = false;
+		async function check(){
+			if (inFlight) return;
+			inFlight = true;
+			try {
+				const r = await fetch("/version.json?t=" + Date.now(), {cache:"no-store"});
+				if (!r.ok) return;
+				const data = await r.json();
+				const live = data.lirien;
+				if (live && live !== BUILD_VERSION){
+					console.log("[freshness] stale build " + BUILD_VERSION + " → " + live + ", reloading");
+					location.reload();
+				}
+			} catch (e) { /* offline */ }
+			finally { inFlight = false; }
+		}
+		setTimeout(check, 1500);
+		document.addEventListener("visibilitychange", () => {
+			if (!document.hidden) check();
+		});
+	})();
+	</script>
 	<script src="analytics.js?v=20260509a"></script>
 	<script src="ink.js?v=20260509a"></script>
 	<script src="main.js?v=20260509a"></script>

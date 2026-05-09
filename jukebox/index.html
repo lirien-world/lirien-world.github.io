@@ -267,6 +267,10 @@ body{
 	position:relative;height:18px;width:min(560px,86vw);margin:0 auto;
 	cursor:pointer;display:flex;align-items:center;
 	-webkit-tap-highlight-color:transparent;
+	/* Lets the slider own touch events instead of the browser
+	   interpreting them as page-scroll — required for drag-to-seek
+	   on touch devices. */
+	touch-action:none;user-select:none;-webkit-user-select:none;
 }
 .progress:focus-visible{outline:none}
 .progress-track{
@@ -964,20 +968,46 @@ $nextBtn.addEventListener("click", next);
 $modeToggle.addEventListener("click", toggleMode);
 $contentToggle.addEventListener("click", toggleContent);
 
-// click-to-seek on the progress bar
-function seekFromEvent(ev){
+// Drag / tap to seek. Pointer events cover mouse, touch, and pen in
+// a single path. setPointerCapture means once the drag starts, we
+// keep getting move/up events even if the finger or cursor leaves
+// the bar's bounds — important for fluid scrubbing.
+let seekDragging = false;
+function clientXFromPointer(ev){
+	return ev.clientX !== undefined ? ev.clientX :
+	       (ev.touches && ev.touches[0] ? ev.touches[0].clientX : 0);
+}
+function applySeek(clientX){
 	if (!$audio.duration || !isFinite($audio.duration)) return;
 	const rect = $progress.getBoundingClientRect();
-	const x = (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX);
-	const ratio = Math.max(0, Math.min(1, (x - rect.left) / rect.width));
+	const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 	$audio.currentTime = ratio * $audio.duration;
-	// Drive immediate visual update on the bar — timeupdate may not
-	// fire instantly while the audio engine resyncs, especially when
-	// paused. The spiral's CSS animation is independent of currentTime,
-	// so seeking doesn't need to touch the spiral.
+	// Drive the bar fill immediately — timeupdate may not fire
+	// instantly while the audio engine resyncs, especially during
+	// continuous drag or while paused.
 	$progressFill.style.width = (ratio*100).toFixed(2) + "%";
+	$progress.setAttribute("aria-valuenow", (ratio*100).toFixed(0));
 }
-$progress.addEventListener("click", seekFromEvent);
+
+$progress.addEventListener("pointerdown", (ev) => {
+	if (!$audio.duration || !isFinite($audio.duration)) return;
+	seekDragging = true;
+	try { $progress.setPointerCapture(ev.pointerId); } catch (e) {}
+	applySeek(clientXFromPointer(ev));
+	ev.preventDefault();
+});
+$progress.addEventListener("pointermove", (ev) => {
+	if (!seekDragging) return;
+	applySeek(clientXFromPointer(ev));
+});
+function endSeek(ev){
+	if (!seekDragging) return;
+	seekDragging = false;
+	try { $progress.releasePointerCapture(ev.pointerId); } catch (e) {}
+}
+$progress.addEventListener("pointerup", endSeek);
+$progress.addEventListener("pointercancel", endSeek);
+
 $progress.addEventListener("keydown", (ev)=>{
 	// Arrow keys when the bar has focus seek by ±5%.
 	if (!$audio.duration || !isFinite($audio.duration)) return;

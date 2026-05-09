@@ -27,8 +27,14 @@ html,body{margin:0;padding:0;height:100%}
 body{
 	background:var(--void);color:var(--cream);
 	font-family:'EB Garamond',Georgia,serif;font-size:var(--text-body);line-height:1.7;
-	overflow:hidden;-webkit-font-smoothing:antialiased;
-	min-height:100dvh;min-height:100vh;
+	-webkit-font-smoothing:antialiased;
+	/* Allow vertical scroll if content exceeds viewport — protects
+	   against the iOS-Safari dynamic-chrome edge case where the
+	   bottom controls would otherwise tuck behind the URL/nav bar.
+	   Horizontal stays hidden so the bg-drift transform can't
+	   introduce a side-scroll. */
+	overflow-x:hidden;overflow-y:auto;
+	min-height:100vh;min-height:100dvh;
 }
 
 /* ───── BACKGROUND IMAGE LAYER (two stacked, crossfade) ───── */
@@ -79,8 +85,16 @@ body{
 .frame{
 	position:relative;z-index:3;
 	display:grid;grid-template-rows:auto 1fr auto;
-	height:100dvh;height:100vh;
+	/* dvh AFTER vh so dvh-supporting browsers use the dynamic
+	   value — accounts for iOS Safari's address bar / bottom
+	   nav, which 100vh ignores and clips controls behind. */
+	min-height:100vh;
+	min-height:100dvh;
 	padding:clamp(1.25rem,3vw,2.5rem) clamp(1.25rem,4vw,3rem);
+	/* Respect iOS safe areas (home indicator, notch) so the
+	   bottom controls aren't tucked under the system bar. */
+	padding-bottom:max(clamp(1.25rem,3vw,2.5rem),env(safe-area-inset-bottom));
+	padding-top:max(clamp(1.25rem,3vw,2.5rem),env(safe-area-inset-top));
 	gap:clamp(1.25rem,3vw,2.5rem);
 }
 
@@ -429,6 +443,27 @@ body{
 	.brand-meta{font-size:0.65rem}
 	.controls{gap:1.4rem}
 	.ctrl-list{margin-left:0;width:100%;text-align:center;padding-top:0.5rem}
+}
+
+/* ───── COMPACT VERTICAL — phones with iOS chrome / short windows ─────
+   When height is tight (e.g. iPhone SE in Safari with the URL bar
+   visible eats ~120px), pull the page in vertically so the transport
+   + drawer toggle stay within the visible viewport without forcing
+   a scroll. Triggers on shorter heights regardless of orientation. */
+@media (max-height:760px){
+	.frame{gap:clamp(0.5rem,1.5vw,1.2rem);padding:clamp(0.75rem,2vw,1.5rem) clamp(1.25rem,4vw,3rem)}
+	.spiral-wrap{width:min(30vh,55vw,320px)}
+	.player{gap:clamp(0.6rem,1.5vh,1.2rem);padding:clamp(0.3rem,0.8vh,0.8rem) 0}
+	.track-info{min-height:0;gap:0.4rem}
+	.invitation{margin-top:0.2rem}
+	.foot{padding-top:clamp(0.5rem,1.5vh,1.2rem);gap:0.6rem}
+}
+
+/* Even tighter for very short viewports (landscape phones, browser
+   chrome eating most of the height). */
+@media (max-height:520px){
+	.spiral-wrap{width:min(26vh,40vw,240px)}
+	.brand-mark .two{display:none}     /* drop the secondary tagline */
 }
 </style>
 </head>

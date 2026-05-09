@@ -914,6 +914,7 @@ function persistQueue(){
 			date: localDateStamp(),
 			fingerprint: visibleFingerprint(),
 			content,
+			mode,
 			queue,
 			queueIdx,
 		}));
@@ -921,29 +922,41 @@ function persistQueue(){
 }
 
 function reshuffle(skipFirst){
-	// Try to restore an in-progress queue first. If it still matches
-	// the visible set + date, we're a same-session reload (or a
-	// page navigation back to the jukebox) and we should pick up
-	// where the user left off.
+	// Try to restore an in-progress queue first. The restored queue
+	// is only valid if the date, visible set, AND mode match — mode
+	// matters because shuffled and sequential produce different
+	// orders and we don't want to display the wrong one.
 	const restored = loadStoredQueue();
-	if (restored && Array.isArray(restored.queue)){
+	if (restored && restored.mode === mode && Array.isArray(restored.queue)){
 		queue = restored.queue;
 		queueIdx = (typeof restored.queueIdx === "number") ? restored.queueIdx : -1;
 		return;
 	}
 	const idx = visibleIndices();
-	for (let i=idx.length-1;i>0;i--){
-		const j = Math.floor(Math.random()*(i+1));
-		[idx[i],idx[j]] = [idx[j],idx[i]];
+	if (mode === "shuffled"){
+		for (let i=idx.length-1;i>0;i--){
+			const j = Math.floor(Math.random()*(i+1));
+			[idx[i],idx[j]] = [idx[j],idx[i]];
+		}
+		// Avoid landing the freshly-shuffled queue's first element on
+		// the track that just finished (otherwise back-to-back same
+		// track on shuffle wraparound).
+		if (skipFirst != null && idx.length > 1 && idx[0] === skipFirst){
+			[idx[0],idx[1]] = [idx[1],idx[0]];
+		}
 	}
-	// Avoid landing the freshly-shuffled queue's first element on the
-	// track that just finished (otherwise back-to-back same track on
-	// shuffle wraparound).
-	if (skipFirst != null && idx.length > 1 && idx[0] === skipFirst){
-		[idx[0],idx[1]] = [idx[1],idx[0]];
-	}
+	// Sequential mode: leave idx in visibleIndices order — that IS
+	// the play order, so the drawer can render it directly.
 	queue = idx;
-	queueIdx = -1;
+	// If a track is currently active, sync queueIdx to its position
+	// in the new queue so next/previous work coherently after a
+	// mode toggle.
+	if (activeIdx !== -1){
+		const pos = queue.indexOf(activeIdx);
+		queueIdx = (pos !== -1) ? pos : -1;
+	} else {
+		queueIdx = -1;
+	}
 	persistQueue();
 }
 
@@ -979,8 +992,13 @@ function previousQueueIndex(){
 
 function toggleMode(){
 	mode = (mode === "shuffled") ? "sequential" : "shuffled";
-	if (mode === "shuffled") reshuffle(activeIdx);
+	// Always regenerate the queue on mode change — sequential and
+	// shuffled produce different orders, and the drawer renders the
+	// queue directly so it must match what's actually about to play.
+	reshuffle(activeIdx);
 	updateModeLabel();
+	buildTracklist();
+	updateActiveRow();
 }
 
 function updateModeLabel(){
@@ -1353,26 +1371,30 @@ document.addEventListener("keydown", (ev)=>{
 // Drawer + track list
 // ─────────────────────────────────────────────────────────────────
 function buildTracklist(){
+	// Render in actual play order. queue is already in the right
+	// sequence: sequential mode = visibleIndices order; shuffled =
+	// the deterministic shuffled order. Either way, the user's
+	// drawer matches what's about to play.
 	const frag = document.createDocumentFragment();
-	const visible = visibleIndices();
-	visible.forEach((i, displayPos) => {
-		const t = TRACKS[i];
+	queue.forEach((trackIdx, queuePos) => {
+		const t = TRACKS[trackIdx];
+		if (!t) return;
 		const li = document.createElement("li");
 		const btn = document.createElement("button");
 		btn.type = "button";
 		btn.className = "track-row";
-		btn.dataset.idx = String(i);
+		btn.dataset.idx = String(trackIdx);
 		// In minimal we drop the chapter-context caption from the
 		// drawer rows too (consistent with the now-playing strip).
 		const where = (content === "minimal") ? "" : t.caption;
 		btn.innerHTML = `
-			<span class="num">${String(displayPos+1).padStart(2,"0")}</span>
+			<span class="num">${String(queuePos+1).padStart(2,"0")}</span>
 			<span class="meta">
 				<span class="name">${escapeHtml(t.title)}</span>
 				<span class="where">${escapeHtml(where)}</span>
 			</span>`;
 		btn.addEventListener("click", ()=>{
-			loadTrack(i, {play:true});
+			loadTrack(trackIdx, {play:true});
 			closeDrawer();
 		});
 		li.appendChild(btn);

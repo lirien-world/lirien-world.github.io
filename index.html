@@ -135,7 +135,14 @@
        central ellipse where the text lives — guarantees no arms behind
        any letter. Spiral remains bright at the rim and reads as a
        pattern that "wraps around" the text. */
-    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(232,168,88,1);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 8px rgba(232,168,88,.7)) drop-shadow(0 0 2px rgba(232,168,88,.6));mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%)}
+    /* Spiral: STATIC shape (rotation read as "duplicate button under
+       the main one" — wrong feeling). Instead, energy flows ALONG the
+       fixed spiral via stroke-dashoffset animation: long dashes travel
+       outward through the filaments. The spiral stays put; light moves
+       through it. Reads alive without reading like a turning wheel. */
+    .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(232,168,88,1);pointer-events:none;transform-origin:50% 50%;transform:scale(1.5);z-index:0;filter:drop-shadow(0 0 8px rgba(232,168,88,.7)) drop-shadow(0 0 2px rgba(232,168,88,.6));mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 0%,transparent 28%,black 72%)}
+    .cta-spiral path{stroke-dasharray:18 22;animation:cta-flow 6s linear infinite}
+    @keyframes cta-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-40}}
     /* Label spotlight: heavier dark radial behind the label, fades to
        transparent at the rim where the spiral takes over. With the
        spiral now masked out of this region, the spotlight is layering
@@ -145,16 +152,16 @@
        1-2px black shadows stack to a thick dark halo around every
        letter — reads on any conceivable backdrop. */
     .cta-label{position:relative;z-index:2;color:rgba(255,250,235,1);text-shadow:0 0 4px rgba(8,6,15,1),0 0 4px rgba(8,6,15,1),0 0 2px rgba(8,6,15,1),0 1px 0 rgba(8,6,15,1),0 0 14px rgba(255,220,150,.45)}
-    @keyframes cta-spin{from{transform:scale(1.5) rotate(0deg)}to{transform:scale(1.5) rotate(-360deg)}}
     .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 42px rgba(255,220,150,.6)) drop-shadow(0 6px 18px rgba(0,0,0,.55));transform:translateY(-1px)}
-    .cta-button:hover .cta-spiral{animation-duration:24s;color:rgba(248,193,118,1);filter:drop-shadow(0 0 12px rgba(232,168,88,.9)) drop-shadow(0 0 3px rgba(232,168,88,.7))}
+    .cta-button:hover .cta-spiral{color:rgba(248,193,118,1);filter:drop-shadow(0 0 12px rgba(232,168,88,.9)) drop-shadow(0 0 3px rgba(232,168,88,.7))}
+    .cta-button:hover .cta-spiral path{animation-duration:2.5s}
     .cta-button:focus-visible{outline:none;filter:drop-shadow(0 0 38px rgba(255,232,175,.85)) drop-shadow(0 6px 18px rgba(0,0,0,.5))}
     .cta-button:active{transform:translateY(0) scale(.97);transition:transform .12s ease}
     /* Motes: small embers that rise out of the button continuously, faster on hover */
     .cta-mote{position:absolute;bottom:6px;left:calc(50% + var(--x,0%));width:3px;height:3px;border-radius:50%;background:rgba(255,232,175,.95);box-shadow:0 0 9px rgba(255,220,150,.7),0 0 3px rgba(255,232,175,.95);pointer-events:none;opacity:0;animation:cta-rise 8s ease-out infinite;animation-delay:var(--d,0s);z-index:2}
     @keyframes cta-rise{0%{opacity:0;transform:translateY(0) scale(.5)}15%{opacity:.85}55%{opacity:.5;transform:translateY(-58px) scale(1)}100%{opacity:0;transform:translateY(-115px) scale(1.1)}}
     .cta-portal:hover .cta-mote{animation-duration:4.5s}
-    @media(prefers-reduced-motion:reduce){.cta-button::before,.cta-spiral,.cta-mote{animation:none}.cta-mote{opacity:0}}
+    @media(prefers-reduced-motion:reduce){.cta-button::before,.cta-spiral path,.cta-mote{animation:none}.cta-mote{opacity:0}}
     .cta-note{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;color:var(--ash);margin-top:1.5rem;display:block}
     footer{padding:clamp(2rem,5vw,4rem) clamp(1.5rem,5vw,4rem);border-top:1px solid rgba(58,53,72,.4);display:flex;justify-content:space-between;align-items:center;gap:2rem;flex-wrap:wrap}
     .footer-mark{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.28em;text-transform:uppercase;color:var(--ash)}

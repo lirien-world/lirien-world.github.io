@@ -543,50 +543,40 @@ body{
 	.frame{min-height:0;height:100vh;height:100dvh}
 }
 
-/* Landscape phones — wide + short. The transport + drawer toggle
-   compete with the spiral + track info for vertical space.
-   Aggressively compress everything so it fits without scroll. */
+/* Landscape phones — wide + short. Browser chrome (URL bar + tab
+   strip) and the iOS home-indicator safe-area both eat dvh, so
+   everything compresses to fit without scrolling.
+   These values used to be split across a base rule + a (display-
+   mode:browser)-qualified rule, but iOS Safari's matching of
+   (display-mode:browser) is unreliable across versions — when it
+   silently fails to match, the layout overflows on real iPhones.
+   Folding the tight values into the unqualified rule guarantees
+   they apply everywhere; the standalone-PWA rule below this can
+   re-override the few values that should be looser in PWA mode. */
 @media (orientation:landscape) and (max-height:480px){
 	.frame{
-		gap:clamp(0.25rem,0.8vh,0.5rem);
-		padding:max(0.3rem,env(safe-area-inset-top))
+		gap:clamp(0.2rem,0.6vh,0.4rem);
+		padding:max(0.2rem,env(safe-area-inset-top))
 		       clamp(1rem,3vw,2rem)
-		       max(0.3rem,env(safe-area-inset-bottom));
+		       max(0.2rem,env(safe-area-inset-bottom));
 	}
-	.spiral-wrap{width:min(20vh,28vw,160px)}
+	.spiral-wrap{width:min(16vh,22vw,120px)}
 	.player{gap:clamp(0.25rem,0.8vh,0.6rem);padding:0}
 	.player-controls{gap:clamp(0.15rem,0.5vh,0.4rem)}
 	.track-info{gap:0.15rem}
-	.track-caption{font-size:0.85em}
-	.invitation{font-size:0.85em}
-	.controls{gap:1rem}
-	.ctrl-list{padding-top:0.2rem}
-	/* Brand-meta goes horizontal so the header collapses from 3
-	   stacked lines (~63px) to one line (~22px). Recovered ~40px
-	   of vertical space without losing any information. */
-	.brand-meta{flex-direction:row;gap:1rem;line-height:1.2}
-}
-
-/* Non-PWA landscape compact — even tighter than the shared
-   landscape rule above. Safari (display-mode:browser) loses
-   ~80-100px of dvh to the URL bar + tab bar that a standalone
-   PWA doesn't lose, so type and controls have to shrink another
-   notch to keep the foot's "N tracks ◆" toggle inside the
-   visible area instead of clipping at the bottom. */
-@media (orientation:landscape) and (max-height:480px) and (display-mode:browser){
-	.frame{
-		padding-top:max(0.2rem,env(safe-area-inset-top));
-		padding-bottom:max(0.2rem,env(safe-area-inset-bottom));
-		gap:clamp(0.2rem,0.6vh,0.4rem);
-	}
-	.spiral-wrap{width:min(16vh,22vw,120px)}
 	.track-title{font-size:1.05rem}
 	.track-caption{font-size:0.72em}
 	.invitation{font-size:0.78em}
 	.transport{gap:clamp(0.6rem,1.8vw,1rem);margin-top:6px}
 	.tx-btn{width:38px;height:38px}
 	.tx-btn--play{width:48px;height:48px}
+	.controls{gap:1rem}
 	.ctrl{padding:0.25rem 0.2rem}
+	.ctrl-list{padding-top:0.2rem}
+	/* Brand-meta goes horizontal so the header collapses from 3
+	   stacked lines (~63px) to one line (~22px). Recovered ~40px
+	   of vertical space without losing any information. */
+	.brand-meta{flex-direction:row;gap:1rem;line-height:1.2}
 }
 
 /* Standalone-PWA-specific (Add to Home Screen, opens chrome-less).
@@ -757,7 +747,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-231432";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-234254";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

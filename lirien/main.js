@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260509a";
+const ASSET_VERSION = "20260510a";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -51,6 +51,63 @@ const $settingsBtn = document.getElementById("settings-btn");
 const $settingsPanel = document.getElementById("settings-panel");
 const $chaptersBtn = document.getElementById("chapters-btn");
 const $chaptersPanel = document.getElementById("chapters-panel");
+const $drawerScrim = document.getElementById("drawer-scrim");
+
+// Drawer open/close helpers. The two drawers (.settings-panel and
+// .chapters-panel) share one backdrop scrim and are mutually
+// exclusive — opening one closes the other. Animations are CSS-
+// driven via the .is-open class on both the drawer and the scrim;
+// JS just toggles class state.
+function openDrawer(drawer) {
+	if (!drawer) return;
+	const other = drawer === $settingsPanel ? $chaptersPanel : $settingsPanel;
+	if (other) {
+		other.classList.remove("is-open");
+		other.setAttribute("aria-hidden", "true");
+	}
+	drawer.classList.add("is-open");
+	drawer.setAttribute("aria-hidden", "false");
+	if ($drawerScrim) $drawerScrim.classList.add("is-open");
+}
+function closeDrawer(drawer) {
+	if (drawer) {
+		drawer.classList.remove("is-open");
+		drawer.setAttribute("aria-hidden", "true");
+	}
+	if ($drawerScrim) $drawerScrim.classList.remove("is-open");
+}
+function closeAllDrawers() {
+	closeDrawer($settingsPanel);
+	closeDrawer($chaptersPanel);
+}
+function isDrawerOpen(drawer) {
+	return drawer && drawer.classList.contains("is-open");
+}
+
+// Brief glow-then-fade tap acknowledgment for chrome buttons. Same
+// pattern as /echoes/: gate :hover behind (hover:hover) in CSS so
+// iOS sticky-hover doesn't pin the glow on after a tap, and apply
+// .tap-ack here on each click for a 1-second visual ack instead.
+function ackTap(el) {
+	if (!el) return;
+	el.classList.remove("tap-ack");
+	void el.offsetWidth;
+	el.classList.add("tap-ack");
+}
+if ($drawerScrim) {
+	$drawerScrim.addEventListener("click", () => closeAllDrawers());
+}
+document.addEventListener("click", (ev) => {
+	const closeBtn = ev.target.closest("[data-close-drawer]");
+	if (!closeBtn) return;
+	const drawer = closeBtn.closest(".drawer");
+	closeDrawer(drawer);
+});
+document.addEventListener("animationend", (ev) => {
+	if (ev.animationName === "chrome-btn-tap-ack") {
+		ev.target.classList.remove("tap-ack");
+	}
+});
 const $chapterList = document.getElementById("chapter-list");
 const $restartBtn = document.getElementById("restart-btn");
 const $returnRecentBtn = document.getElementById("return-recent-btn");
@@ -1261,6 +1318,7 @@ function bindAdvanceInput() {
 		if (ev.target.closest(".choice")) return;
 		if (ev.target.closest(".settings-btn") || ev.target.closest(".settings-panel")) return;
 		if (ev.target.closest(".chapters-btn") || ev.target.closest(".chapters-panel")) return;
+		if (ev.target.closest(".drawer-scrim")) return;
 		if (ev.target.closest(".title-continue")) return;
 		if (ev.target.closest(".confirm-dialog")) return;
 		if (ev.target.closest(".install-splash")) return;
@@ -1316,10 +1374,13 @@ function bindAdvanceInput() {
 
 function bindSettingsMenu() {
 	$settingsBtn.addEventListener("click", () => {
-		$settingsPanel.hidden = !$settingsPanel.hidden;
-		// Mutual exclusion — only one corner panel visible at a time.
-		if (!$settingsPanel.hidden) $chaptersPanel.hidden = true;
-		refreshSelectionMarkers();
+		ackTap($settingsBtn);
+		if (isDrawerOpen($settingsPanel)) {
+			closeDrawer($settingsPanel);
+		} else {
+			openDrawer($settingsPanel);
+			refreshSelectionMarkers();
+		}
 	});
 	for (const btn of $settingsPanel.querySelectorAll(".speed-btn")) {
 		btn.addEventListener("click", () => {
@@ -1369,13 +1430,6 @@ function bindSettingsMenu() {
 		});
 	}
 	refreshSelectionMarkers();
-
-	// Click outside the panel closes it.
-	document.addEventListener("pointerdown", (ev) => {
-		if ($settingsPanel.hidden) return;
-		if (ev.target.closest(".settings-panel") || ev.target.closest(".settings-btn")) return;
-		$settingsPanel.hidden = true;
-	});
 }
 
 // ----- chapters menu -----
@@ -1386,10 +1440,11 @@ function bindSettingsMenu() {
 
 function bindChaptersMenu() {
 	$chaptersBtn.addEventListener("click", () => {
-		$chaptersPanel.hidden = !$chaptersPanel.hidden;
-		// Mutual exclusion — only one corner panel visible at a time.
-		if (!$chaptersPanel.hidden) {
-			$settingsPanel.hidden = true;
+		ackTap($chaptersBtn);
+		if (isDrawerOpen($chaptersPanel)) {
+			closeDrawer($chaptersPanel);
+		} else {
+			openDrawer($chaptersPanel);
 			// Render on open so previously-saved bookmarks appear even
 			// if no chapter: tag has fired yet this session, and so any
 			// late-session changes are reflected.
@@ -1404,21 +1459,14 @@ function bindChaptersMenu() {
 			message: "Your reading position and chapter list will be cleared. This can't be undone.",
 			confirmLabel: "Restart",
 		}, () => {
-			$chaptersPanel.hidden = true;
+			closeDrawer($chaptersPanel);
 			restartFromBeginning();
 		});
 	});
 
 	$returnRecentBtn.addEventListener("click", () => {
-		$chaptersPanel.hidden = true;
+		closeDrawer($chaptersPanel);
 		returnToMostRecent();
-	});
-
-	// Click outside the panel closes it.
-	document.addEventListener("pointerdown", (ev) => {
-		if ($chaptersPanel.hidden) return;
-		if (ev.target.closest(".chapters-panel") || ev.target.closest(".chapters-btn")) return;
-		$chaptersPanel.hidden = true;
 	});
 }
 

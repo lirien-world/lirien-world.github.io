@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260509a">
+	<link rel="stylesheet" href="style.css?v=20260510a">
 </head>
 <body>
 	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
@@ -48,35 +48,54 @@
 		<div id="offline-hint" class="offline-hint" hidden aria-live="polite">Waiting for connection&hellip;</div>
 		<div id="choices" class="choices"></div>
 	</div>
-	<button id="chapters-btn" class="chapters-btn" aria-label="Chapters"></button>
-	<div id="chapters-panel" class="chapters-panel" hidden>
-		<div class="settings-heading">Chapters</div>
-		<div id="chapter-list" class="chapter-list">
-			<div class="chapter-empty">Chapter list will appear here as you read.</div>
+	<div class="drawer-scrim" id="drawer-scrim" aria-hidden="true"></div>
+
+	<button id="chapters-btn" class="chrome-btn chapters-btn" aria-label="Chapters"></button>
+	<aside id="chapters-panel" class="drawer chapters-drawer" aria-hidden="true">
+		<div class="drawer-head">
+			<h2 class="drawer-title">Chapters</h2>
+			<button class="drawer-close" type="button" data-close-drawer>Close</button>
 		</div>
-		<button id="return-recent-btn" class="return-recent-btn" hidden>Return to most recent point</button>
-		<div class="settings-divider"></div>
-		<button id="restart-btn" class="restart-btn">Restart from beginning</button>
-	</div>
-	<button id="settings-btn" class="settings-btn" aria-label="Settings"></button>
-	<div id="settings-panel" class="settings-panel" hidden>
-		<div class="settings-heading">Reading speed</div>
-		<button class="speed-btn" data-multiplier="0.2">Very slow</button>
-		<button class="speed-btn" data-multiplier="0.3">Slow</button>
-		<button class="speed-btn" data-multiplier="0.4">Normal</button>
-		<button class="speed-btn" data-multiplier="0.7">Fast</button>
-		<button class="speed-btn" data-multiplier="1.0">Very fast</button>
-		<div class="settings-divider"></div>
-		<div class="settings-heading">Text size</div>
-		<button class="size-btn" data-size="28">Small</button>
-		<button class="size-btn" data-size="32">Medium</button>
-		<button class="size-btn" data-size="36">Large</button>
-		<button class="size-btn" data-size="42">Very large</button>
-		<div class="settings-divider"></div>
-		<div class="settings-heading">Music</div>
-		<button class="music-btn" data-music="on">On</button>
-		<button class="music-btn" data-music="off">Off</button>
-	</div>
+		<div class="drawer-body">
+			<div id="chapter-list" class="chapter-list">
+				<div class="chapter-empty">Chapter list will appear here as you read.</div>
+			</div>
+		</div>
+		<div class="drawer-foot-actions">
+			<button id="return-recent-btn" class="drawer-action" hidden>Return to most recent point</button>
+			<button id="restart-btn" class="drawer-action drawer-action--danger">Restart from beginning</button>
+		</div>
+	</aside>
+
+	<button id="settings-btn" class="chrome-btn settings-btn" aria-label="Settings"></button>
+	<aside id="settings-panel" class="drawer settings-drawer" aria-hidden="true">
+		<div class="drawer-head">
+			<h2 class="drawer-title">Settings</h2>
+			<button class="drawer-close" type="button" data-close-drawer>Close</button>
+		</div>
+		<div class="drawer-body">
+			<section class="setting-section">
+				<div class="setting-section-heading">Reading speed</div>
+				<button class="setting-row speed-btn" data-multiplier="0.2">Very slow</button>
+				<button class="setting-row speed-btn" data-multiplier="0.3">Slow</button>
+				<button class="setting-row speed-btn" data-multiplier="0.4">Normal</button>
+				<button class="setting-row speed-btn" data-multiplier="0.7">Fast</button>
+				<button class="setting-row speed-btn" data-multiplier="1.0">Very fast</button>
+			</section>
+			<section class="setting-section">
+				<div class="setting-section-heading">Text size</div>
+				<button class="setting-row size-btn" data-size="28">Small</button>
+				<button class="setting-row size-btn" data-size="32">Medium</button>
+				<button class="setting-row size-btn" data-size="36">Large</button>
+				<button class="setting-row size-btn" data-size="42">Very large</button>
+			</section>
+			<section class="setting-section">
+				<div class="setting-section-heading">Music</div>
+				<button class="setting-row music-btn" data-music="on">On</button>
+				<button class="setting-row music-btn" data-music="off">Off</button>
+			</section>
+		</div>
+	</aside>
 	<div id="rotate-prompt" class="rotate-prompt">Please rotate your device to landscape</div>
 	<div id="install-splash" class="install-splash" hidden>
 		<div class="install-splash-content">
@@ -166,7 +185,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260509-193553";
+		const BUILD_VERSION = "20260510-004224";
 		let inFlight = false;
 		async function check(){
 			if (inFlight) return;
@@ -189,8 +208,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260509a"></script>
-	<script src="ink.js?v=20260509a"></script>
-	<script src="main.js?v=20260509a"></script>
+	<script src="analytics.js?v=20260510a"></script>
+	<script src="ink.js?v=20260510a"></script>
+	<script src="main.js?v=20260510a"></script>
 </body>
 </html>

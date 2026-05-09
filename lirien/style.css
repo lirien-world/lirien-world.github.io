@@ -432,8 +432,13 @@ html, body {
 
 /* Settings + Chapters buttons share size, position-anchor, and color
  * so the two corner icons read as a coherent pair. */
-.settings-btn,
-.chapters-btn {
+/* ----- chrome buttons (top-right toggles) -----
+ *
+ * Same icon-only floating buttons as before, restyled to match the
+ * /echoes/ chrome aesthetic: mist-gray default, gold-bright on hover
+ * (gated to hover-capable devices to dodge iOS sticky-hover), and a
+ * brief glow-fade tap-ack animation per press for touch users. */
+.chrome-btn {
 	position: fixed;
 	top: 12px;
 	width: 36px;
@@ -443,131 +448,232 @@ html, body {
 	cursor: pointer;
 	z-index: 50;
 	padding: 0;
-	color: #f5ebd2;
-	transition: color 0.2s ease;
+	color: var(--mist);
+	transition: color 0.3s ease, filter 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
 }
-.settings-btn:hover,
-.chapters-btn:hover { color: #fbf2d4; }
+@media (hover: hover) and (pointer: fine) {
+	.chrome-btn:hover {
+		color: var(--gold-bright);
+		filter: drop-shadow(0 0 10px rgba(196,147,90,0.5));
+	}
+}
+.chrome-btn:focus-visible {
+	outline: none;
+	color: var(--gold-bright);
+	filter: drop-shadow(0 0 10px rgba(196,147,90,0.5));
+}
+@keyframes chrome-btn-tap-ack {
+	0%   { color: var(--gold-bright); filter: drop-shadow(0 0 10px rgba(196,147,90,0.5)); }
+	100% { color: var(--mist);        filter: drop-shadow(0 0 0   rgba(196,147,90,0)); }
+}
+.chrome-btn.tap-ack { animation: chrome-btn-tap-ack 1s ease-out; }
+
 .settings-btn { right: 12px; }
 .chapters-btn { right: 56px; }
-.chapters-btn::before {
-	content: '';
-	display: block;
-	width: 100%;
-	height: 100%;
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5ebd2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>");
-	background-size: contain;
-	background-repeat: no-repeat;
-	background-position: center;
-}
-
+.chapters-btn::before,
 .settings-btn::before {
 	content: '';
 	display: block;
 	width: 100%;
 	height: 100%;
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5ebd2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
-	color: inherit;
+}
+/* Currentcolor on stroke so the SVG icon picks up the .chrome-btn
+ * color (and its hover/focus/tap-ack transitions) automatically.
+ * Encoded as 'currentColor' in the URL — Chrome and Safari both
+ * resolve this against the parent's `color` property. */
+.chapters-btn::before {
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>");
+}
+.settings-btn::before {
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
 }
 
-.settings-panel {
+/* ----- drawer chrome (settings + chapters) -----
+ *
+ * Right-side full-height drawers, lifted from the /echoes/ pattern so
+ * the two surfaces share a vocabulary. Backdrop scrim is shared
+ * (only one drawer open at a time). Gold-on-navy, Cormorant Garamond,
+ * letterspaced uppercase titles. Slide-in via translateX with the
+ * same cubic curve we use elsewhere for "ceremonial" motion. */
+.drawer-scrim {
 	position: fixed;
-	top: 56px;
-	right: 12px;
-	background: rgba(11, 11, 18, 0.92);
-	border-radius: 12px;
-	padding: 18px;
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	min-width: 220px;
-	max-height: 85vh;
-	overflow-y: auto;
-	overscroll-behavior: contain;
-	-webkit-overflow-scrolling: touch;
-	z-index: 50;
+	inset: 0;
+	z-index: 60;
+	background: rgba(8, 6, 15, 0.78);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.5s ease;
 }
-.settings-panel[hidden] { display: none; }
+.drawer-scrim.is-open { opacity: 1; pointer-events: auto; }
 
-/* Chapters panel — same chrome as settings, just a different content
- * model. Shares positioning so only one panel is ever visible at a
- * time (JS enforces mutual exclusion). */
-.chapters-panel {
+.drawer {
 	position: fixed;
-	top: 56px;
-	right: 12px;
-	background: rgba(11, 11, 18, 0.92);
-	border-radius: 12px;
-	padding: 18px;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 70;
+	width: min(440px, 92vw);
+	background: rgba(16, 13, 28, 0.94);
+	border-left: 1px solid rgba(196, 147, 90, 0.22);
+	transform: translateX(100%);
+	transition: transform 0.6s cubic-bezier(.2, .7, .2, 1);
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	min-width: 240px;
-	max-width: 320px;
-	max-height: 85vh;
-	overflow-y: auto;
-	overscroll-behavior: contain;
-	-webkit-overflow-scrolling: touch;
-	z-index: 50;
+	padding: clamp(1.5rem, 3vw, 2.5rem);
+	padding-top: max(clamp(1.5rem, 3vw, 2.5rem), env(safe-area-inset-top));
+	padding-bottom: max(clamp(1.5rem, 3vw, 2.5rem), env(safe-area-inset-bottom));
+	overflow: hidden;
 }
-.chapters-panel[hidden] { display: none; }
+.drawer.is-open { transform: translateX(0); }
+
+.drawer-head {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.25rem;
+	border-bottom: 1px solid rgba(196, 147, 90, 0.18);
+}
+.drawer-title {
+	font-family: 'Cormorant Garamond', serif;
+	font-weight: 400;
+	font-size: 0.95rem;
+	letter-spacing: 0.42em;
+	text-transform: uppercase;
+	color: var(--gold);
+	margin: 0;
+}
+.drawer-close {
+	all: unset;
+	cursor: pointer;
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 0.78rem;
+	letter-spacing: 0.32em;
+	text-transform: uppercase;
+	color: var(--mist);
+	padding: 0.4rem 0.6rem;
+	transition: color 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+	.drawer-close:hover { color: var(--gold-bright); }
+}
+.drawer-close:focus-visible { outline: none; color: var(--gold-bright); }
+
+.drawer-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior: contain;
+	display: flex;
+	flex-direction: column;
+	gap: 1.4rem;
+}
+
+.drawer-foot-actions {
+	flex-shrink: 0;
+	margin-top: 1.4rem;
+	padding-top: 1.25rem;
+	border-top: 1px solid rgba(196, 147, 90, 0.18);
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.drawer-action {
+	all: unset;
+	cursor: pointer;
+	font-family: 'Cormorant Garamond', serif;
+	font-style: italic;
+	font-size: 1.05rem;
+	letter-spacing: 0.04em;
+	color: var(--mist);
+	padding: 0.55rem 0.5rem;
+	border-radius: 4px;
+	transition: color 0.3s ease, background 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+	.drawer-action:hover {
+		color: var(--gold-bright);
+		background: rgba(196, 147, 90, 0.06);
+	}
+}
+.drawer-action:focus-visible {
+	outline: none;
+	color: var(--gold-bright);
+	background: rgba(196, 147, 90, 0.06);
+}
+.drawer-action--danger { color: var(--ash); }
+.drawer-action[hidden] { display: none; }
 
 .chapter-list {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	margin-bottom: 4px;
 }
 
 .chapter-empty {
-	font-size: 15px;
-	color: rgba(240, 225, 195, 0.55);
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 0.95rem;
 	font-style: italic;
-	padding: 6px 10px 12px 10px;
-	line-height: 1.45;
+	color: var(--ash);
+	padding: 0.4rem 0.5rem 0.8rem 0.5rem;
+	line-height: 1.5;
+	letter-spacing: 0.04em;
 }
 
+/* Chapter row in the drawer — Cormorant italic with the diamond
+ * glyph marking the current chapter, matching the active-track
+ * treatment in /echoes/. Hover/focus pull the row in to signal
+ * affordance, same micro-interaction as /echoes/. */
 .chapter-btn {
-	font-family: inherit;
-	font-size: 18px;
-	color: rgba(240, 225, 195, 0.85);
-	background: transparent;
-	border: none;
-	text-align: left;
-	padding: 6px 10px 6px 24px;
+	all: unset;
 	cursor: pointer;
-	border-radius: 4px;
-	min-height: 36px;
+	font-family: 'Cormorant Garamond', serif;
+	font-style: italic;
+	font-size: 1.1rem;
+	color: var(--cream);
+	letter-spacing: 0.04em;
+	line-height: 1.35;
+	padding: 0.7rem 0.5rem 0.7rem 1.25rem;
+	border-bottom: 1px dashed rgba(122, 112, 144, 0.18);
 	position: relative;
+	transition: color 0.3s ease, background 0.3s ease, padding 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
 }
-.chapter-btn:hover { color: #fbf2d4; background: rgba(245, 235, 210, 0.05); }
+@media (hover: hover) and (pointer: fine) {
+	.chapter-btn:hover { background: rgba(196, 147, 90, 0.06); padding-left: 1.5rem; }
+}
+.chapter-btn:focus-visible {
+	outline: none;
+	background: rgba(196, 147, 90, 0.06);
+	padding-left: 1.5rem;
+}
+.chapter-btn.current { background: rgba(196, 147, 90, 0.1); color: var(--parchment); }
 .chapter-btn.current::before {
-	content: '•';
+	content: '◆';
 	position: absolute;
-	left: 8px;
-	color: #fbf2d4;
+	left: 0.45rem;
+	color: var(--gold);
+	font-size: 0.78em;
+	font-style: normal;
+	letter-spacing: 0;
+	top: 50%;
+	transform: translateY(-50%);
 }
 
-.restart-btn,
-.return-recent-btn {
-	font-family: inherit;
-	font-size: 16px;
-	color: rgba(240, 225, 195, 0.65);
-	background: transparent;
-	border: none;
-	text-align: left;
-	padding: 6px 10px;
-	cursor: pointer;
-	border-radius: 4px;
-	min-height: 36px;
-	letter-spacing: 0.02em;
-}
-.restart-btn:hover,
-.return-recent-btn:hover { color: #fbf2d4; background: rgba(245, 235, 210, 0.05); }
-.return-recent-btn[hidden] { display: none; }
+/* .restart-btn / .return-recent-btn are styled via .drawer-action
+ * (set on the same element). No additional rules needed here —
+ * the legacy class names are kept on the elements only because JS
+ * targets them by id, not class. */
 
 /* ----- confirm dialog ----- */
 .confirm-dialog {
@@ -863,43 +969,87 @@ html, body {
 	font-style: italic;
 }
 
+/* Settings drawer interior. .setting-section groups a heading with
+ * its rows; .setting-row is the unified row look used for every
+ * settings choice. Same Cormorant italic + diamond-marker treatment
+ * as the chapter rows, so the drawer feels like one tonal piece. */
+.setting-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+.setting-section-heading,
 .settings-heading {
-	font-size: 18px;
-	color: rgba(245, 230, 200, 1);
-	margin-bottom: 8px;
+	font-family: 'Cormorant Garamond', serif;
+	font-weight: 400;
+	font-size: 0.78rem;
+	letter-spacing: 0.32em;
+	text-transform: uppercase;
+	color: var(--ash);
+	padding: 0 0.5rem 0.5rem 0.5rem;
 }
 
+.setting-row,
 .speed-btn,
 .size-btn,
 .music-btn {
-	font-family: inherit;
-	font-size: 18px;
-	color: rgba(240, 225, 195, 0.85);
-	background: transparent;
-	border: none;
-	text-align: left;
-	padding: 6px 10px 6px 24px;
+	all: unset;
 	cursor: pointer;
-	border-radius: 4px;
-	min-height: 36px;
+	font-family: 'Cormorant Garamond', serif;
+	font-style: italic;
+	font-size: 1.1rem;
+	color: var(--cream);
+	letter-spacing: 0.04em;
+	line-height: 1.35;
+	padding: 0.55rem 0.5rem 0.55rem 1.25rem;
+	border-bottom: 1px dashed rgba(122, 112, 144, 0.18);
 	position: relative;
+	transition: color 0.3s ease, background 0.3s ease, padding 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
 }
-.speed-btn:hover,
-.size-btn:hover,
-.music-btn:hover { color: #fbf2d4; background: rgba(245, 235, 210, 0.05); }
+@media (hover: hover) and (pointer: fine) {
+	.setting-row:hover,
+	.speed-btn:hover,
+	.size-btn:hover,
+	.music-btn:hover {
+		background: rgba(196, 147, 90, 0.06);
+		padding-left: 1.5rem;
+	}
+}
+.setting-row:focus-visible,
+.speed-btn:focus-visible,
+.size-btn:focus-visible,
+.music-btn:focus-visible {
+	outline: none;
+	background: rgba(196, 147, 90, 0.06);
+	padding-left: 1.5rem;
+}
+.setting-row.current,
+.speed-btn.current,
+.size-btn.current,
+.music-btn.current {
+	background: rgba(196, 147, 90, 0.1);
+	color: var(--parchment);
+}
+.setting-row.current::before,
 .speed-btn.current::before,
 .size-btn.current::before,
 .music-btn.current::before {
-	content: '•';
+	content: '◆';
 	position: absolute;
-	left: 8px;
-	color: #fbf2d4;
+	left: 0.45rem;
+	color: var(--gold);
+	font-size: 0.78em;
+	font-style: normal;
+	letter-spacing: 0;
+	top: 50%;
+	transform: translateY(-50%);
 }
 
+/* Legacy class — left for compatibility but no longer used inside
+ * the drawer (the drawer-foot-actions border-top replaces it). */
 .settings-divider {
-	height: 1px;
-	background: rgba(245, 235, 210, 0.15);
-	margin: 10px 0 6px 0;
+	display: none;
 }
 
 /* ----- portrait orientation prompt ----- */
@@ -1124,20 +1274,9 @@ html, body {
 	/* Standalone mode (Add to Home Screen) gets a hair more breathing
 	 * room since there's no browser chrome eating the viewport. */
 	body.is-standalone .choice { font-size: 18px; padding: 10px 12px; }
-	.settings-panel,
-	.chapters-panel {
-		/* Anchor both top AND bottom so the panel's height is fully
-		   constrained inside the viewport. Without a hard bottom edge,
-		   iOS rubber-bands past the screen and snaps back, which is
-		   why the Music section was unreachable: it was visible during
-		   the drag but settled off-screen on release. */
-		top: 50px;
-		right: 8px;
-		bottom: 8px;
-		max-height: none;
-		max-width: calc(100vw - 16px);
-		min-width: 0;
-	}
+	/* Drawers always cover full viewport height by their own rules
+	 * — no compact override needed here. The old floating-panel
+	 * sizing override that lived in this block has been removed. */
 	/* Chapter title eyebrow — keep clear of the iPhone camera island
 	 * (left or right depending on landscape rotation) and the top
 	 * notch in portrait, plus scale down so it doesn't dominate the

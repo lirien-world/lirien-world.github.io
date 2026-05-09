@@ -162,8 +162,20 @@ body{
 	min-height:0;
 	/* Backstop: in extreme compression the unit shrinks via the
 	   vh-driven gaps + spiral sizing; if anything still doesn't
-	   fit, clip rather than spill into the brand or controls. */
+	   fit, clip rather than spill into the brand or controls.
+	   Use overflow:clip with overflow-clip-margin so the play
+	   button's :focus-visible gold halo (26px box-shadow,
+	   triggered after a tap) can bleed past .player's bottom
+	   edge into the grid-row gap above the foot — without the
+	   bleed allowance the halo gets sliced flat right at the
+	   foot row's top edge, reading as a hard cropping artifact.
+	   The 40px margin is ~50% headroom on the largest shadow we
+	   render. The overflow:hidden line stays as a fallback for
+	   browsers that predate overflow:clip support (Safari 16+,
+	   Chrome 90+, Firefox 102+). */
 	overflow:hidden;
+	overflow:clip;
+	overflow-clip-margin:40px;
 }
 
 .player-controls{
@@ -751,7 +763,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-234731";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-235658";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

@@ -4,9 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08060f">
-<title>Lirien · Jukebox</title>
-<meta name="description" content="The music of The Spiral That Remembers — on shuffle, on loop.">
+<title>Lirien · The Spiral Plays</title>
+<meta name="description" content="The music of The Spiral That Remembers — the spiral plays when you ask it to.">
 <meta name="robots" content="noindex,nofollow">
+
+<!-- PWA — homescreen-installable, plays music in the background.
+     iOS Safari: apple-mobile-web-app-capable + status-bar-style
+     enable a chrome-less standalone display when the user adds
+     to homescreen. apple-touch-icon points at the spiral icon.
+     manifest.webmanifest covers Android / Chromium browsers. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lirien">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -576,7 +587,10 @@ body{
 	</div>
 </aside>
 
-<audio id="audio" preload="auto" crossorigin="anonymous"></audio>
+<!-- preload="auto" so iOS Safari starts buffering as soon as src is set;
+     playsinline so audio doesn't pop into a fullscreen video player on
+     iOS; x-webkit-airplay defaults to "allow" so AirPlay just works. -->
+<audio id="audio" preload="auto" playsinline crossorigin="anonymous"></audio>
 
 <script>
 "use strict";
@@ -1130,6 +1144,7 @@ $audio.addEventListener("play",  ()=>{
 	$playBtn.setAttribute("aria-label","Pause");
 	$spiralBtn.setAttribute("aria-pressed","true");
 	$invitation.classList.add("is-hidden");
+	updateMediaSessionMeta();
 });
 $audio.addEventListener("pause", ()=>{
 	document.body.classList.remove("is-playing");
@@ -1292,6 +1307,35 @@ $progress.addEventListener("keydown", (ev)=>{
 		$audio.currentTime = ratio * $audio.duration;
 	}
 });
+
+// ─────────────────────────────────────────────────────────────────
+// Media Session — controls in the OS lock screen, AirPods, watch,
+// car CarPlay, the iOS now-playing widget, etc. Without this, when
+// the user backgrounds the tab or PWA, their playback controls
+// just say the page title. With this, they see the actual track
+// title + caption + spiral artwork and can play/pause/skip from
+// hardware controls.
+// ─────────────────────────────────────────────────────────────────
+function updateMediaSessionMeta(){
+	if (!("mediaSession" in navigator)) return;
+	if (activeIdx < 0) return;
+	const track = TRACKS[activeIdx];
+	try {
+		navigator.mediaSession.metadata = new MediaMetadata({
+			title: track.title || "",
+			artist: "Chronicles of Lirien",
+			album: "The Spiral That Remembers",
+			artwork: [
+				{ src: "icon-192.png",  sizes: "192x192", type: "image/png" },
+				{ src: "icon-512.png",  sizes: "512x512", type: "image/png" }
+			]
+		});
+		navigator.mediaSession.setActionHandler("play",         () => play());
+		navigator.mediaSession.setActionHandler("pause",        () => pause());
+		navigator.mediaSession.setActionHandler("nexttrack",    () => next());
+		navigator.mediaSession.setActionHandler("previoustrack",() => previous());
+	} catch (e) { /* not all browsers support every action — silent */ }
+}
 
 // keyboard (global). Arrow keys on the focused progress bar mean
 // "seek" — handled by the slider's own listener — so we skip them

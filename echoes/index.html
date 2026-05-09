@@ -561,7 +561,11 @@ body{
 		       max(0.2rem,env(safe-area-inset-bottom));
 	}
 	.spiral-wrap{width:min(16vh,22vw,120px)}
-	.player{gap:clamp(0.25rem,0.8vh,0.6rem);padding:0}
+	/* padding-bottom keeps the transport's gold play-button rim
+	   from sitting flush against the foot's "N tracks ◆" toggle
+	   in the grid row below. Without it the two read as one
+	   crowded cluster even though they're in separate rows. */
+	.player{gap:clamp(0.25rem,0.8vh,0.6rem);padding:0 0 clamp(0.5rem,1.4vh,1rem) 0}
 	.player-controls{gap:clamp(0.15rem,0.5vh,0.4rem)}
 	.track-info{gap:0.15rem}
 	.track-title{font-size:1.05rem}
@@ -747,7 +751,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-234254";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-234731";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

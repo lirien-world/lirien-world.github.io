@@ -134,11 +134,17 @@
        visible strip so the spiral fills the dark window instead of
        sitting tiny in its centre. */
     .cta-spiral{position:absolute;inset:0;width:100%;height:100%;color:rgba(255,220,150,.85);pointer-events:none;transform-origin:50% 50%;animation:cta-spin 80s linear infinite;z-index:0;filter:drop-shadow(0 0 6px rgba(255,220,150,.45))}
-    /* Label: cream over the dark portal. text-shadow gives a warm
-       halo so letters read as illuminated even where a spiral arm
-       passes directly behind them, plus a tiny dark shadow that
-       lifts them from the gold of those arms. */
-    .cta-label{position:relative;z-index:1;color:rgba(255,245,220,.98);text-shadow:0 0 12px rgba(255,220,150,.55),0 0 4px rgba(8,6,15,.85),0 1px 0 rgba(8,6,15,.6)}
+    /* Label spotlight: a soft dark radial gradient layered ABOVE the
+       spiral but below the label. Creates a localised dimming around
+       the text so the spiral arms passing directly behind letters get
+       muted, while the spiral elsewhere stays bright. No hard rect/
+       pill — the gradient fades to transparent at the edges so the
+       spiral reads clearly there. */
+    .cta-button::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 75% at 50% 50%,rgba(8,6,15,.78) 0%,rgba(8,6,15,.45) 35%,transparent 75%);pointer-events:none;z-index:1}
+    /* Label: cream over the dark spotlight. text-shadow stays as
+       belt-and-braces — warm halo + tight dark lift on top of the
+       spotlight backing. */
+    .cta-label{position:relative;z-index:2;color:rgba(255,245,220,.98);text-shadow:0 0 14px rgba(255,220,150,.6),0 0 4px rgba(8,6,15,.95),0 1px 1px rgba(8,6,15,.7)}
     @keyframes cta-spin{from{transform:scale(1.5) rotate(0deg)}to{transform:scale(1.5) rotate(-360deg)}}
     .cta-button:hover{letter-spacing:.52em;filter:drop-shadow(0 0 42px rgba(255,220,150,.6)) drop-shadow(0 6px 18px rgba(0,0,0,.55));transform:translateY(-1px)}
     .cta-button:hover .cta-spiral{animation-duration:24s;color:rgba(255,235,180,.95);filter:drop-shadow(0 0 10px rgba(255,220,150,.7))}

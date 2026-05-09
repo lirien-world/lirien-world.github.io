@@ -83,6 +83,7 @@
     @media(max-width:480px){
       .nav-links{display:none;animation:none;opacity:1}
       .nav-mark{display:none}
+      .nav-right > .lang-switcher{display:none}    /* desktop dropdown hidden on mobile — mobile-nav overlay has its own */
       .hamburger{display:flex;opacity:1}
       .nav-links.open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,6,15,.97);justify-content:center;align-items:center;gap:2.5rem;z-index:200;animation:none;opacity:1}
       .nav-links.open a{font-size:1.4rem;letter-spacing:.2em}
@@ -697,7 +698,7 @@
     "nav.echoes":        { en: "The Spiral Plays",                es: "La Espiral Suena" },
     "nav.walk":          { en: "Walk the Spiral",                 es: "Camina la Espiral" },
 
-    "hero.eyebrow":      { en: "Book One — Chronicles of Lirien", es: "Libro Primero — Crónicas de Lirien" },
+    "hero.eyebrow":      { en: "Book One — Chronicles of Lirien", es: "Libro I — Crónicas de Lirien" },
     "hero.title":        { en: "The Spiral That<br><em>Remembers</em>", es: "La Espiral Que<br><em>Recuerda</em>" },
     "hero.tagline":      { en: "The world forgot itself. One man is walking forward into what remains.", es: "El mundo se olvidó de sí mismo. Un hombre camina hacia delante a lo que queda." },
     "hero.scroll":       { en: "Enter",                           es: "Entra" },
@@ -759,7 +760,7 @@
     "closing.message":   { en: "If the world found you —<br>we'd like to know.",
                            es: "Si el mundo te encontró —<br>nos gustaría saberlo." },
 
-    "footer.mark":       { en: "Chronicles of Lirien — Book One", es: "Crónicas de Lirien — Libro Primero" },
+    "footer.mark":       { en: "Chronicles of Lirien — Book One", es: "Crónicas de Lirien — Libro I" },
     "footer.quote":      { en: "Belonging is not something that happens to you —<br>it is something you have to stop preventing.",
                            es: "Pertenecer no es algo que te suceda —<br>es algo que tienes que dejar de impedir." },
   };

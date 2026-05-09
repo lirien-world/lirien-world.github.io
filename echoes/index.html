@@ -460,22 +460,24 @@ body{
 	font-style:italic;color:var(--ash);letter-spacing:0.06em;line-height:1.6;
 }
 
-/* Language dropdown lives at the bottom of the drawer — out of the way
-   of the now-playing UI, only seen by users who reach for the tracklist.
-   Opens upward (we're at the bottom of the drawer panel). */
-.drawer-lang{flex-shrink:0;position:relative;margin-top:1rem;padding-top:1.25rem;border-top:1px solid rgba(196,147,90,.16);font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:0.18em;text-transform:uppercase}
-.drawer-lang-toggle{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:0.45rem;padding:0.4rem 0.6rem;color:var(--ash);transition:color 0.3s ease;font-weight:500}
-.drawer-lang-toggle:hover,.drawer-lang-toggle:focus-visible,.drawer-lang-toggle.open{color:var(--gold-bright);outline:none}
-.drawer-lang-caret{width:0.55em;height:0.32em;opacity:0.55;transition:transform 0.3s ease,opacity 0.3s ease}
-.drawer-lang-toggle.open .drawer-lang-caret{transform:rotate(180deg);opacity:0.85}
-.drawer-lang-dropdown{position:absolute;bottom:calc(100% + 0.35rem);left:0;background:rgba(10,8,18,.95);border:1px solid rgba(196,147,90,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:0.2rem 0;box-shadow:0 -10px 28px rgba(0,0,0,.55);opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity 0.25s ease,transform 0.25s ease;z-index:120;line-height:1}
-.drawer-lang-dropdown.open{opacity:1;pointer-events:auto;transform:translateY(0)}
-.drawer-lang-item{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:0.55rem;padding:0.45rem 0.75rem;color:var(--ash);transition:color 0.3s ease,background 0.3s ease;width:100%;box-sizing:border-box;white-space:nowrap;line-height:1.1;font-weight:500}
-.drawer-lang-item:hover,.drawer-lang-item:focus-visible{color:var(--gold-bright);background:rgba(196,147,90,.08);outline:none}
-.drawer-lang-item[aria-pressed="true"]{color:var(--gold)}
-.drawer-lang-item[aria-pressed="true"] .lang-code{color:var(--gold-bright);text-shadow:0 0 8px rgba(196,147,90,.4)}
-.drawer-lang-item .lang-code{letter-spacing:0.18em;min-width:1.6em}
-.drawer-lang-item .lang-name{font-style:italic;font-size:0.95em;letter-spacing:0.06em;text-transform:none;color:inherit;opacity:0.85;font-weight:400}
+/* Language switcher: fixed bottom-left, small + unobtrusive.
+   Sits below the floor of the player UI, doesn't compete with the
+   seekbar (full-width along bottom) or the drawer-toggle button
+   (lower-right). Opens upward. iOS-aware insets so it doesn't
+   slide under the home indicator in landscape. */
+.echoes-lang{position:fixed;bottom:max(0.6rem,env(safe-area-inset-bottom));left:max(0.8rem,env(safe-area-inset-left));z-index:8;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:0.18em;text-transform:uppercase}
+.echoes-lang-toggle{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.5rem;color:var(--ash);opacity:0.65;transition:color 0.3s ease,opacity 0.3s ease;font-weight:500;-webkit-tap-highlight-color:transparent}
+.echoes-lang-toggle:hover,.echoes-lang-toggle:focus-visible,.echoes-lang-toggle.open{color:var(--gold-bright);opacity:1;outline:none}
+.echoes-lang-caret{width:0.55em;height:0.32em;opacity:0.7;transition:transform 0.3s ease}
+.echoes-lang-toggle.open .echoes-lang-caret{transform:rotate(180deg)}
+.echoes-lang-dropdown{position:absolute;bottom:calc(100% + 0.35rem);left:0;background:rgba(10,8,18,.95);border:1px solid rgba(196,147,90,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:0.2rem 0;box-shadow:0 -10px 28px rgba(0,0,0,.55);opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity 0.25s ease,transform 0.25s ease;z-index:120;line-height:1}
+.echoes-lang-dropdown.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+.echoes-lang-item{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:0.55rem;padding:0.45rem 0.75rem;color:var(--ash);transition:color 0.3s ease,background 0.3s ease;width:100%;box-sizing:border-box;white-space:nowrap;line-height:1.1;font-weight:500}
+.echoes-lang-item:hover,.echoes-lang-item:focus-visible{color:var(--gold-bright);background:rgba(196,147,90,.08);outline:none}
+.echoes-lang-item[aria-pressed="true"]{color:var(--gold)}
+.echoes-lang-item[aria-pressed="true"] .lang-code{color:var(--gold-bright);text-shadow:0 0 8px rgba(196,147,90,.4)}
+.echoes-lang-item .lang-code{letter-spacing:0.18em;min-width:1.6em}
+.echoes-lang-item .lang-name{font-style:italic;font-size:0.95em;letter-spacing:0.06em;text-transform:none;color:inherit;opacity:0.85;font-weight:400}
 
 /* ───── ANIMATIONS ───── */
 @keyframes reveal{from{opacity:0;transform:translateY(0.6rem)}to{opacity:1;transform:translateY(0)}}
@@ -659,23 +661,29 @@ body{
 	<div class="drawer-foot">
 		<span id="drawerCountLabel">Sixteen</span><span data-i18n-html="echoes.drawer.foot"> pieces written for <em>The Spiral That Remembers</em>. They play in shuffled order, never repeating until each has been heard. Touch any title to step there directly.</span>
 	</div>
-	<div class="drawer-lang" role="group" aria-label="Language">
-		<button class="drawer-lang-toggle" type="button" data-lang-toggle aria-haspopup="listbox" aria-expanded="false">
-			<span data-lang-current>EN</span>
-			<svg class="drawer-lang-caret" viewBox="0 0 8 4" aria-hidden="true">
-				<path d="M0 4 L4 0 L8 4" fill="none" stroke="currentColor" stroke-width="0.7"/>
-			</svg>
-		</button>
-		<div class="drawer-lang-dropdown" role="listbox" aria-label="Choose language">
-			<button class="drawer-lang-item" type="button" data-lang-set="en" role="option">
-				<span class="lang-code">EN</span><span class="lang-name">English</span>
-			</button>
-			<button class="drawer-lang-item" type="button" data-lang-set="es" role="option">
-				<span class="lang-code">ES</span><span class="lang-name">Español</span>
-			</button>
-		</div>
-	</div>
 </aside>
+
+<!-- Language switcher: fixed bottom-left, small + unobtrusive.
+     Out of the way of the seekbar (full-width along bottom), the
+     transport row (centred), and the drawer-toggle "16 tracks ◆"
+     button (lower-right). Opens upward like the main lirien.world
+     footer dropdown. -->
+<div class="echoes-lang" role="group" aria-label="Language">
+	<button class="echoes-lang-toggle" type="button" data-lang-toggle aria-haspopup="listbox" aria-expanded="false">
+		<span data-lang-current>EN</span>
+		<svg class="echoes-lang-caret" viewBox="0 0 8 4" aria-hidden="true">
+			<path d="M0 4 L4 0 L8 4" fill="none" stroke="currentColor" stroke-width="0.7"/>
+		</svg>
+	</button>
+	<div class="echoes-lang-dropdown" role="listbox" aria-label="Choose language">
+		<button class="echoes-lang-item" type="button" data-lang-set="en" role="option">
+			<span class="lang-code">EN</span><span class="lang-name">English</span>
+		</button>
+		<button class="echoes-lang-item" type="button" data-lang-set="es" role="option">
+			<span class="lang-code">ES</span><span class="lang-name">Español</span>
+		</button>
+	</div>
+</div>
 
 <!-- preload="auto" so iOS Safari starts buffering as soon as src is set;
      playsinline so audio doesn't pop into a fullscreen video player on
@@ -696,7 +704,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-223936";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-224610";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;
@@ -800,7 +808,7 @@ body{
 	}
 
 	function closeAllDropdowns() {
-		document.querySelectorAll(".drawer-lang-dropdown.open").forEach(d => d.classList.remove("open"));
+		document.querySelectorAll(".echoes-lang-dropdown.open").forEach(d => d.classList.remove("open"));
 		document.querySelectorAll("[data-lang-toggle].open").forEach(b => {
 			b.classList.remove("open");
 			b.setAttribute("aria-expanded", "false");
@@ -825,7 +833,7 @@ body{
 		}
 		const toggleBtn = e.target.closest("[data-lang-toggle]");
 		if (toggleBtn) {
-			const dropdown = toggleBtn.parentElement.querySelector(".drawer-lang-dropdown");
+			const dropdown = toggleBtn.parentElement.querySelector(".echoes-lang-dropdown");
 			if (dropdown) {
 				const open = dropdown.classList.toggle("open");
 				toggleBtn.classList.toggle("open", open);

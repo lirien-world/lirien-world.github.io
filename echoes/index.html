@@ -1556,7 +1556,21 @@ function updateCounts(){
 	// not fatal (played mode falls back to chapter granularity).
 	await loadMusicProgression();
 	const detected = detectReachedChapter();
-	if (detected === 0){
+	const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+	                     || window.navigator.standalone === true;
+	if (isStandalone){
+		// PWA install (Add to Home Screen). iOS sandboxes localStorage
+		// per PWA, so the reader's save (lirien.save written by Safari
+		// at the same origin) isn't visible here. "Played" mode would
+		// always show empty + Lirien Remembers, which is misleading;
+		// "Minimal" hides the catalog. Force "all" so the PWA functions
+		// as a full jukebox regardless of reader progress, and hide the
+		// content-mode toggle so the user can't get into a confusing
+		// state. The mode toggle (shuffled/sequential) stays.
+		content = "all";
+		reachedChapter = Math.max(1, detected);
+		$contentToggle.hidden = true;
+	} else if (detected === 0){
 		// New visitor: default to minimal so the page looks complete
 		// and non-spoilery from the first paint. reachedChapter stays
 		// at 1 so if they switch to "played" later they still get the

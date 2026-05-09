@@ -519,18 +519,19 @@ body{
 @media (max-height:520px){
 	.spiral-wrap{width:min(26vh,40vw,240px)}
 	.brand-mark .two{display:none}     /* drop the secondary tagline */
-	/* Hard-fit to viewport: switch from min-height to height so
-	   content can't push controls below the fold. The grid's 1fr
-	   middle row absorbs any squeeze. */
-	body{overflow:hidden}
+	/* min-height:0 + height:100dvh lets the grid absorb any
+	   squeeze. We deliberately do NOT set overflow:hidden on body
+	   here — in non-PWA Safari the URL bar dynamically eats dvh,
+	   so content sized for a wider dvh would be silently clipped
+	   below the fold (with no scroll fallback) when the bar
+	   reappears. Letting the body scroll as fallback is the
+	   non-broken behaviour; PWA standalone gets strict no-scroll
+	   below. */
 	.frame{min-height:0;height:100vh;height:100dvh}
 }
 
 /* Landscape phones — wide + short. The transport + drawer toggle
-   compete with the spiral + track info for vertical space and
-   were getting clipped in iOS PWA standalone mode where the
-   viewport is taller than browser-Safari (no URL bar) BUT the
-   safe-area insets eat ~80px between notch + home indicator.
+   compete with the spiral + track info for vertical space.
    Aggressively compress everything so it fits without scroll. */
 @media (orientation:landscape) and (max-height:480px){
 	.frame{
@@ -547,13 +548,19 @@ body{
 	.foot{padding-top:0.25rem;gap:0.35rem}
 	.controls{gap:1rem}
 	.ctrl-list{padding-top:0.2rem}
+	/* Brand-meta goes horizontal so the header collapses from 3
+	   stacked lines (~63px) to one line (~22px). Recovered ~40px
+	   of vertical space without losing any information. */
+	.brand-meta{flex-direction:row;gap:1rem;line-height:1.2}
 }
 
 /* Standalone-PWA-specific (Add to Home Screen, opens chrome-less).
-   No browser URL bar to hide, but iOS still reserves safe-area
-   insets at top + bottom that compress the usable area. Tighten
-   one notch beyond regular landscape to guarantee fit. */
+   Strict fit + no scroll: the PWA is a fixed-frame app, scrolling
+   here would feel like a layout bug. Non-PWA Safari keeps its
+   polite scroll fallback if dynamic URL-bar dvh shrinkage pushes
+   content past the bottom. */
 @media (display-mode:standalone) and (orientation:landscape){
+	body{overflow:hidden}
 	.frame{padding-left:max(0.5rem,env(safe-area-inset-left));
 	       padding-right:max(0.5rem,env(safe-area-inset-right))}
 	.spiral-wrap{width:min(18vh,24vw,140px)}
@@ -704,7 +711,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-224610";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-225119";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

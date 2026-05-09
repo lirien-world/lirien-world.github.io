@@ -54,8 +54,30 @@
     .particle{position:absolute;border-radius:50%;opacity:0;background:var(--gold-bright);animation:shimmer var(--dur,8s) ease-in-out var(--delay,0s) infinite}
     @keyframes shimmer{0%{opacity:0;transform:translateY(0) scale(1)}20%{opacity:.5}80%{opacity:.2}100%{opacity:0;transform:translateY(-50px) scale(.5)}}
     nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:clamp(1rem,3vw,2rem) clamp(1.5rem,5vw,4rem);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(8,6,15,.95) 0%,transparent 100%);opacity:1!important}
+    .nav-right{display:flex;align-items:center;gap:clamp(1.2rem,2.5vw,2rem)}
     .nav-mark{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;color:var(--mist);opacity:0;animation:fade-in 2s ease forwards .5s}
     .nav-links{display:flex;gap:clamp(1.2rem,3vw,2.5rem);list-style:none;opacity:0;animation:fade-in 2s ease forwards .8s}
+    /* Language switcher — dropdown of two-letter codes. Extensible to
+       N languages: add an entry to the LANGUAGES array in the script
+       and a corresponding ".<code>" key to each translation entry. */
+    .lang-switcher{position:relative;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;opacity:0;animation:fade-in 2s ease forwards .8s}
+    .lang-toggle{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .55rem;color:var(--mist);transition:color .3s ease}
+    .lang-toggle:hover,.lang-toggle:focus-visible,.lang-toggle.open{color:var(--gold-bright);outline:none}
+    .lang-caret{width:.55em;height:.32em;opacity:.55;transition:transform .3s ease,opacity .3s ease}
+    .lang-toggle.open .lang-caret{transform:rotate(180deg);opacity:.85}
+    .lang-dropdown{position:absolute;top:calc(100% + .5rem);right:0;min-width:160px;background:rgba(10,8,18,.94);border:1px solid rgba(196,147,90,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:.3rem 0;box-shadow:0 10px 28px rgba(0,0,0,.55);opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .25s ease,transform .25s ease;z-index:120}
+    .lang-dropdown.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+    .lang-item{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:.6rem;padding:.55rem .85rem;color:var(--ash);transition:color .3s ease,background .3s ease;width:100%;box-sizing:border-box}
+    .lang-item:hover,.lang-item:focus-visible{color:var(--gold-bright);background:rgba(196,147,90,.08);outline:none}
+    .lang-item[aria-pressed="true"]{color:var(--gold)}
+    .lang-item[aria-pressed="true"] .lang-code{color:var(--gold-bright);text-shadow:0 0 8px rgba(196,147,90,.45)}
+    .lang-item .lang-code{letter-spacing:.32em;min-width:1.6em}
+    .lang-item .lang-name{font-style:italic;font-size:.95em;letter-spacing:.06em;text-transform:none;color:inherit;opacity:.85}
+    /* Mobile-nav has its own simpler list-style switcher inside the
+       overlay (no dropdown — it sits inline with the menu items). */
+    #mobile-nav .lang-switcher-mobile{margin-top:1rem;padding-top:1.5rem;border-top:1px solid rgba(196,147,90,.18);display:flex;gap:1.2rem;justify-content:center;align-items:baseline;font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.32em;text-transform:uppercase}
+    #mobile-nav .lang-switcher-mobile .lang-item{padding:.6rem .9rem;color:var(--ash);width:auto}
+    #mobile-nav .lang-switcher-mobile .lang-item[aria-pressed="true"]{color:var(--gold-bright);text-shadow:0 0 10px rgba(196,147,90,.45)}
     .nav-links a{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-decoration:none;transition:color .4s}
     .nav-links a:hover{color:var(--gold)}
     @media(max-width:480px){
@@ -296,13 +318,33 @@
 <div class="particles" aria-hidden="true" id="particles"></div>
 
 <nav aria-label="Main">
-  <div class="nav-mark">Chronicles of Lirien</div>
-  <ul class="nav-links" id="nav-links">
-    <li><a href="#world">The World</a></li>
-    <li><a href="#characters">Characters</a></li>
-    <li><a href="echoes/">The Spiral Plays</a></li>
-    <li><a href="#begin">Walk the Spiral</a></li>
-  </ul>
+  <div class="nav-mark" data-i18n="nav.brand">Chronicles of Lirien</div>
+  <div class="nav-right">
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#world" data-i18n="nav.world">The World</a></li>
+      <li><a href="#characters" data-i18n="nav.characters">Characters</a></li>
+      <li><a href="echoes/" data-i18n="nav.echoes">The Spiral Plays</a></li>
+      <li><a href="#begin" data-i18n="nav.walk">Walk the Spiral</a></li>
+    </ul>
+    <div class="lang-switcher" role="group" aria-label="Language">
+      <button class="lang-toggle" type="button" data-lang-toggle aria-haspopup="listbox" aria-expanded="false">
+        <span data-lang-current>EN</span>
+        <svg class="lang-caret" viewBox="0 0 8 4" aria-hidden="true">
+          <path d="M0 0 L4 4 L8 0" fill="none" stroke="currentColor" stroke-width="0.7"/>
+        </svg>
+      </button>
+      <div class="lang-dropdown" role="listbox" aria-label="Choose language">
+        <button class="lang-item" type="button" data-lang-set="en" role="option">
+          <span class="lang-code">EN</span>
+          <span class="lang-name">English</span>
+        </button>
+        <button class="lang-item" type="button" data-lang-set="es" role="option">
+          <span class="lang-code">ES</span>
+          <span class="lang-name">Español</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </nav>
 
 <!-- Mobile hamburger — fixed position, JS controlled -->
@@ -312,22 +354,30 @@
 
 <!-- Mobile nav overlay -->
 <div id="mobile-nav">
-  <a href="#world" class="mobile-nav-link">The World</a>
-  <a href="#characters" class="mobile-nav-link">Characters</a>
-  <a href="echoes/" class="mobile-nav-link">The Spiral Plays</a>
-  <a href="#begin" class="mobile-nav-link">Walk the Spiral</a>
+  <a href="#world" class="mobile-nav-link" data-i18n="nav.world">The World</a>
+  <a href="#characters" class="mobile-nav-link" data-i18n="nav.characters">Characters</a>
+  <a href="echoes/" class="mobile-nav-link" data-i18n="nav.echoes">The Spiral Plays</a>
+  <a href="#begin" class="mobile-nav-link" data-i18n="nav.walk">Walk the Spiral</a>
+  <div class="lang-switcher-mobile" role="group" aria-label="Language">
+    <button class="lang-item" type="button" data-lang-set="en" role="option">
+      <span class="lang-code">EN</span>
+    </button>
+    <button class="lang-item" type="button" data-lang-set="es" role="option">
+      <span class="lang-code">ES</span>
+    </button>
+  </div>
 </div>
 
 <section class="hero" aria-label="Hero">
   <div class="hero-image" role="img" aria-label="Aerin walking north across the ash plain, shimmer trail behind him"></div>
   <div class="hero-overlay" aria-hidden="true"></div>
   <div class="hero-content">
-    <span class="hero-eyebrow">Book One — Chronicles of Lirien</span>
-    <h1 class="hero-title">The Spiral That<br><em>Remembers</em></h1>
-    <p class="hero-tagline">The world forgot itself. One man is walking forward into what remains.</p>
+    <span class="hero-eyebrow" data-i18n="hero.eyebrow">Book One — Chronicles of Lirien</span>
+    <h1 class="hero-title" data-i18n-html="hero.title">The Spiral That<br><em>Remembers</em></h1>
+    <p class="hero-tagline" data-i18n="hero.tagline">The world forgot itself. One man is walking forward into what remains.</p>
     <div class="hero-scroll" aria-hidden="true">
       <div class="scroll-line"></div>
-      <span class="scroll-text">Enter</span>
+      <span class="scroll-text" data-i18n="hero.scroll">Enter</span>
     </div>
   </div>
 </section>
@@ -345,21 +395,10 @@
     </div>
     <div class="glyph-line r"></div>
   </div>
-  <span class="section-label reveal d1">The World</span>
-  <h2 class="reveal d2">
-    A man woke in the ash<br>with no name, <em>no past</em>,<br>
-    and a glyph on his palm<br>that kept responding to the world.
-  </h2>
-  <p class="reveal d3">
-    The world of Lirien has forgotten itself. The shimmer — that living atmospheric light,
-    the texture of a world that knows it is whole — is gone from most places.
-    <strong>Twelve anchor points once held the world in resonance. Five are still alive. Seven are dark.</strong>
-  </p>
-  <p class="reveal">
-    He does not know his name. He does not know what he did.
-    The hollow beneath his ribs knows something his mind doesn't.
-    The world is waiting to see if he'll ask the right question.
-  </p>
+  <span class="section-label reveal d1" data-i18n="world.label">The World</span>
+  <h2 class="reveal d2" data-i18n-html="world.heading">A man woke in the ash<br>with no name, <em>no past</em>,<br>and a glyph on his palm<br>that kept responding to the world.</h2>
+  <p class="reveal d3" data-i18n-html="world.p1">The world of Lirien has forgotten itself. The shimmer — that living atmospheric light, the texture of a world that knows it is whole — is gone from most places. <strong>Twelve anchor points once held the world in resonance. Five are still alive. Seven are dark.</strong></p>
+  <p class="reveal" data-i18n="world.p2">He does not know his name. He does not know what he did. The hollow beneath his ribs knows something his mind doesn't. The world is waiting to see if he'll ask the right question.</p>
 </section>
 
 <div class="spiral-section" aria-hidden="true">
@@ -370,8 +409,8 @@
   <img src="ring_of_stones.png" alt="Aerin in the ring of stones, forehead pressed to parchment, the shimmer arriving" style="object-position:center 30%;">
   <div class="panel-overlay" aria-hidden="true"></div>
   <div class="panel-caption">
-    <h3>Please.</h3>
-    <p>I don't want to be alone.</p>
+    <h3 data-i18n="panel.please.h">Please.</h3>
+    <p data-i18n="panel.please.p">I don't want to be alone.</p>
   </div>
 </div>
 
@@ -379,20 +418,16 @@
   <img src="solrien_wide.png" alt="First sight of Solrien — the city that refused to forget" style="object-position:15% center!important;">
   <div class="panel-overlay" aria-hidden="true"></div>
   <div class="panel-caption">
-    <h3>Solrien</h3>
-    <p>The city that refused to forget quietly.</p>
+    <h3 data-i18n="panel.solrien.h">Solrien</h3>
+    <p data-i18n="panel.solrien.p">The city that refused to forget quietly.</p>
   </div>
 </div>
 
 <section class="magic" id="magic">
-  <span class="section-label reveal">The Tones</span>
-  <h2 class="reveal d1">Magic in Lirien is not cast.<br><em>It is inhabited.</em></h2>
-  <p class="reveal d2">
-    Each tone is a frequency — the particular way a person's deepest self
-    resonates with reality. Compatible tones produce harmonics.
-    The world responds not to what you intend, but to what you actually are.
-  </p>
-  <p class="reveal d3">You cannot wield a tone. You can only allow it.</p>
+  <span class="section-label reveal" data-i18n="magic.label">The Tones</span>
+  <h2 class="reveal d1" data-i18n-html="magic.heading">Magic in Lirien is not cast.<br><em>It is inhabited.</em></h2>
+  <p class="reveal d2" data-i18n="magic.p1">Each tone is a frequency — the particular way a person's deepest self resonates with reality. Compatible tones produce harmonics. The world responds not to what you intend, but to what you actually are.</p>
+  <p class="reveal d3" data-i18n="magic.p2">You cannot wield a tone. You can only allow it.</p>
   <!-- Five tonal glyphs — unnamed, each its own frequency -->
   <div class="glyphs reveal">
 
@@ -456,35 +491,31 @@
   <img src="dream_corridor.png" alt="The corridor of warm stone, stars above, doors lining the walls">
   <div class="interlude-overlay" aria-hidden="true"></div>
   <div class="interlude-text">
-    <blockquote>"You've been here before.<br>You just don't remember it yet."</blockquote>
-    <cite>— Thistle</cite>
+    <blockquote data-i18n-html="interlude.quote">"You've been here before.<br>You just don't remember it yet."</blockquote>
+    <cite data-i18n="interlude.cite">— Thistle</cite>
   </div>
 </div>
 
 <section class="characters" id="characters">
   <div class="characters-header">
-    <span class="section-label reveal">The Company</span>
-    <h2 class="reveal d1">Those who will not forget him,<br>even when he has.</h2>
+    <span class="section-label reveal" data-i18n="characters.label">The Company</span>
+    <h2 class="reveal d1" data-i18n-html="characters.heading">Those who will not forget him,<br>even when he has.</h2>
   </div>
   <div class="characters-grid">
     <div class="character-card reveal">
       <div style="background:#050209;width:100%;"><img src="aerin_portrait.png" alt="Aerin — the protagonist" style="object-fit:contain;height:auto;display:block;width:100%;"></div>
       <div class="card-body" style="background:#050209;">
-        <div class="card-name">Aerin</div>
-        <span class="card-subtitle" style="letter-spacing:.15em;">The one who forgot himself on purpose</span>
-        <p class="card-desc">
-          He erased himself for one final chance. He does not remember who he was. The glyph on his palm does.
-        </p>
+        <div class="card-name" data-i18n="aerin.name">Aerin</div>
+        <span class="card-subtitle" style="letter-spacing:.15em;" data-i18n="aerin.subtitle">The one who forgot himself on purpose</span>
+        <p class="card-desc" data-i18n="aerin.desc">He erased himself for one final chance. He does not remember who he was. The glyph on his palm does.</p>
       </div>
     </div>
     <div class="character-card reveal d1">
       <img src="thistle_portrait.png" alt="Thistle — ancient fox-adjacent companion" style="object-fit:contain;height:auto;background:#000;">
       <div class="card-body" style="background:#050209;">
-        <div class="card-name">Thistle</div>
-        <span class="card-subtitle">Fox-adjacent. Sparkle-adjacent. Disaster-adjacent.</span>
-        <p class="card-desc">
-          They arrived with opinions about everything and show no particular interest in gravity as a personal constraint. Something about them suggests they have been here before. In what sense, they decline to specify.
-        </p>
+        <div class="card-name" data-i18n="thistle.name">Thistle</div>
+        <span class="card-subtitle" data-i18n="thistle.subtitle">Fox-adjacent. Sparkle-adjacent. Disaster-adjacent.</span>
+        <p class="card-desc" data-i18n="thistle.desc">They arrived with opinions about everything and show no particular interest in gravity as a personal constraint. Something about them suggests they have been here before. In what sense, they decline to specify.</p>
       </div>
     </div>
   </div>
@@ -504,26 +535,18 @@
     </div>
     <div class="glyph-line r"></div>
   </div>
-  <span class="section-label reveal">The Story</span>
-  <h2 class="reveal d1">The story is waiting.<br><em>The world will remember you.</em></h2>
-  <p class="reveal d2">
-    An interactive narrative. Every choice is small.
-    Every choice is load-bearing. The ending finds you
-    by the accumulated weight of who you chose to be.
-  </p>
-  <p class="reveal d3" style="font-size:var(--text-md);font-family:'Cormorant Garamond',serif;font-weight:300;color:var(--cream);font-style:normal;margin-bottom:2rem;">
-    A man destroys the world by trying to save it alone.<br>He must learn to let others carry what he cannot.
-  </p>
-  <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--mist);margin-bottom:2rem;">
-    It begins in ash.
-  </p>
+  <span class="section-label reveal" data-i18n="begin.label">The Story</span>
+  <h2 class="reveal d1" data-i18n-html="begin.heading">The story is waiting.<br><em>The world will remember you.</em></h2>
+  <p class="reveal d2" data-i18n="begin.p1">An interactive narrative. Every choice is small. Every choice is load-bearing. The ending finds you by the accumulated weight of who you chose to be.</p>
+  <p class="reveal d3" style="font-size:var(--text-md);font-family:'Cormorant Garamond',serif;font-weight:300;color:var(--cream);font-style:normal;margin-bottom:2rem;" data-i18n-html="begin.p2">A man destroys the world by trying to save it alone.<br>He must learn to let others carry what he cannot.</p>
+  <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--mist);margin-bottom:2rem;" data-i18n="begin.p3">It begins in ash.</p>
   <div class="reveal">
     <span class="cta-portal">
       <a href="lirien/index.html" class="cta-button">
         <svg class="cta-spiral" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <path d="M 50 50 L 50.05 49.81 L 50.2 49.65 L 50.43 49.58 L 50.7 49.6 L 50.98 49.75 L 51.21 50.02 L 51.36 50.39 L 51.38 50.83 L 51.26 51.31 L 50.97 51.77 L 50.52 52.16 L 49.94 52.42 L 49.25 52.51 L 48.51 52.4 L 47.79 52.07 L 47.15 51.51 L 46.66 50.76 L 46.37 49.86 L 46.34 48.85 L 46.6 47.83 L 47.15 46.87 L 47.97 46.05 L 49.03 45.46 L 50.26 45.17 L 51.57 45.21 L 52.88 45.62 L 54.07 46.38 L 55.06 47.48 L 55.73 48.85 L 56.04 50.4 L 55.91 52.03 L 55.35 53.61 L 54.35 55.04 L 52.98 56.18 L 51.3 56.94 L 49.43 57.24 L 47.49 57.03 L 45.63 56.29 L 43.98 55.06 L 42.69 53.4 L 41.85 51.41 L 41.57 49.22 L 41.87 46.97 L 42.78 44.84 L 44.25 42.98 L 46.2 41.54 L 48.5 40.64 L 51.02 40.37 L 53.57 40.78 L 55.97 41.87 L 58.04 43.59 L 59.62 45.83 L 60.58 48.45 L 60.81 51.29 L 60.29 54.14 L 59.01 56.81 L 57.05 59.08 L 54.51 60.79 L 51.57 61.8 L 48.41 62 L 45.25 61.35 L 42.33 59.88 L 39.86 57.66 L 38.03 54.82 L 36.98 51.55 L 36.83 48.07 L 37.6 44.62 L 39.28 41.45 L 41.76 38.79 L 44.9 36.84 L 48.49 35.76 L 52.29 35.66 L 56.04 36.57 L 59.46 38.46 L 62.31 41.21 L 64.36 44.65 L 65.46 48.57 L 65.5 52.69 L 64.44 56.72 L 62.34 60.39 L 59.32 63.42 L 55.56 65.57 L 51.32 66.69 L 46.89 66.65 L 42.56 65.45 L 38.66 63.12 L 35.46 59.82 L 33.21 55.75 L 32.09 51.18 L 32.2 46.43 L 33.57 41.82 L 36.12 37.68 L 39.71 34.32 L 44.09 31.99 L 48.99 30.87 L 54.06 31.07 L 58.95 32.6 L 63.32 35.39 L 66.84 39.27 L 69.25 43.97 L 70.35 49.19 L 70.06 54.58 L 68.34 59.75 L 65.31 64.33 L 61.15 68 L 56.12 70.48 L 50.57 71.57 L 44.87 71.17 L 39.43 69.28 L 34.63 65.99 L 30.81 61.53 L 28.27 56.18 L 27.21 50.3 L 27.73 44.29 L 29.81 38.58 L 33.35 33.57 L 38.11 29.62 L 43.79 27.03 L 50 26" stroke="currentColor" stroke-width="0.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span class="cta-label">Walk the Spiral</span>
+        <span class="cta-label" data-i18n="begin.cta">Walk the Spiral</span>
       </a>
       <span class="cta-mote" style="--x:-32%;--d:0s"></span>
       <span class="cta-mote" style="--x:18%;--d:1.6s"></span>
@@ -531,11 +554,9 @@
       <span class="cta-mote" style="--x:30%;--d:4.8s"></span>
       <span class="cta-mote" style="--x:0%;--d:6.4s"></span>
     </span>
-    <span class="cta-note">First three chapters — Free to read</span>
+    <span class="cta-note" data-i18n="begin.cta_note">First three chapters — Free to read</span>
   </div>
-  <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--mist);margin-top:3rem;letter-spacing:.04em;">
-    or sit with the <a href="jukebox/index.html" style="color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;">small room of music</a>
-  </p>
+  <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--mist);margin-top:3rem;letter-spacing:.04em;" data-i18n-html="begin.music">or sit with the <a href="jukebox/index.html" style="color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;">small room of music</a></p>
 </section>
 
 
@@ -552,20 +573,15 @@
     </div>
     <div class="glyph-line r"></div>
   </div>
-  <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-md);font-weight:300;color:var(--lavender);font-style:italic;margin-bottom:1.5rem;">
-    If the world found you —<br>we'd like to know.
-  </p>
+  <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-md);font-weight:300;color:var(--lavender);font-style:italic;margin-bottom:1.5rem;" data-i18n-html="closing.message">If the world found you —<br>we'd like to know.</p>
   <a href="mailto:hello@lirien.world" class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);letter-spacing:.2em;color:var(--gold);text-decoration:none;text-shadow:0 0 12px rgba(196,147,90,.5);transition:text-shadow .4s,color .4s;display:inline-block;">
     hello@lirien.world
   </a>
 </section>
 
 <footer>
-  <div class="footer-mark">Chronicles of Lirien — Book One</div>
-  <p class="footer-quote">
-    Belonging is not something that happens to you —<br>
-    it is something you have to stop preventing.
-  </p>
+  <div class="footer-mark" data-i18n="footer.mark">Chronicles of Lirien — Book One</div>
+  <p class="footer-quote" data-i18n-html="footer.quote">Belonging is not something that happens to you —<br>it is something you have to stop preventing.</p>
 </footer>
 
 <script>
@@ -652,6 +668,173 @@
     if (now - lastTap <= 300) e.preventDefault();
     lastTap = now;
   }, { passive: false });
+</script>
+
+<!-- ──────── i18n: language detection + switcher ────────
+     Designed to be extensible. To add a new language:
+       1. Append to LANGUAGES (e.g. {code:"fr", name:"Français"})
+       2. Add the same code as a key inside every TR[...] entry
+       3. Add a <button data-lang-set="fr"> ... </button> to the
+          .lang-dropdown in the nav and the .lang-switcher-mobile
+     The runtime detects browser language on first visit, persists
+     the user's explicit choice in localStorage, and applies on
+     boot before any hover state fires. -->
+<script>
+(function () {
+  const LANGUAGES = [
+    { code: "en", name: "English" },
+    { code: "es", name: "Español" },
+  ];
+  const STORAGE_KEY = "lirien.lang";
+
+  // Translation map. Keys correspond to data-i18n / data-i18n-html
+  // attributes in the markup. Plain text uses .textContent; HTML
+  // (with <br>, <em>, <strong>, <a>) uses .innerHTML.
+  const TR = {
+    "nav.brand":         { en: "Chronicles of Lirien",            es: "Crónicas de Lirien" },
+    "nav.world":         { en: "The World",                       es: "El Mundo" },
+    "nav.characters":    { en: "Characters",                      es: "Personajes" },
+    "nav.echoes":        { en: "The Spiral Plays",                es: "La Espiral Suena" },
+    "nav.walk":          { en: "Walk the Spiral",                 es: "Camina la Espiral" },
+
+    "hero.eyebrow":      { en: "Book One — Chronicles of Lirien", es: "Libro Primero — Crónicas de Lirien" },
+    "hero.title":        { en: "The Spiral That<br><em>Remembers</em>", es: "La Espiral Que<br><em>Recuerda</em>" },
+    "hero.tagline":      { en: "The world forgot itself. One man is walking forward into what remains.", es: "El mundo se olvidó de sí mismo. Un hombre camina hacia delante a lo que queda." },
+    "hero.scroll":       { en: "Enter",                           es: "Entra" },
+
+    "world.label":       { en: "The World",                       es: "El Mundo" },
+    "world.heading":     { en: "A man woke in the ash<br>with no name, <em>no past</em>,<br>and a glyph on his palm<br>that kept responding to the world.",
+                           es: "Un hombre despertó en la ceniza<br>sin nombre, <em>sin pasado</em>,<br>y un símbolo en la palma<br>que seguía respondiendo al mundo." },
+    "world.p1":          { en: "The world of Lirien has forgotten itself. The shimmer — that living atmospheric light, the texture of a world that knows it is whole — is gone from most places. <strong>Twelve anchor points once held the world in resonance. Five are still alive. Seven are dark.</strong>",
+                           es: "El mundo de Lirien se ha olvidado de sí mismo. El brillo — esa luz atmosférica viva, la textura de un mundo que se sabe entero — se ha ido de casi todas partes. <strong>Doce anclajes mantuvieron antes el mundo en resonancia. Cinco siguen vivos. Siete están oscuros.</strong>" },
+    "world.p2":          { en: "He does not know his name. He does not know what he did. The hollow beneath his ribs knows something his mind doesn't. The world is waiting to see if he'll ask the right question.",
+                           es: "No sabe su nombre. No sabe qué hizo. El hueco bajo sus costillas sabe algo que su mente no. El mundo espera para ver si hará la pregunta correcta." },
+
+    "panel.please.h":    { en: "Please.",                         es: "Por favor." },
+    "panel.please.p":    { en: "I don't want to be alone.",       es: "No quiero estar solo." },
+    "panel.solrien.h":   { en: "Solrien",                         es: "Solrien" },
+    "panel.solrien.p":   { en: "The city that refused to forget quietly.",
+                           es: "La ciudad que se negó a olvidar en silencio." },
+
+    "magic.label":       { en: "The Tones",                       es: "Los Tonos" },
+    "magic.heading":     { en: "Magic in Lirien is not cast.<br><em>It is inhabited.</em>",
+                           es: "La magia en Lirien no se invoca.<br><em>Se habita.</em>" },
+    "magic.p1":          { en: "Each tone is a frequency — the particular way a person's deepest self resonates with reality. Compatible tones produce harmonics. The world responds not to what you intend, but to what you actually are.",
+                           es: "Cada tono es una frecuencia — la forma particular en que el ser más profundo de una persona resuena con la realidad. Los tonos compatibles producen armónicos. El mundo responde no a lo que pretendes, sino a lo que realmente eres." },
+    "magic.p2":          { en: "You cannot wield a tone. You can only allow it.",
+                           es: "No puedes empuñar un tono. Solo puedes permitirlo." },
+
+    "interlude.quote":   { en: "“You’ve been here before.<br>You just don’t remember it yet.”",
+                           es: "«Ya has estado aquí antes.<br>Es solo que aún no lo recuerdas.»" },
+    "interlude.cite":    { en: "— Thistle",                       es: "— Thistle" },
+
+    "characters.label":  { en: "The Company",                     es: "La Compañía" },
+    "characters.heading":{ en: "Those who will not forget him,<br>even when he has.",
+                           es: "Aquellos que no lo olvidarán,<br>aun cuando él lo haya hecho." },
+    "aerin.name":        { en: "Aerin",                           es: "Aerin" },
+    "aerin.subtitle":    { en: "The one who forgot himself on purpose",
+                           es: "Aquel que se olvidó a sí mismo a propósito" },
+    "aerin.desc":        { en: "He erased himself for one final chance. He does not remember who he was. The glyph on his palm does.",
+                           es: "Se borró a sí mismo por una última oportunidad. No recuerda quién era. El símbolo en su palma sí." },
+    "thistle.name":      { en: "Thistle",                         es: "Thistle" },
+    "thistle.subtitle":  { en: "Fox-adjacent. Sparkle-adjacent. Disaster-adjacent.",
+                           es: "Adyacente a un zorro. Adyacente al destello. Adyacente al desastre." },
+    "thistle.desc":      { en: "They arrived with opinions about everything and show no particular interest in gravity as a personal constraint. Something about them suggests they have been here before. In what sense, they decline to specify.",
+                           es: "Llegó con opiniones sobre todo y no muestra particular interés en la gravedad como restricción personal. Algo en ella sugiere que ha estado aquí antes. En qué sentido, prefiere no especificar." },
+
+    "begin.label":       { en: "The Story",                       es: "La Historia" },
+    "begin.heading":     { en: "The story is waiting.<br><em>The world will remember you.</em>",
+                           es: "La historia espera.<br><em>El mundo te recordará.</em>" },
+    "begin.p1":          { en: "An interactive narrative. Every choice is small. Every choice is load-bearing. The ending finds you by the accumulated weight of who you chose to be.",
+                           es: "Una narrativa interactiva. Cada elección es pequeña. Cada elección sostiene peso. El final te encuentra por el peso acumulado de quién elegiste ser." },
+    "begin.p2":          { en: "A man destroys the world by trying to save it alone.<br>He must learn to let others carry what he cannot.",
+                           es: "Un hombre destruye el mundo al intentar salvarlo solo.<br>Debe aprender a dejar que otros carguen lo que él no puede." },
+    "begin.p3":          { en: "It begins in ash.",               es: "Comienza en la ceniza." },
+    "begin.cta":         { en: "Walk the Spiral",                 es: "Camina la Espiral" },
+    "begin.cta_note":    { en: "First three chapters — Free to read",
+                           es: "Tres primeros capítulos — Gratis" },
+    "begin.music":       { en: "or sit with the <a href=\"jukebox/index.html\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;\">small room of music</a>",
+                           es: "o siéntate con la <a href=\"jukebox/index.html\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;\">pequeña sala de música</a>" },
+
+    "closing.message":   { en: "If the world found you —<br>we'd like to know.",
+                           es: "Si el mundo te encontró —<br>nos gustaría saberlo." },
+
+    "footer.mark":       { en: "Chronicles of Lirien — Book One", es: "Crónicas de Lirien — Libro Primero" },
+    "footer.quote":      { en: "Belonging is not something that happens to you —<br>it is something you have to stop preventing.",
+                           es: "Pertenecer no es algo que te suceda —<br>es algo que tienes que dejar de impedir." },
+  };
+
+  function detectLang() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && LANGUAGES.some(l => l.code === stored)) return stored;
+    } catch (e) {}
+    const browser = (navigator.language || "en").toLowerCase().slice(0, 2);
+    if (LANGUAGES.some(l => l.code === browser)) return browser;
+    return "en";
+  }
+
+  function applyLang(lang) {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const tr = TR[el.getAttribute("data-i18n")];
+      if (tr && tr[lang] != null) el.textContent = tr[lang];
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(el => {
+      const tr = TR[el.getAttribute("data-i18n-html")];
+      if (tr && tr[lang] != null) el.innerHTML = tr[lang];
+    });
+    document.querySelectorAll("[data-lang-current]").forEach(el => {
+      el.textContent = lang.toUpperCase();
+    });
+    document.querySelectorAll("[data-lang-set]").forEach(btn => {
+      btn.setAttribute("aria-pressed", btn.getAttribute("data-lang-set") === lang ? "true" : "false");
+    });
+  }
+
+  function setLang(lang) {
+    if (!LANGUAGES.some(l => l.code === lang)) return;
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+    applyLang(lang);
+  }
+
+  function closeAllDropdowns() {
+    document.querySelectorAll(".lang-dropdown.open").forEach(d => d.classList.remove("open"));
+    document.querySelectorAll("[data-lang-toggle].open").forEach(b => {
+      b.classList.remove("open");
+      b.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  // Apply on boot
+  applyLang(detectLang());
+
+  // Switcher: click delegation
+  document.addEventListener("click", (e) => {
+    const setBtn = e.target.closest("[data-lang-set]");
+    if (setBtn) {
+      setLang(setBtn.getAttribute("data-lang-set"));
+      closeAllDropdowns();
+      return;
+    }
+    const toggleBtn = e.target.closest("[data-lang-toggle]");
+    if (toggleBtn) {
+      const dropdown = toggleBtn.parentElement.querySelector(".lang-dropdown");
+      if (dropdown) {
+        const open = dropdown.classList.toggle("open");
+        toggleBtn.classList.toggle("open", open);
+        toggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      return;
+    }
+    closeAllDropdowns();
+  });
+
+  // Esc closes dropdown for keyboard users
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllDropdowns();
+  });
+})();
 </script>
 </body>
 </html>

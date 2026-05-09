@@ -1039,6 +1039,10 @@ function loadTrack(idx, opts){
 	// mode lirien_theme so it loops cleanly without a tiny gap on
 	// the `ended` → next() roundtrip.
 	$audio.loop = !!track.loop;
+	// New track means new "ahead-of" reference point — clear the
+	// prefetch markers so the next 2 (relative to the new position)
+	// can be queued up when we hit 80% again.
+	resetPrefetchMarkers();
 	if (opts.play !== false){
 		const p = $audio.play();
 		if (p && p.catch) p.catch(()=>{ /* autoplay may block; silent */ });
@@ -1112,7 +1116,57 @@ $audio.addEventListener("timeupdate", ()=>{
 	const pct = ($audio.currentTime / $audio.duration) * 100;
 	$progressFill.style.width = pct.toFixed(2) + "%";
 	$progress.setAttribute("aria-valuenow", pct.toFixed(0));
+	// Once we're 80% through the current track, prefetch the next 2
+	// tracks' audio + image so the swap is instant when the current
+	// one ends. Non-greedy: never more than 2 ahead, never re-fetched
+	// once cached. The browser cache (and the service worker, when
+	// it lands) hold them across track changes.
+	if (pct >= 80) maybePrefetchAhead();
 });
+
+// ─────────────────────────────────────────────────────────────────
+// Predictive preload — non-greedy.
+//
+// Two tracks ahead is the whole budget. Each track's audio + image
+// is fetched once (browser cache holds the rest) and we mark which
+// queue indices we've already prefetched so we don't re-fire on
+// every timeupdate tick.
+// ─────────────────────────────────────────────────────────────────
+const prefetchedQueueIdx = new Set();
+function maybePrefetchAhead(){
+	if (!queue.length) return;
+	for (let ahead = 1; ahead <= 2; ahead++){
+		const peekIdx = (queueIdx + ahead) % queue.length;
+		if (prefetchedQueueIdx.has(peekIdx)) continue;
+		const trackIdx = queue[peekIdx];
+		const track = TRACKS[trackIdx];
+		if (!track) continue;
+		// Image: an Image() object's src triggers a fetch the browser
+		// then keeps in its image cache; subsequent <img>/background-
+		// image references reuse the same cached entry.
+		if (track.image){
+			const img = new Image();
+			img.src = (track.image.startsWith("../") ? track.image : (ATMOS_BASE + track.image));
+		}
+		// Audio: a separate Audio() with preload="auto" warms the
+		// browser's media cache for the track. We deliberately don't
+		// call .play() — just letting the file download.
+		if (track.file){
+			const a = new Audio();
+			a.preload = "auto";
+			a.src = trackAudioUrl(track);
+		}
+		prefetchedQueueIdx.add(peekIdx);
+	}
+}
+// On each track change, drop prefetch markers for queue indices that
+// are no longer "ahead" of the current position so they get re-prefetched
+// later in the loop. (The browser cache still holds the bytes, so this
+// is cheap — it's just our internal "should we kick fetches off again"
+// state.)
+function resetPrefetchMarkers(){
+	prefetchedQueueIdx.clear();
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Controls

@@ -567,6 +567,28 @@ body{
 	.brand-meta{flex-direction:row;gap:1rem;line-height:1.2}
 }
 
+/* Non-PWA landscape compact — even tighter than the shared
+   landscape rule above. Safari (display-mode:browser) loses
+   ~80-100px of dvh to the URL bar + tab bar that a standalone
+   PWA doesn't lose, so type and controls have to shrink another
+   notch to keep the foot's "N tracks ◆" toggle inside the
+   visible area instead of clipping at the bottom. */
+@media (orientation:landscape) and (max-height:480px) and (display-mode:browser){
+	.frame{
+		padding-top:max(0.2rem,env(safe-area-inset-top));
+		padding-bottom:max(0.2rem,env(safe-area-inset-bottom));
+		gap:clamp(0.2rem,0.6vh,0.4rem);
+	}
+	.spiral-wrap{width:min(16vh,22vw,120px)}
+	.track-title{font-size:1.05rem}
+	.track-caption{font-size:0.72em}
+	.invitation{font-size:0.78em}
+	.transport{gap:clamp(0.6rem,1.8vw,1rem);margin-top:6px}
+	.tx-btn{width:38px;height:38px}
+	.tx-btn--play{width:48px;height:48px}
+	.ctrl{padding:0.25rem 0.2rem}
+}
+
 /* Standalone-PWA-specific (Add to Home Screen, opens chrome-less).
    Strict fit + no scroll: the PWA is a fixed-frame app, scrolling
    here would feel like a layout bug. Non-PWA Safari keeps its
@@ -735,7 +757,7 @@ body{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260509-231212";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260509-231432";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;

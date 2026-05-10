@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-011441";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-022053";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -855,7 +855,14 @@ body.is-playing .progress{
 			const live = data.echoes;
 			if (live && live !== BUILD_VERSION){
 				console.log("[freshness] stale build " + BUILD_VERSION + " → " + live + ", reloading");
-				location.reload();
+				// Cache-bust the URL on reload — iOS PWA standalone
+				// can serve the same stale HTML from browser HTTP
+				// cache when location.reload() is called, defeating
+				// the whole freshness-check pattern. Adding a unique
+				// query param forces a brand-new request.
+				const url = new URL(location.href);
+				url.searchParams.set("_v", live);
+				location.replace(url.toString());
 			}
 		} catch (e) { /* offline — try again next check */ }
 		finally { inFlight = false; }

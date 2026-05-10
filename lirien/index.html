@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510s">
+	<link rel="stylesheet" href="style.css?v=20260510t">
 </head>
 <body>
 	<script>
@@ -228,7 +228,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-021904";
+		const BUILD_VERSION = "20260510-022053";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -251,7 +251,14 @@
 					// silently — the user shouldn't be punted back to
 					// the title screen just because we shipped a fix.
 					try { sessionStorage.setItem("lirien.justAutoreloaded", "1"); } catch (e) {}
-					location.reload();
+					// Cache-bust the URL on reload — iOS PWA standalone
+					// can serve stale HTML from browser HTTP cache via
+					// plain location.reload(), which makes the whole
+					// freshness-check pattern silently fail. A unique
+					// query param forces a brand-new request.
+					const url = new URL(location.href);
+					url.searchParams.set("_v", live);
+					location.replace(url.toString());
 				}
 			} catch (e) { /* offline */ }
 			finally { inFlight = false; }
@@ -283,8 +290,8 @@
 		};
 	})();
 	</script>
-	<script src="analytics.js?v=20260510s"></script>
-	<script src="ink.js?v=20260510s"></script>
-	<script src="main.js?v=20260510s"></script>
+	<script src="analytics.js?v=20260510t"></script>
+	<script src="ink.js?v=20260510t"></script>
+	<script src="main.js?v=20260510t"></script>
 </body>
 </html>

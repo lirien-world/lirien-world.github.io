@@ -501,19 +501,46 @@ body.story-started .game { opacity: 1; }
 	width: 36px;
 	height: 36px;
 	border: none;
-	background: transparent;
 	cursor: pointer;
 	z-index: 50;
 	padding: 0;
 	color: var(--mist);
-	transition: color 0.3s ease, filter 0.3s ease, opacity 0.6s ease;
+	transition: color 0.3s ease, filter 0.3s ease, opacity 0.6s ease,
+		background 0.3s ease;
 	-webkit-tap-highlight-color: transparent;
+	border-radius: 50%;
+	/* Soft dark underlay so the gold strokes always have contrast,
+	 * even when the chapter atmosphere image is pale or washed-out.
+	 * Radial gradient (not a solid disc) means it doesn't read as
+	 * a button widget — just a localized darkening of the corner
+	 * where the icon sits. backdrop-filter: blur adds a slight
+	 * frost so anything visually loud behind it gets softened. */
+	background: radial-gradient(
+		circle at center,
+		rgba(8, 6, 15, 0.6) 0%,
+		rgba(8, 6, 15, 0.42) 45%,
+		rgba(8, 6, 15, 0.12) 75%,
+		rgba(8, 6, 15, 0) 100%
+	);
+	backdrop-filter: blur(3px);
+	-webkit-backdrop-filter: blur(3px);
 	/* Hidden until the title is dismissed. Prevents the gold halo
 	 * from being visible at top-right during the title's fade-out
 	 * window, when the user is still meant to be focused on the
 	 * cover. */
 	opacity: 0;
 	pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+	.chrome-btn:hover {
+		background: radial-gradient(
+			circle at center,
+			rgba(8, 6, 15, 0.7) 0%,
+			rgba(8, 6, 15, 0.5) 45%,
+			rgba(8, 6, 15, 0.18) 75%,
+			rgba(8, 6, 15, 0) 100%
+		);
+	}
 }
 body.story-started .chrome-btn {
 	opacity: 1;

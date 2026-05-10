@@ -16,10 +16,25 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510j">
+	<link rel="stylesheet" href="style.css?v=20260510k">
 </head>
 <body>
 	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
+	<!--
+		Atmospheric layer (ash, shimmer, etc) — sits between the bg and
+		the prose so particles drift through the world image and behind
+		the held page. Particles are CSS-animated divs spawned by JS.
+		See setAtmosphere() / spawnAshParticles() in main.js, and the
+		# atmosphere: <name> ink tag.
+	-->
+	<div id="atmosphere-layer" class="atmosphere-layer" aria-hidden="true"></div>
+	<!--
+		Shimmer one-shot. Ink tag # fx: shimmer flips .is-firing on this
+		element and an animation plays a brief radial gold ripple +
+		blur stutter. Lifts the underlying colours via mix-blend-mode
+		so it reads as the world breathing rather than a UI overlay.
+	-->
+	<div id="shimmer-fx" class="shimmer-fx" aria-hidden="true"></div>
 	<div id="title-screen" class="title-screen">
 		<div class="title-content">
 			<div class="title-eyebrow">Book One &mdash; Chronicles of Lirien</div>
@@ -198,7 +213,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-012559";
+		const BUILD_VERSION = "20260510-013054";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -246,8 +261,8 @@
 		document.addEventListener("pointerdown", () => check(false), { passive: true });
 	})();
 	</script>
-	<script src="analytics.js?v=20260510j"></script>
-	<script src="ink.js?v=20260510j"></script>
-	<script src="main.js?v=20260510j"></script>
+	<script src="analytics.js?v=20260510k"></script>
+	<script src="ink.js?v=20260510k"></script>
+	<script src="main.js?v=20260510k"></script>
 </body>
 </html>

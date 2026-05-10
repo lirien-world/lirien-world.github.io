@@ -83,6 +83,89 @@ html, body {
 .bg-image:not([src]),
 .bg-image[src=""] { visibility: hidden; }
 
+/* ----- atmosphere layer (ash, shimmer, etc) -----
+ *
+ * Sits z:5, between .bg (z:0) and .game (z:10), so atmospheric
+ * particles drift through the world image and partially behind
+ * the held prose page. Each particle is a tiny <div> with random
+ * --x / --size / --opacity / --dur / --delay / --drift custom
+ * properties driving a single CSS @keyframes — animation runs on
+ * the compositor thread, freeing the main thread for ink/audio
+ * scheduling (same constraint that drove /echoes/'s compositor-
+ * cost trims, see task #55). Layer is invisible (.atmosphere-
+ * layer) until JS adds .is-active, which fades it in over 1.6s.
+ */
+.atmosphere-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 5;
+	pointer-events: none;
+	overflow: hidden;
+	contain: layout paint style;
+	opacity: 0;
+	transition: opacity 1.6s ease-in-out;
+}
+.atmosphere-layer.is-active { opacity: 1; }
+
+.ash-particle {
+	position: absolute;
+	top: 0;
+	left: var(--x, 50%);
+	width: var(--size, 2px);
+	height: var(--size, 2px);
+	border-radius: 50%;
+	background: rgba(220, 215, 200, var(--opacity, 0.5));
+	box-shadow: 0 0 var(--glow, 1px) rgba(220, 215, 200, 0.4);
+	animation: ash-fall var(--dur, 12s) linear var(--delay, 0s) infinite;
+	will-change: transform, opacity;
+}
+@keyframes ash-fall {
+	0%   { transform: translate(0, -10vh);            opacity: 0; }
+	8%   { opacity: var(--opacity, 0.5); }
+	92%  { opacity: var(--opacity, 0.5); }
+	100% { transform: translate(var(--drift, 0), 110vh); opacity: 0; }
+}
+
+/* ----- shimmer one-shot -----
+ *
+ * Fired by # fx: shimmer ink tags. Manuscript: "a distortion
+ * rippled upward: a shimmer, a stutter, space briefly recon-
+ * sidering its relationship with staying still." Visually: a
+ * soft gold radial gradient lifts the underlying colours via
+ * mix-blend-mode, expanding outward as it rises, with a brief
+ * blur stutter at the start and end. ~1.4s total. z:90 puts it
+ * above .game so the prose itself is touched by the shimmer
+ * (the world reconsidering includes the page in the world).
+ */
+.shimmer-fx {
+	position: fixed;
+	inset: 0;
+	z-index: 90;
+	pointer-events: none;
+	opacity: 0;
+	background: radial-gradient(
+		ellipse at center 60%,
+		rgba(220, 200, 160, 0.36) 0%,
+		rgba(196, 147, 90, 0.22) 28%,
+		rgba(196, 147, 90, 0.06) 55%,
+		rgba(196, 147, 90, 0) 75%
+	);
+	mix-blend-mode: screen;
+	transform: scale(0.85) translateY(15vh);
+	filter: blur(8px);
+}
+.shimmer-fx.is-firing {
+	animation: shimmer-pulse 1.4s ease-out;
+	will-change: transform, opacity, filter;
+}
+@keyframes shimmer-pulse {
+	0%   { opacity: 0;    transform: scale(0.85) translateY(15vh); filter: blur(10px); }
+	22%  { opacity: 0.85; transform: scale(0.96) translateY(6vh);  filter: blur(3px); }
+	48%  { opacity: 1;    transform: scale(1.04) translateY(-3vh); filter: blur(0); }
+	78%  { opacity: 0.45; transform: scale(1.14) translateY(-10vh); filter: blur(2px); }
+	100% { opacity: 0;    transform: scale(1.24) translateY(-18vh); filter: blur(5px); }
+}
+
 /* ----- title screen (front cover) -----
  *
  * Mirrors the landing page hero: Cormorant Garamond at 300 weight,

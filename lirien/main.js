@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510j";
+const ASSET_VERSION = "20260510k";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -50,6 +50,8 @@ const $chapterTitle = document.getElementById("chapter-title");
 const $menuBtn = document.getElementById("menu-btn");
 const $menuPanel = document.getElementById("menu-panel");
 const $drawerScrim = document.getElementById("drawer-scrim");
+const $atmosphereLayer = document.getElementById("atmosphere-layer");
+const $shimmerFx = document.getElementById("shimmer-fx");
 // Backwards-compat aliases — most call sites and `bind*Menu` use
 // these names. After the chapters + settings merge into one drawer,
 // both names point at the same DOM node.
@@ -1421,13 +1423,102 @@ function releasePlayerSrc(player) {
 function applyTags(tags) {
 	for (const raw of tags) {
 		const tag = String(raw).trim();
-		if (tag.startsWith("bg:"))            swapBackground(tag.slice(3).trim());
-		else if (tag.startsWith("music:"))    swapMusic(tag.slice(6).trim());
-		else if (tag.startsWith("chapter:"))  showChapterTitle(tag.slice(8).trim());
-		else if (tag === "transition")        { /* TODO: shimmer dissolve */ }
+		if (tag.startsWith("bg:"))              swapBackground(tag.slice(3).trim());
+		else if (tag.startsWith("music:"))      swapMusic(tag.slice(6).trim());
+		else if (tag.startsWith("chapter:"))    showChapterTitle(tag.slice(8).trim());
+		else if (tag.startsWith("atmosphere:")) setAtmosphere(tag.slice(11).trim());
+		else if (tag.startsWith("fx:"))         fireFx(tag.slice(3).trim());
+		else if (tag === "transition")          { /* TODO: shimmer dissolve */ }
 		// portrait_left / portrait_right / portrait_clear can be wired
 		// later when the new game adds them.
 	}
+}
+
+// ----- atmosphere + fx layer -----
+//
+// # atmosphere: <name>  → sets a sustained ambient state
+//   - "ash-falling" spawns N drifting CSS-animated ash particles
+//   - "clear" / "off" / "" / "none" fades the layer out and clears
+// # fx: <name>          → fires a one-shot effect
+//   - "shimmer" plays the .shimmer-fx pulse animation
+//
+// Particles are CSS-animated via per-element custom properties so
+// the main thread stays free for ink/audio scheduling. Negative
+// animation-delay starts each particle partway through its fall
+// cycle, so the screen fills immediately rather than top-down.
+
+let currentAtmosphere = null;
+
+function spawnAshParticles(count) {
+	if (!$atmosphereLayer) return;
+	const frag = document.createDocumentFragment();
+	for (let i = 0; i < count; i++) {
+		const p = document.createElement("div");
+		p.className = "ash-particle";
+		const dur = 10 + Math.random() * 9;
+		p.style.setProperty("--x",       `${Math.random() * 100}%`);
+		p.style.setProperty("--size",    `${(1 + Math.random() * 2).toFixed(1)}px`);
+		p.style.setProperty("--opacity", (0.22 + Math.random() * 0.42).toFixed(2));
+		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
+		// Negative delay → particle is already partway through its
+		// fall cycle on first paint, screen fills instantly.
+		p.style.setProperty("--delay",   `-${(Math.random() * dur).toFixed(1)}s`);
+		// Small horizontal drift so particles read as ASH (slightly
+		// fluttering) rather than rain (perfectly vertical).
+		p.style.setProperty("--drift",   `${((Math.random() - 0.5) * 30).toFixed(0)}px`);
+		p.style.setProperty("--glow",    `${(0.5 + Math.random() * 1.5).toFixed(1)}px`);
+		frag.appendChild(p);
+	}
+	$atmosphereLayer.appendChild(frag);
+}
+
+function setAtmosphere(name) {
+	if (!$atmosphereLayer) return;
+	name = (name || "").trim();
+	const shouldClear = !name || name === "clear" || name === "off" || name === "none";
+	if (shouldClear) {
+		if (!currentAtmosphere) return;
+		// Fade the layer out smoothly, then drop the particles. The
+		// 1700ms timeout matches the .atmosphere-layer opacity
+		// transition (1.6s ease-in-out) plus a small grace.
+		$atmosphereLayer.classList.remove("is-active");
+		const wasAt = currentAtmosphere;
+		currentAtmosphere = null;
+		setTimeout(() => {
+			if (currentAtmosphere === null) $atmosphereLayer.innerHTML = "";
+		}, 1700);
+		return;
+	}
+	if (name === currentAtmosphere) return;
+	$atmosphereLayer.innerHTML = "";
+	if (name === "ash-falling") {
+		// 70 particles is "polite" — manuscript: "as though it had
+		// been asked very politely to keep the noise down."
+		spawnAshParticles(70);
+	}
+	currentAtmosphere = name;
+	// rAF gives the freshly-appended particles a frame to start
+	// their per-element animations before we trigger the layer-
+	// level fade-in, so the user doesn't see a half-cycle of
+	// movement appearing all at once at full opacity.
+	requestAnimationFrame(() => $atmosphereLayer.classList.add("is-active"));
+}
+
+function fireFx(name) {
+	name = (name || "").trim();
+	if (name === "shimmer" && $shimmerFx) {
+		$shimmerFx.classList.remove("is-firing");
+		void $shimmerFx.offsetWidth;
+		$shimmerFx.classList.add("is-firing");
+	}
+}
+
+if ($shimmerFx) {
+	$shimmerFx.addEventListener("animationend", (ev) => {
+		if (ev.animationName === "shimmer-pulse") {
+			$shimmerFx.classList.remove("is-firing");
+		}
+	});
 }
 
 // ----- input: tap-to-advance / skip ------

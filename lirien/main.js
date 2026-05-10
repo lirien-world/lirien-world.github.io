@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510q";
+const ASSET_VERSION = "20260510r";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -879,11 +879,14 @@ function snapScrollToWholeParagraphs() {
 		if (pTop >= scrollTop) return;
 		// pTop < scrollTop < pBottom: this paragraph straddles the
 		// viewport top. Decide whether to snap.
-		// (a) Tall paragraph (taller than 85% of viewport) — leave
-		//     alone; user is mid-paragraph reading.
-		if (p.offsetHeight > viewportH * 0.85) return;
-		// (b) Most of the paragraph is visible (>50% of viewport) —
-		//     leave alone; that's deliberate context, not leakage.
+		// Use partial-visible-height alone: if more than half the
+		// viewport is showing this paragraph, the user is mid-read
+		// and snapping would lurch. Less than half = the paragraph
+		// is mostly past, just its tail is leaking → snap.
+		// (Earlier "tall paragraph exempt regardless" rule was wrong:
+		// a 180px paragraph with only its bottom 71px visible isn't
+		// being read mid-paragraph, it's leaking. Diagnostic
+		// screenshot 2026-05-10 confirmed.)
 		const partialHeight = pBottom - scrollTop;
 		if (partialHeight > viewportH * 0.5) return;
 		// Otherwise: snap DOWN so the paragraph's bottom is at the

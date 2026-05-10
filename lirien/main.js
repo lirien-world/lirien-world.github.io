@@ -1645,13 +1645,11 @@ function spawnAshParticles(count) {
 		p.className = "ash-particle";
 		const dur = 10 + Math.random() * 9;
 		p.style.setProperty("--x",       `${Math.random() * 100}%`);
-		// Bumped from 1-3px → 2-5px. Splits the difference between
-		// the original "barely visible flecks" and the chunky 7px
-		// echoes motes — readable as ash without becoming snow.
-		p.style.setProperty("--size",    `${(2 + Math.random() * 3).toFixed(1)}px`);
-		// Slight opacity bump too so larger particles still feel
-		// restrained, not "filling the air".
-		p.style.setProperty("--opacity", (0.32 + Math.random() * 0.46).toFixed(2));
+		// Bumped 3-7px (was 2-5) and brighter halo so they actually
+		// register against the dark prose background. Echoes-like
+		// presence without going full snowstorm.
+		p.style.setProperty("--size",    `${(3 + Math.random() * 4).toFixed(1)}px`);
+		p.style.setProperty("--opacity", (0.45 + Math.random() * 0.40).toFixed(2));
 		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
 		// Negative delay → particle is already partway through its
 		// fall cycle on first paint, screen fills instantly.
@@ -1659,9 +1657,9 @@ function spawnAshParticles(count) {
 		// Small horizontal drift so particles read as ASH (slightly
 		// fluttering) rather than rain (perfectly vertical).
 		p.style.setProperty("--drift",   `${((Math.random() - 0.5) * 30).toFixed(0)}px`);
-		// Halo larger so each particle has a soft glow rather than
-		// a hard pixel — same trick echoes motes use.
-		p.style.setProperty("--glow",    `${(2 + Math.random() * 3).toFixed(1)}px`);
+		// Larger halo — gives each particle a soft glow rather than
+		// a hard pixel, the same trick echoes motes use.
+		p.style.setProperty("--glow",    `${(4 + Math.random() * 5).toFixed(1)}px`);
 		frag.appendChild(p);
 	}
 	$atmosphereLayer.appendChild(frag);
@@ -1681,12 +1679,16 @@ function spawnLightMotes(count) {
 		p.className = "light-mote";
 		const dur = 14 + Math.random() * 10;
 		p.style.setProperty("--x",       `${Math.random() * 100}%`);
-		p.style.setProperty("--size",    `${(2.5 + Math.random() * 3).toFixed(1)}px`);
-		p.style.setProperty("--opacity", (0.40 + Math.random() * 0.40).toFixed(2));
+		// Bumped to echoes-mote sizing: 5-9px size with 8-14px halo.
+		// Each mote is a clear, present "presence" (manuscript:
+		// "small motes of light drifted upward from the ground,
+		// slow and without urgency").
+		p.style.setProperty("--size",    `${(5 + Math.random() * 4).toFixed(1)}px`);
+		p.style.setProperty("--opacity", (0.55 + Math.random() * 0.40).toFixed(2));
 		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
 		p.style.setProperty("--delay",   `-${(Math.random() * dur).toFixed(1)}s`);
 		p.style.setProperty("--drift",   `${((Math.random() - 0.5) * 60).toFixed(0)}px`);
-		p.style.setProperty("--glow",    `${(4 + Math.random() * 5).toFixed(1)}px`);
+		p.style.setProperty("--glow",    `${(8 + Math.random() * 6).toFixed(1)}px`);
 		frag.appendChild(p);
 	}
 	$atmosphereLayer.appendChild(frag);

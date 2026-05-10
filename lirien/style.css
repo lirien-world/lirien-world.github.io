@@ -526,13 +526,18 @@ body.story-started .game { opacity: 1; }
 	top: 0;
 	left: 0;
 	right: 0;
-	height: 36px;
-	margin-bottom: -36px;
+	height: 28px;
+	margin-bottom: -28px;
+	/* Much subtler now — per-character fade in main.js does the
+	 * primary peek-through hiding for the active chunk, so this
+	 * overlay only needs to handle simplified-post-reveal old
+	 * chunks (no .ch spans → char-fade can't apply). At 0.55
+	 * top opacity it reads as a soft edge feather, not the dark
+	 * band Steve flagged. */
 	background: linear-gradient(
 		to bottom,
-		rgba(11, 11, 18, 0.96) 0%,
-		rgba(11, 11, 18, 0.92) 55%,
-		rgba(11, 11, 18, 0.30) 85%,
+		rgba(11, 11, 18, 0.55) 0%,
+		rgba(11, 11, 18, 0.30) 55%,
 		rgba(11, 11, 18, 0) 100%
 	);
 	pointer-events: none;

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510c";
+const ASSET_VERSION = "20260510d";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -459,6 +459,10 @@ let allBgNames = [];
 
 function dismissTitleScreen() {
 	$titleScreen.classList.add("dismissed");
+	// Reveal the prose surface as the title fades out — same 1.4s
+	// curve, same window. The body class lets CSS keep .game opaque
+	// thereafter without needing to track state per-element.
+	document.body.classList.add("story-started");
 	setTimeout(() => {
 		$titleScreen.hidden = true;
 		$titleScreen.classList.remove("visible", "dismissed");

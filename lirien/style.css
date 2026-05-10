@@ -264,7 +264,17 @@ html, body {
 	z-index: 10;
 	height: 100%;
 	pointer-events: none;
+	/* Hidden until the title screen dismisses. With the prose now
+	 * carrying a strong drop-shadow + gold rim, its outline was
+	 * briefly visible behind the title screen during the 1.6s
+	 * title fade-in — distracting first impression. JS adds
+	 * .story-started to <body> when the user enters; the prose
+	 * + chrome fade in over the same 1.4s window the title fades
+	 * out, so the two cross at the midpoint. */
+	opacity: 0;
+	transition: opacity 1.4s ease-in;
 }
+body.story-started .game { opacity: 1; }
 .game > * { pointer-events: auto; }
 
 /* ----- prose panel: bottom half ----- */

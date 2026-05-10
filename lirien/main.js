@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510m";
+const ASSET_VERSION = "20260510n";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -763,6 +763,9 @@ function onChunkRevealed() {
 	currentReveal = null;
 	state = "waiting";
 	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("waiting");
+	// After the typing animation lands, refine the scroll so no
+	// paragraph is partially clipped at the visible top edge.
+	snapScrollToWholeParagraphs();
 	// Decide between the continue-chevron and the offline-block hint
 	// based on whether the next chunk would need an uncached asset.
 	presentWaitingHintForCurrentState();
@@ -832,6 +835,50 @@ function scrollChunkToTop(paragraph) {
 		const offset = Math.max(0, paragraph.offsetTop - padTop);
 		$prose.scrollTo({ top: offset, behavior: "auto" });
 	});
+}
+
+// After progressive-scroll lands its final position, refine the
+// scrollTop so no paragraph is partially clipped at the top edge of
+// the visible viewport. Each paragraph should be either FULLY
+// visible or FULLY out of view — never half-visible at the top.
+//
+// This replaces the earlier visual-fade attempts (mask-image, sibling
+// gradient overlays). Those hid the symptom but left the underlying
+// scroll position wrong; the cleaner fix is to snap to a whole-
+// paragraph boundary so there's nothing to hide in the first place.
+//
+// Tall paragraphs (taller than ~85% of the visible viewport) are
+// exempt — for those, partial visibility at the top is the user's
+// own scroll position mid-paragraph and snapping would lurch.
+function snapScrollToWholeParagraphs() {
+	const paragraphs = $proseContent.querySelectorAll("p");
+	if (paragraphs.length === 0) return;
+	const scrollTop = $prose.scrollTop;
+	const viewportH = $prose.clientHeight;
+	for (const p of paragraphs) {
+		const pTop = p.offsetTop;
+		const pBottom = pTop + p.offsetHeight;
+		// Fully scrolled past — skip.
+		if (pBottom <= scrollTop) continue;
+		// First non-past paragraph isn't clipped at top — done, no
+		// straddler exists.
+		if (pTop >= scrollTop) return;
+		// pTop < scrollTop < pBottom: this paragraph straddles the
+		// viewport top. Decide whether to snap.
+		// (a) Tall paragraph (taller than 85% of viewport) — leave
+		//     alone; user is mid-paragraph reading.
+		if (p.offsetHeight > viewportH * 0.85) return;
+		// (b) Most of the paragraph is visible (>50% of viewport) —
+		//     leave alone; that's deliberate context, not leakage.
+		const partialHeight = pBottom - scrollTop;
+		if (partialHeight > viewportH * 0.5) return;
+		// Otherwise: snap DOWN so the paragraph's bottom is at the
+		// viewport top (paragraph fully scrolled out). The next
+		// paragraph's natural margin-top creates a clean gap before
+		// the visible content.
+		$prose.scrollTo({ top: pBottom, behavior: "smooth" });
+		return;
+	}
 }
 
 // ----- choices -----

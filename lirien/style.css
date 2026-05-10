@@ -437,51 +437,14 @@ body.story-started .game { opacity: 1; }
 		inset 0 1px 0 rgba(245, 238, 216, 0.07);
 }
 
-/* Inside-only fade overlays for the prose box. Sibling elements
- * inside .game, positioned absolutely to match .prose's edges
- * exactly. They sit ABOVE .prose visually (z-index) but DON'T
- * scroll with the prose's content — they stay fixed at the
- * prose's top + bottom edges, hiding any text that scrolls
- * through the padding zones (the "responded." orphan-line
- * leakage from progressive-scroll-parked-deep cases).
- *
- * Critically: the gold rim stays visible all the way around
- * because these overlays sit INSIDE the rim (1px inset on each
- * side), and only cover top/bottom strips. Sides + corners
- * remain crisp. */
-.prose-fade {
-	position: absolute;
-	pointer-events: none;
-	z-index: 11;
-	left: calc(80px + 1px);
-	right: calc(80px + 1px);
-}
-.prose-fade--top {
-	top: calc(50% + 1px);
-	height: 32px;
-	background: linear-gradient(
-		to bottom,
-		rgba(11, 11, 18, 0.95) 0%,
-		rgba(11, 11, 18, 0.62) 45%,
-		rgba(11, 11, 18, 0.22) 78%,
-		rgba(11, 11, 18, 0) 100%
-	);
-	border-top-left-radius: 11px;
-	border-top-right-radius: 11px;
-}
-.prose-fade--bottom {
-	bottom: calc(56px + 1px);
-	height: 38px;
-	background: linear-gradient(
-		to top,
-		rgba(11, 11, 18, 0.95) 0%,
-		rgba(11, 11, 18, 0.62) 45%,
-		rgba(11, 11, 18, 0.22) 78%,
-		rgba(11, 11, 18, 0) 100%
-	);
-	border-bottom-left-radius: 11px;
-	border-bottom-right-radius: 11px;
-}
+/* Edge fade overlays were tried (mask-image, then sibling-overlay
+ * gradients) — both replaced because they hid the symptom rather
+ * than fixing it. The right fix is computational: after the
+ * progressive-scroll lands its final position, snapScrollToWhole
+ * Paragraphs() in main.js detects whether a paragraph is being
+ * clipped at the top of the viewport and adjusts scrollTop so
+ * the paragraph is either FULLY visible or FULLY scrolled out.
+ * No partial-line leakage means no need for a fade. */
 .prose::-webkit-scrollbar { width: 8px; }
 .prose::-webkit-scrollbar-track { background: transparent; }
 .prose::-webkit-scrollbar-thumb {
@@ -1572,21 +1535,6 @@ body.story-started .chrome-btn {
 		padding: 22px 18px 28px 18px;
 		border-radius: 8px;
 	}
-	.prose-fade {
-		left: calc(max(14px, env(safe-area-inset-left)) + 1px);
-		right: calc(max(14px, env(safe-area-inset-right)) + 1px);
-	}
-	.prose-fade--top {
-		top: calc(32% + 1px);
-		border-top-left-radius: 7px;
-		border-top-right-radius: 7px;
-	}
-	.prose-fade--bottom {
-		bottom: calc(14px + 1px);
-		border-bottom-left-radius: 7px;
-		border-bottom-right-radius: 7px;
-	}
-	body.is-standalone .prose-fade--top { top: calc(45% + 1px); }
 	/* Standalone (Add to Home Screen) gets the full viewport with no
 	 * browser chrome eating space, so the prose panel can shrink and
 	 * still hold a comfortable amount of text per chunk — letting the

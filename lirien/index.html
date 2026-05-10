@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510m">
+	<link rel="stylesheet" href="style.css?v=20260510n">
 </head>
 <body>
 	<script>
@@ -70,8 +70,6 @@
 		<div id="prose" class="prose">
 			<div id="prose-content" class="prose-content"></div>
 		</div>
-		<div class="prose-fade prose-fade--top" aria-hidden="true"></div>
-		<div class="prose-fade prose-fade--bottom" aria-hidden="true"></div>
 		<div id="continue-hint" class="continue-hint" aria-hidden="true">
 			<svg viewBox="0 0 24 12" aria-hidden="true">
 				<path d="M2 2 L12 10 L22 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -231,7 +229,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-014856";
+		const BUILD_VERSION = "20260510-015429";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -286,8 +284,8 @@
 		};
 	})();
 	</script>
-	<script src="analytics.js?v=20260510m"></script>
-	<script src="ink.js?v=20260510m"></script>
-	<script src="main.js?v=20260510m"></script>
+	<script src="analytics.js?v=20260510n"></script>
+	<script src="ink.js?v=20260510n"></script>
+	<script src="main.js?v=20260510n"></script>
 </body>
 </html>

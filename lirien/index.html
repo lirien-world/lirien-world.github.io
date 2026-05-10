@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260511b">
+	<link rel="stylesheet" href="style.css?v=20260511c">
 </head>
 <body>
 	<script>
@@ -238,7 +238,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-043621";
+		const BUILD_VERSION = "20260510-121551";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -404,14 +404,35 @@
 			if (!LANGUAGES.some(l => l.code === lang)) return;
 			const previous = (document.documentElement && document.documentElement.lang) || "";
 			try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
-			// If the user switched languages mid-session, the
-			// existing autosave was made against a different
-			// compiled story (story_es.json vs story.json); inkjs
-			// state addresses won't map. Clear autosave + reload
-			// to fetch the right story file with a clean slate.
-			// User accepts that switching language restarts.
+			// Mid-session language switch: keep position (state),
+			// drop language-bound bits. test.ink and test_es.ink
+			// share the same knot graph + variable names, so inkjs
+			// state.LoadJson() migrates 1:1 between story.json and
+			// story_es.json. Strip lastChunk + chapter so the
+			// resume doesn't render the OLD language's prose or
+			// chapter overlay. Keep bg, music, atmosphere — those
+			// are language-independent identifiers. main.js wraps
+			// LoadJson in try/catch already, so a corrupt or
+			// genuinely-incompatible state still falls through to
+			// a clean restart instead of locking the reader.
 			if (previous && previous !== lang) {
-				try { localStorage.removeItem("lirien.save"); } catch (e) {}
+				try {
+					const raw = localStorage.getItem("lirien.save");
+					const saved = raw ? JSON.parse(raw) : null;
+					if (saved && saved.state) {
+						const migrated = {
+							state: saved.state,
+							bg: saved.bg || "",
+							music: saved.music || "",
+							atmosphere: saved.atmosphere || "",
+							chapter: "",
+							lastChunk: ""
+						};
+						localStorage.setItem("lirien.save", JSON.stringify(migrated));
+					}
+				} catch (e) {
+					try { localStorage.removeItem("lirien.save"); } catch (e2) {}
+				}
 				const url = new URL(location.href);
 				url.searchParams.set("_v", lang + "-" + Date.now());
 				location.replace(url.toString());
@@ -440,8 +461,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260511b"></script>
-	<script src="ink.js?v=20260511b"></script>
-	<script src="main.js?v=20260511b"></script>
+	<script src="analytics.js?v=20260511c"></script>
+	<script src="ink.js?v=20260511c"></script>
+	<script src="main.js?v=20260511c"></script>
 </body>
 </html>

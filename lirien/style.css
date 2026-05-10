@@ -452,7 +452,7 @@ body.story-started .game { opacity: 1; }
 	 * respects the panel's inner padding so the snapped paragraph
 	 * lines up with the inner edge, not the rim. */
 	scroll-snap-type: y mandatory;
-	scroll-padding-top: 22px;
+	scroll-padding-top: 36px;
 }
 .prose-content p {
 	scroll-snap-align: start;
@@ -485,26 +485,30 @@ body.story-started .game { opacity: 1; }
 	color: #f5ebd2;
 }
 
-/* Sticky fade-top sits inside the prose's scroll container, anchored
- * to the viewport top via position:sticky. Anything that scrolls
- * UNDER it (i.e. peek-through at the top edge) is gradient-faded.
- * Hidden until the user actually scrolls (.prose.is-scrolled is set
- * by JS on the first non-zero scrollTop) so the first paragraph at
- * idle is never dimmed. The gold rim is OUTSIDE this overlay (on
- * .prose's box-shadow), so it stays visible all the way around.
- * margin-bottom: -22px so this sticky element doesn't displace
- * .prose-content's natural position in the flow. */
+/* Sticky fade-top covers the top zone of the prose's scroll
+ * container — anything scrolling under it dissolves to invisible.
+ * Tuned so the gradient stays NEAR FULLY OPAQUE for the first
+ * ~22px (where peek-through happens) and only transitions to
+ * transparent in the last ~14px (where the snapped paragraph's
+ * top lives, post scroll-padding-top:36). So peek-through is
+ * fully obscured while the snapped first line is barely dimmed.
+ *
+ * Hidden until the user actually scrolls (.prose.is-scrolled is
+ * set by JS) so the first paragraph at idle is never dimmed.
+ * Gold rim is OUTSIDE this overlay (on .prose's box-shadow), so
+ * it stays visible all the way around. */
 .prose-fade-top {
 	position: sticky;
 	top: 0;
 	left: 0;
 	right: 0;
-	height: 28px;
-	margin-bottom: -28px;
+	height: 36px;
+	margin-bottom: -36px;
 	background: linear-gradient(
 		to bottom,
-		rgba(11, 11, 18, 0.95) 0%,
-		rgba(11, 11, 18, 0.55) 55%,
+		rgba(11, 11, 18, 0.96) 0%,
+		rgba(11, 11, 18, 0.92) 55%,
+		rgba(11, 11, 18, 0.30) 85%,
 		rgba(11, 11, 18, 0) 100%
 	);
 	pointer-events: none;

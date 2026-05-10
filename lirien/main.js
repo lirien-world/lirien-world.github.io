@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510u";
+const ASSET_VERSION = "20260510v";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -780,7 +780,7 @@ if ($prose) {
 		clearTimeout(proseScrollEndTimer);
 		proseScrollEndTimer = setTimeout(() => {
 			snapScrollToWholeParagraphs();
-		}, 250);
+		}, 120);
 	}, { passive: true });
 }
 
@@ -2514,6 +2514,12 @@ function toggleDevPanel() {
 	$devPanel.hidden = !$devPanel.hidden;
 	if (!$devPanel.hidden) {
 		$devSearch.value = "";
+		// Run snap synchronously before rendering the diagnostic so
+		// the version row reflects the post-snap state. Without this,
+		// opening the dev panel right after a manual scroll could
+		// catch a race window (snap timer pending, panel reads pre-
+		// snap scrollTop, screenshot misleads diagnosis).
+		snapScrollToWholeParagraphs();
 		renderDevVersion();
 		// Sub-header: show the bg the user is currently looking at so
 		// they can orient and skip forward/back from where they are.

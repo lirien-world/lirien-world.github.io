@@ -441,14 +441,15 @@ body.story-started .game { opacity: 1; }
 		 * this is purely atmospheric: the panel reads as a held page
 		 * with light catching its top inside edge. ~14px tall. */
 		inset 0 14px 16px -10px rgba(11, 11, 18, 0.45);
-	/* CSS scroll-snap: when the user manually scrolls (or progressive-
-	 * scroll lands them somewhere odd), the scroll settles on
-	 * paragraph boundaries rather than mid-line. `proximity` (not
-	 * `mandatory`) so we encourage clean alignment without fighting
-	 * the user's intent if they want to park between snap points.
-	 * scroll-padding-top respects the panel's inner padding so the
-	 * snapped paragraph lines up with the inner edge, not the rim. */
-	scroll-snap-type: y proximity;
+	/* CSS scroll-snap: scroll always settles on a paragraph boundary
+	 * (mandatory). For prose reading, paragraph alignment is the
+	 * universal intent — there's no good reason to want to park
+	 * mid-line at the top edge. proximity was leaving 11-px-style
+	 * peek-through when the browser decided no snap point was "close
+	 * enough"; mandatory removes the choice. scroll-padding-top
+	 * respects the panel's inner padding so the snapped paragraph
+	 * lines up with the inner edge, not the rim. */
+	scroll-snap-type: y mandatory;
 	scroll-padding-top: 22px;
 }
 .prose-content p {

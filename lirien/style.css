@@ -453,12 +453,14 @@ body.story-started .game { opacity: 1; }
 		0 6px 18px rgba(0, 0, 0, 0.38),
 		inset 0 0 0 1px rgba(196, 147, 90, 0.14),
 		inset 0 1px 0 rgba(245, 238, 216, 0.07),
-		/* Subtle inner top fade — gives the eye a soft "page edge"
-		 * cue without the heavy darkening of earlier attempts. The
-		 * snap-to-paragraph routine prevents real peek-through, so
-		 * this is purely atmospheric: the panel reads as a held page
-		 * with light catching its top inside edge. ~14px tall. */
-		inset 0 14px 16px -10px rgba(11, 11, 18, 0.45);
+		/* Inner top fade — gives the eye a soft "page edge" cue and
+		 * adds contrast behind the words that are mid per-character
+		 * fade at the top of the visible reading area, so the
+		 * half-in/half-out characters read more clearly. Extended
+		 * from ~14px to ~22px and bumped opacity 0.45 → 0.58 per
+		 * Steve's request 2026-05-10. The snap-to-paragraph routine
+		 * still prevents real peek-through; this is atmospheric. */
+		inset 0 22px 24px -10px rgba(11, 11, 18, 0.58);
 }
 .prose-content p {
 	scroll-snap-align: start;

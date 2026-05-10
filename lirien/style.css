@@ -483,22 +483,69 @@ html, body {
 
 .menu-btn {
 	right: 14px;
-	width: 32px;
-	height: 32px;
+	width: 36px;
+	height: 36px;
+	color: var(--gold);
+	/* Always-on faint gold halo, like a small lit sigil at rest.
+	 * Hover / focus / tap-ack lift it via the .chrome-btn rules. */
+	filter: drop-shadow(0 0 4px rgba(196, 147, 90, 0.22));
 }
-/* Subtle three-line glyph — the most universally readable "menu"
- * symbol. Strokes are thin (1.5px) and lightly dimmed by default
- * so the chrome doesn't compete with the prose; on hover/focus/
- * tap the .chrome-btn color transition lifts it to gold-bright. */
+@media (hover: hover) and (pointer: fine) {
+	.menu-btn:hover {
+		filter: drop-shadow(0 0 12px rgba(224, 176, 112, 0.55));
+	}
+}
+.menu-btn:focus-visible {
+	filter: drop-shadow(0 0 12px rgba(224, 176, 112, 0.55));
+}
+/* Three-line "menu" glyph rendered via mask-image so we can pour a
+ * gold-on-gold gradient through the strokes and animate it. The
+ * effect: a brighter highlight sweeps across the icon every ~5.5s,
+ * like brushed gold catching candlelight. Subtle enough to feel
+ * incidental rather than busy. */
 .menu-btn::before {
 	content: '';
 	display: block;
 	width: 100%;
 	height: 100%;
-	background-size: 22px 22px;
+	background: linear-gradient(
+		90deg,
+		var(--gold) 0%,
+		var(--gold) 38%,
+		var(--gold-bright) 48%,
+		#f5dfa6 50%,
+		var(--gold-bright) 52%,
+		var(--gold) 62%,
+		var(--gold) 100%
+	);
+	background-size: 260% 100%;
 	background-repeat: no-repeat;
-	background-position: center;
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'><path d='M4 7h16'/><path d='M4 12h16'/><path d='M4 17h16'/></svg>");
+	-webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M4 7h16'/><path d='M4 12h16'/><path d='M4 17h16'/></svg>");
+	mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M4 7h16'/><path d='M4 12h16'/><path d='M4 17h16'/></svg>");
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: 24px;
+	mask-size: 24px;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	animation: menu-btn-shimmer 5.5s ease-in-out infinite;
+}
+/* Pause shimmer on hover/focus so the icon settles into its
+ * "active" gold-bright state without the moving highlight
+ * fighting for attention. */
+@media (hover: hover) and (pointer: fine) {
+	.menu-btn:hover::before {
+		animation: none;
+		background-position: 50% 0%;
+	}
+}
+.menu-btn:focus-visible::before {
+	animation: none;
+	background-position: 50% 0%;
+}
+@keyframes menu-btn-shimmer {
+	0%, 100% { background-position: 100% 0%; }
+	50%      { background-position: 0% 0%; }
 }
 
 /* ----- drawer chrome (settings + chapters) -----

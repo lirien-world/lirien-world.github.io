@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510b">
+	<link rel="stylesheet" href="style.css?v=20260510c">
 </head>
 <body>
 	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
@@ -198,7 +198,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-005843";
+		const BUILD_VERSION = "20260510-010142";
 		let inFlight = false;
 		async function check(){
 			if (inFlight) return;
@@ -221,8 +221,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260510b"></script>
-	<script src="ink.js?v=20260510b"></script>
-	<script src="main.js?v=20260510b"></script>
+	<script src="analytics.js?v=20260510c"></script>
+	<script src="ink.js?v=20260510c"></script>
+	<script src="main.js?v=20260510c"></script>
 </body>
 </html>

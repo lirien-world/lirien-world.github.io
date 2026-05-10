@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510f";
+const ASSET_VERSION = "20260510g";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -164,6 +164,26 @@ document.addEventListener("click", (ev) => {
 	if (!section) return;
 	const open = section.classList.toggle("is-open");
 	summary.setAttribute("aria-expanded", open ? "true" : "false");
+	// On expand, scroll the drawer body so this section's header is
+	// near the top of the visible area. Without this, sections that
+	// open near the bottom of the drawer expand below the fold —
+	// the user clicks "Text size" and sees no choices because they're
+	// all rendered below the visible scroll region.
+	if (open) {
+		const body = section.closest(".drawer-body");
+		if (body) {
+			// rAF lets the just-toggled grid-row animation start so
+			// the section's outline includes its expanding height —
+			// otherwise we'd scroll to its current (collapsed) top
+			// and the content would still expand below the fold.
+			requestAnimationFrame(() => {
+				const sectionRect = section.getBoundingClientRect();
+				const bodyRect = body.getBoundingClientRect();
+				const target = body.scrollTop + (sectionRect.top - bodyRect.top);
+				body.scrollTo({ top: target, behavior: "smooth" });
+			});
+		}
+	}
 });
 const $chapterList = document.getElementById("chapter-list");
 const $restartBtn = document.getElementById("restart-btn");

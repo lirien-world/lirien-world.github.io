@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510r";
+const ASSET_VERSION = "20260510s";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -225,6 +225,12 @@ const $devPanel = document.getElementById("dev-panel");
 const $devSearch = document.getElementById("dev-search");
 const $devList = document.getElementById("dev-list");
 const $devVersion = document.getElementById("dev-version");
+// Timestamp of the last 3+ finger touch — used by the prose
+// tap-to-advance handler to ignore the synthesized click that
+// follows a multi-finger touchstart (the click would otherwise
+// advance the story while the user was trying to open the dev
+// panel to capture state).
+let lastMultiFingerAt = 0;
 const $devClose = document.getElementById("dev-close");
 const $devCurrent = document.getElementById("dev-current");
 
@@ -1608,6 +1614,15 @@ function bindAdvanceInput() {
 		if (ev.target.closest(".title-continue")) return;
 		if (ev.target.closest(".confirm-dialog")) return;
 		if (ev.target.closest(".install-splash")) return;
+		// Dev menu open OR a 3-finger tap just fired → don't advance.
+		// Without this, opening the dev panel via 3-finger tap also
+		// advanced the story (touchstart → toggleDevPanel, then the
+		// synthesized click hit the prose tap-handler), which made
+		// it impossible to capture the on-screen state Steve wanted
+		// to report. The dev panel itself swallows clicks inside it.
+		if ($devPanel && !$devPanel.hidden) return;
+		if (ev.target.closest(".dev-panel")) return;
+		if (Date.now() - lastMultiFingerAt < 600) return;
 
 		// Title screen: first tap dismisses + starts the story. Taps
 		// during "title-loading" are ignored (story.json not parsed
@@ -2414,6 +2429,7 @@ function bindDevMenu() {
 	document.addEventListener("touchstart", (ev) => {
 		if (ev.touches && ev.touches.length >= 3) {
 			ev.preventDefault();
+			lastMultiFingerAt = Date.now();
 			toggleDevPanel();
 		}
 	}, { passive: false });

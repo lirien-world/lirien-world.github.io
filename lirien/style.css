@@ -441,6 +441,19 @@ body.story-started .game { opacity: 1; }
 		 * this is purely atmospheric: the panel reads as a held page
 		 * with light catching its top inside edge. ~14px tall. */
 		inset 0 14px 16px -10px rgba(11, 11, 18, 0.45);
+	/* CSS scroll-snap: when the user manually scrolls (or progressive-
+	 * scroll lands them somewhere odd), the scroll settles on
+	 * paragraph boundaries rather than mid-line. `proximity` (not
+	 * `mandatory`) so we encourage clean alignment without fighting
+	 * the user's intent if they want to park between snap points.
+	 * scroll-padding-top respects the panel's inner padding so the
+	 * snapped paragraph lines up with the inner edge, not the rim. */
+	scroll-snap-type: y proximity;
+	scroll-padding-top: 22px;
+}
+.prose-content p {
+	scroll-snap-align: start;
+	scroll-snap-stop: normal;
 }
 
 /* Edge fade overlays were tried (mask-image, then sibling-overlay

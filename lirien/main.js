@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510n";
+const ASSET_VERSION = "20260510o";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -2422,11 +2422,12 @@ function renderDevVersion() {
 		else lastCheckStr = `${Math.round(ago / 3600)}h ago`;
 	}
 	const isStandalone = document.body.classList.contains("is-standalone");
+	const modeStr = isStandalone ? "PWA" : "browser";
 	$devVersion.innerHTML =
-		`<span class="label">build:</span> <span class="value">${buildVersion}</span><br>` +
-		`<span class="label">asset:</span> <span class="value">${ASSET_VERSION}</span><br>` +
-		`<span class="label">checked:</span> <span class="value">${lastCheckStr}</span><br>` +
-		`<span class="label">mode:</span> <span class="value">${isStandalone ? "PWA standalone" : "browser"}</span>`;
+		`<span class="pair"><span class="label">build:</span> <span class="value">${buildVersion}</span></span>` +
+		`<span class="pair"><span class="label">asset:</span> <span class="value">${ASSET_VERSION}</span></span>` +
+		`<span class="pair"><span class="label">checked:</span> <span class="value">${lastCheckStr}</span></span>` +
+		`<span class="pair"><span class="label">mode:</span> <span class="value">${modeStr}</span></span>`;
 }
 
 function toggleDevPanel() {
@@ -2444,7 +2445,11 @@ function toggleDevPanel() {
 			$devCurrent.hidden = true;
 		}
 		const currentEl = buildDevList();
-		$devSearch.focus();
+		// Don't auto-focus the filter input. On mobile this pops the
+		// soft keyboard, which is the wrong default — most uses are
+		// "scroll the list and tap a destination", not "type to
+		// filter". The user can still tap the input to bring up the
+		// keyboard when they actually want to filter.
 		// Center the current row in the list so neighbors are visible
 		// in both directions. Defer one frame so layout has settled
 		// after the panel un-hides.

@@ -1460,9 +1460,11 @@ body.story-started .chrome-btn {
 }
 
 /* Version row at the top of the dev panel — BUILD_VERSION (PWA
- * freshness stamp), ASSET_VERSION (?v= cache-buster), and time
- * since last freshness check. Rendered live by main.js whenever
- * the panel opens. */
+ * freshness stamp), ASSET_VERSION (?v= cache-buster), time since
+ * last freshness check, and standalone vs browser mode. Rendered
+ * as flex-wrap pairs so on a phone they fit side-by-side rather
+ * than stacking 4 rows tall. Each label-value pair stays on a
+ * single line via white-space:nowrap on the inline-block pair. */
 .dev-version {
 	font-family: ui-monospace, Menlo, monospace;
 	font-size: 11px;
@@ -1471,12 +1473,14 @@ body.story-started .chrome-btn {
 	margin-bottom: 6px;
 	border-bottom: 1px dashed rgba(245, 235, 210, 0.15);
 	letter-spacing: 0.02em;
-	line-height: 1.6;
+	line-height: 1.55;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px 14px;
 }
+.dev-version > .pair { white-space: nowrap; }
 .dev-version .label {
 	color: rgba(245, 235, 210, 0.45);
-	display: inline-block;
-	min-width: 4.2em;
 }
 .dev-version .value {
 	color: var(--gold-bright);

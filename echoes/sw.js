@@ -30,7 +30,7 @@
 //   fetch        → cache-first for asset URLs; passthrough for HTML
 //   message      → handle "purge" command from page
 
-const CACHE_NAME = "lirien-jukebox-v6";
+const CACHE_NAME = "lirien-jukebox-v7";
 
 // URL patterns we cache. Keep this conservative — anything not
 // matched here goes straight to network (and through Cloudflare's

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510y";
+const ASSET_VERSION = "20260510z";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -482,7 +482,15 @@ let allBgNames = [];
 	state = "title-loading";
 	requestAnimationFrame(() => $titleScreen.classList.add("visible"));
 	try {
-		const parsed = await fetch("story.json").then(r => r.json());
+		// Load the language-specific compiled story. test.ink and
+		// test_es.ink share knot names + tag structure exactly, so
+		// state JSON migrates 1:1 in theory — but only after a clean
+		// restart. The Language section in the menu drawer clears
+		// the autosave and reloads on switch (see i18n module in
+		// index.html).
+		const lang = (document.documentElement && document.documentElement.lang) || "en";
+		const storyFile = lang === "es" ? "story_es.json" : "story.json";
+		const parsed = await fetch(storyFile).then(r => r.json());
 		story = new inkjs.Story(parsed);
 		// Route inkjs warnings + errors through a dedicated handler
 		// instead of letting StoryException bubble to window.onerror.
@@ -1193,18 +1201,21 @@ function clearTranscript() {
 // handler and by autosave resume (Continue / Return-to-recent), where
 // recording a bookmark would land on a stale stateBeforeContinue.
 function showChapterTitleOverlay(spec) {
-	// spec is "<num> — <title>", e.g. "One — Ash and Arrival".
+	// spec is "<num> — <title>", e.g. "One — Ash and Arrival" (en)
+	// or "Uno — Ceniza y Llegada" (es).
+	const t = (window.lirienT || ((k) => k));
+	const prefix = t("lirien.chapter.prefix");
 	let numText = "";
 	let titleText = spec;
 	for (const sep of [" — ", " – ", " - "]) {
 		if (spec.indexOf(sep) >= 0) {
 			const idx = spec.indexOf(sep);
-			numText = "CHAPTER " + spec.substring(0, idx).trim().toUpperCase();
+			numText = prefix + " " + spec.substring(0, idx).trim().toUpperCase();
 			titleText = spec.substring(idx + sep.length).trim();
 			break;
 		}
 	}
-	if (numText === "") numText = "CHAPTER";
+	if (numText === "") numText = prefix;
 
 	$chapterTitle.querySelector(".chapter-number").textContent = numText;
 	$chapterTitle.querySelector(".chapter-name").textContent = titleText;

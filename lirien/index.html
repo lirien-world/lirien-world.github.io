@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510y">
+	<link rel="stylesheet" href="style.css?v=20260510z">
 </head>
 <body>
 	<script>
@@ -238,7 +238,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-034613";
+		const BUILD_VERSION = "20260510-040448";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -350,6 +350,7 @@
 			"lirien.action.restart":       { en: "Restart from beginning",       es: "Reiniciar desde el principio" },
 
 			"lirien.chapter.empty":    { en: "Chapter list will appear here as you read.",  es: "La lista de capítulos aparecerá aquí mientras lees." },
+			"lirien.chapter.prefix":   { en: "CHAPTER",                                       es: "CAPÍTULO" },
 
 			"lirien.confirm.restart.title":   { en: "Restart from beginning?",                                                                  es: "¿Reiniciar desde el principio?" },
 			"lirien.confirm.restart.message": { en: "Your reading position and chapter list will be cleared. This can't be undone.",            es: "Tu posición de lectura y la lista de capítulos se borrarán. Esto no se puede deshacer." },
@@ -401,7 +402,21 @@
 
 		function setLang(lang) {
 			if (!LANGUAGES.some(l => l.code === lang)) return;
+			const previous = (document.documentElement && document.documentElement.lang) || "";
 			try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+			// If the user switched languages mid-session, the
+			// existing autosave was made against a different
+			// compiled story (story_es.json vs story.json); inkjs
+			// state addresses won't map. Clear autosave + reload
+			// to fetch the right story file with a clean slate.
+			// User accepts that switching language restarts.
+			if (previous && previous !== lang) {
+				try { localStorage.removeItem("lirien.save"); } catch (e) {}
+				const url = new URL(location.href);
+				url.searchParams.set("_v", lang + "-" + Date.now());
+				location.replace(url.toString());
+				return;
+			}
 			applyLang(lang);
 		}
 
@@ -425,8 +440,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260510y"></script>
-	<script src="ink.js?v=20260510y"></script>
-	<script src="main.js?v=20260510y"></script>
+	<script src="analytics.js?v=20260510z"></script>
+	<script src="ink.js?v=20260510z"></script>
+	<script src="main.js?v=20260510z"></script>
 </body>
 </html>

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510i";
+const ASSET_VERSION = "20260510j";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -511,6 +511,28 @@ let allBgNames = [];
 			$titleContinue.hidden = false;
 			$titleHint.classList.add("has-continue");
 		}
+		// Silent auto-resume after a freshness-driven reload — the
+		// user shouldn't have to tap Continue again just because we
+		// shipped an update behind their back. The PWA freshness
+		// check sets sessionStorage.lirien.justAutoreloaded right
+		// before location.reload(); we read + clear it here and
+		// programmatically click Continue if there's an autosave to
+		// pick up. Browser autoplay grace generally still applies
+		// because the prior session was actively interacted with
+		// seconds ago.
+		try {
+			const justAutoreloaded = sessionStorage.getItem("lirien.justAutoreloaded") === "1";
+			if (justAutoreloaded) {
+				sessionStorage.removeItem("lirien.justAutoreloaded");
+				if (hasContinueOption) {
+					// Defer one frame so the Continue handler binds
+					// (its addEventListener is at the top of init,
+					// already done by now, but rAF gives the title-
+					// screen reveal a clean first paint either way).
+					requestAnimationFrame(() => $titleContinue.click());
+				}
+			}
+		} catch (e) { /* sessionStorage blocked — fall through to manual resume */ }
 		// Title-seen marks the top of the install / read funnel: how many
 		// people landed on the page and reached an interactive title vs
 		// how many ever start a session. has_continue distinguishes
@@ -531,6 +553,13 @@ function dismissTitleScreen() {
 	// curve, same window. The body class lets CSS keep .game opaque
 	// thereafter without needing to track state per-element.
 	document.body.classList.add("story-started");
+	// Kick a synthetic resize event so iOS Safari recomputes dvh
+	// against the current chrome state. Without this, after a
+	// freshness auto-reload, the layout can render against a stale
+	// viewport size, leaving a black bar at the bottom until a
+	// real device rotation forces a recompute. Firing here covers
+	// both the manual-Continue path and the auto-resume path.
+	setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
 	setTimeout(() => {
 		$titleScreen.hidden = true;
 		$titleScreen.classList.remove("visible", "dismissed");

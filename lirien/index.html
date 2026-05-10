@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510i">
+	<link rel="stylesheet" href="style.css?v=20260510j">
 </head>
 <body>
 	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
@@ -198,7 +198,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-011956";
+		const BUILD_VERSION = "20260510-012559";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -216,6 +216,11 @@
 				const live = data.lirien;
 				if (live && live !== BUILD_VERSION){
 					console.log("[freshness] stale build " + BUILD_VERSION + " → " + live + ", reloading");
+					// Mark this reload as a freshness-driven update so
+					// post-reload init can auto-resume the autosave
+					// silently — the user shouldn't be punted back to
+					// the title screen just because we shipped a fix.
+					try { sessionStorage.setItem("lirien.justAutoreloaded", "1"); } catch (e) {}
 					location.reload();
 				}
 			} catch (e) { /* offline */ }
@@ -241,8 +246,8 @@
 		document.addEventListener("pointerdown", () => check(false), { passive: true });
 	})();
 	</script>
-	<script src="analytics.js?v=20260510i"></script>
-	<script src="ink.js?v=20260510i"></script>
-	<script src="main.js?v=20260510i"></script>
+	<script src="analytics.js?v=20260510j"></script>
+	<script src="ink.js?v=20260510j"></script>
+	<script src="main.js?v=20260510j"></script>
 </body>
 </html>

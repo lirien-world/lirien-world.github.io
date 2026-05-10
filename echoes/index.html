@@ -1871,7 +1871,7 @@ function buildTracklist(){
 		btn.type = "button";
 		btn.className = "track-row";
 		btn.dataset.idx = String(trackIdx);
-		const where = t.caption;
+		const where = captionFor(t, currentLang());
 		btn.innerHTML = `
 			<span class="num">${String(queuePos+1).padStart(2,"0")}</span>
 			<span class="meta">
@@ -1977,6 +1977,10 @@ window.echoesRefreshDynamicLabels = function(){
 	// flips to the new locale (and the default-state placeholder flips
 	// too when no track is active).
 	if (typeof renderTrackInfo === "function") renderTrackInfo();
+	// Rebuild the drawer track-list so each row's caption flips locale.
+	// buildTracklist resets the DOM, so re-apply the active-row marker.
+	if (typeof buildTracklist === "function") buildTracklist();
+	if (typeof updateActiveRow === "function") updateActiveRow();
 };
 
 // ─────────────────────────────────────────────────────────────────

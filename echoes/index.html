@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-002004";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-011203";  // bump on echoes/ deploys
 	let inFlight = false;
 	async function check(){
 		if (inFlight) return;
@@ -2019,17 +2019,42 @@ window.echoesRefreshDynamicLabels = function(){
 	updateCounts();
 	reshuffle();
 	buildTracklist();
-	// Prime the first bg. In minimal mode use the wide Solrien vista;
-	// otherwise use the first queued track's chapter image so the
-	// page isn't jarringly black before first play. Audio doesn't
-	// load yet — the user has to ask first.
-	const primeUrl = (content === "minimal")
-		? HERO_BG_PATH
-		: (queue.length
-			? (ATMOS_BASE + TRACKS[queue[0]].image)
-			: HERO_BG_PATH);
-	$bgA.style.backgroundImage = `url("${primeUrl}")`;
-	$bgA.classList.add("is-active");
+
+	// Soft-restore the previously-active track on PWA / tab reopen.
+	// reshuffle() restores queueIdx from sessionStorage, but
+	// activeIdx stays at -1 — so a tap on Play used to fall into
+	// the activeIdx<0 branch of play() and advance the queue by
+	// one (Steve: "I had to get to the next track before it would
+	// start playing"). Pre-loading the audio src + visible state
+	// here means the next tap on Play picks up exactly where the
+	// user left, no surprise track skip.
+	let restored = false;
+	if (queueIdx >= 0 && queueIdx < queue.length){
+		const idx = queue[queueIdx];
+		const track = (idx != null && idx >= 0 && idx < TRACKS.length) ? TRACKS[idx] : null;
+		if (track){
+			activeIdx = idx;
+			$audio.src = trackAudioUrl(track);
+			$audio.loop = !!track.loop && content === "minimal";
+			$trackTitle.textContent = track.title;
+			$trackCaption.textContent = captionFor(track, currentLang());
+			updateActiveRow();
+			setBg(track.image);
+			restored = true;
+		}
+	}
+	if (!restored){
+		// Fresh session — prime the bg without setting audio.src.
+		// Minimal mode = wide Solrien vista; otherwise = first queued
+		// track's chapter image (avoids a jarringly black first paint).
+		const primeUrl = (content === "minimal")
+			? HERO_BG_PATH
+			: (queue.length
+				? (ATMOS_BASE + TRACKS[queue[0]].image)
+				: HERO_BG_PATH);
+		$bgA.style.backgroundImage = `url("${primeUrl}")`;
+		$bgA.classList.add("is-active");
+	}
 })();
 </script>
 </body>

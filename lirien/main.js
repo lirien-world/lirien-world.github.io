@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510w";
+const ASSET_VERSION = "20260510x";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -765,6 +765,72 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 	});
 }
 
+// Per-character top-edge fade. Each .ch span's opacity is set
+// based on its distance from the prose viewport's top edge —
+// characters near or past the edge fade to 0; characters past
+// the fade zone get full opacity. Premium "page absorbs text
+// at the edge" feel; replaces the heavier overlay mask as the
+// primary peek-through hider.
+//
+// Cost: ~1-3ms per scroll frame for a typical chunk (~100-200
+// .ch spans). rAF-batched so multiple scroll events per frame
+// share a single layout pass. Spans in paragraphs entirely
+// past the fade zone get a single style-clear (no per-char
+// rect read), so the cost scales with paragraphs INTERSECTING
+// the fade zone — usually zero or one.
+//
+// Note on .ch lifecycle: the post-reveal optimization in
+// onChunkRevealed simplifies finished chunks to plain text
+// (no .ch spans remain). For those chunks the sticky-overlay
+// fade is the only safety. The active chunk always has spans;
+// scrolled-back-to old chunks rely on the overlay. The two
+// systems compose — char-fade where available, overlay
+// elsewhere.
+const CHAR_FADE_PX = 36;
+let charFadeRaf = 0;
+function scheduleCharFade() {
+	if (charFadeRaf) return;
+	charFadeRaf = requestAnimationFrame(() => {
+		charFadeRaf = 0;
+		updateCharFade();
+	});
+}
+function updateCharFade() {
+	if (!$prose || !$proseContent) return;
+	const proseRect = $prose.getBoundingClientRect();
+	const fadeTopPx = proseRect.top;
+	const fadeBottomPx = fadeTopPx + CHAR_FADE_PX;
+	const ps = $proseContent.querySelectorAll("p");
+	for (const p of ps) {
+		const pRect = p.getBoundingClientRect();
+		// Paragraph entirely above fade zone — clear any opacity.
+		if (pRect.bottom < fadeTopPx) {
+			const dirty = p.querySelectorAll('.ch[style*="opacity"]');
+			for (const s of dirty) s.style.opacity = "";
+			continue;
+		}
+		// Paragraph entirely below fade zone — clear any opacity.
+		if (pRect.top >= fadeBottomPx) {
+			const dirty = p.querySelectorAll('.ch[style*="opacity"]');
+			for (const s of dirty) s.style.opacity = "";
+			continue;
+		}
+		// Paragraph intersects the fade zone — set per-span opacity.
+		const spans = p.querySelectorAll(".ch");
+		for (const s of spans) {
+			const sRect = s.getBoundingClientRect();
+			const charY = sRect.top - fadeTopPx;
+			if (charY < -2) {
+				s.style.opacity = "0";
+			} else if (charY >= CHAR_FADE_PX) {
+				if (s.style.opacity) s.style.opacity = "";
+			} else {
+				s.style.opacity = (Math.max(0, charY) / CHAR_FADE_PX).toFixed(2);
+			}
+		}
+	}
+}
+
 // Manual-scroll snap. After the user stops scrolling for ~250ms,
 // re-run snapScrollToWholeParagraphs so the prose settles on a
 // whole-paragraph boundary even when the scroll wasn't driven by
@@ -777,13 +843,20 @@ let snapInProgress = false;
 if ($prose) {
 	$prose.addEventListener("scroll", () => {
 		// Toggle .is-scrolled so the sticky fade-top reveals (CSS
-		// fades opacity 0→1). Hidden at scrollTop=0 means the very
-		// first paragraph at idle is never dimmed by the overlay.
+		// fades opacity 0→1). Still useful as a base-layer safety
+		// even with per-character fade — covers chunks whose .ch
+		// spans have been simplified post-reveal (no spans = no
+		// per-char fade applies).
 		if ($prose.scrollTop > 4) {
 			$prose.classList.add("is-scrolled");
 		} else {
 			$prose.classList.remove("is-scrolled");
 		}
+		// Per-character fade — actual character-level opacity based
+		// on each .ch span's distance from the viewport top edge.
+		// rAF-batched so consecutive scroll events coalesce into a
+		// single update per frame.
+		scheduleCharFade();
 		if (snapInProgress) return;
 		clearTimeout(proseScrollEndTimer);
 		proseScrollEndTimer = setTimeout(() => {
@@ -799,6 +872,12 @@ function onChunkRevealed() {
 	// After the typing animation lands, refine the scroll so no
 	// paragraph is partially clipped at the visible top edge.
 	snapScrollToWholeParagraphs();
+	// Set per-character fade opacity to match current scroll
+	// position — covers the case where a chunk revealed but
+	// the user hasn't scrolled yet (e.g. progressive-scroll
+	// parked us with a paragraph straddling the top, and we
+	// want char-edge fade applied immediately).
+	scheduleCharFade();
 	// Decide between the continue-chevron and the offline-block hint
 	// based on whether the next chunk would need an uncached asset.
 	presentWaitingHintForCurrentState();
@@ -1588,6 +1667,31 @@ function spawnAshParticles(count) {
 	$atmosphereLayer.appendChild(frag);
 }
 
+// Light motes — chapter 2's "small motes of light drifted upward
+// from the ground". Fewer than ash (40 vs 70), each more
+// substantial: bigger size, brighter halo, slower-rising, with
+// stronger horizontal drift so they sway as they ascend. Mote
+// elements use the same animation-delay trick to fill the screen
+// instantly rather than spending the full cycle warming up.
+function spawnLightMotes(count) {
+	if (!$atmosphereLayer) return;
+	const frag = document.createDocumentFragment();
+	for (let i = 0; i < count; i++) {
+		const p = document.createElement("div");
+		p.className = "light-mote";
+		const dur = 14 + Math.random() * 10;
+		p.style.setProperty("--x",       `${Math.random() * 100}%`);
+		p.style.setProperty("--size",    `${(2.5 + Math.random() * 3).toFixed(1)}px`);
+		p.style.setProperty("--opacity", (0.40 + Math.random() * 0.40).toFixed(2));
+		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
+		p.style.setProperty("--delay",   `-${(Math.random() * dur).toFixed(1)}s`);
+		p.style.setProperty("--drift",   `${((Math.random() - 0.5) * 60).toFixed(0)}px`);
+		p.style.setProperty("--glow",    `${(4 + Math.random() * 5).toFixed(1)}px`);
+		frag.appendChild(p);
+	}
+	$atmosphereLayer.appendChild(frag);
+}
+
 function setAtmosphere(name) {
 	if (!$atmosphereLayer) return;
 	name = (name || "").trim();
@@ -1611,6 +1715,11 @@ function setAtmosphere(name) {
 		// 70 particles is "polite" — manuscript: "as though it had
 		// been asked very politely to keep the noise down."
 		spawnAshParticles(70);
+	} else if (name === "light-motes") {
+		// Fewer than ash, more substantial each — manuscript:
+		// "small motes of light drifted upward from the ground,
+		// slow and without urgency."
+		spawnLightMotes(40);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

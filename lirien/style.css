@@ -126,6 +126,30 @@ html, body {
 	100% { transform: translate(var(--drift, 0), 110vh); opacity: 0; }
 }
 
+/* Light motes — chapter 2's "small motes of light drifted upward
+ * from the ground, slow and without urgency". Gold particles
+ * starting below screen, rising slowly with a slight side-to-side
+ * drift, glowing softly. Fewer than ash, more substantial each. */
+.light-mote {
+	position: absolute;
+	bottom: 0;
+	left: var(--x, 50%);
+	width: var(--size, 3px);
+	height: var(--size, 3px);
+	border-radius: 50%;
+	background: rgba(220, 180, 110, var(--opacity, 0.55));
+	box-shadow: 0 0 var(--glow, 6px) rgba(196, 147, 90, 0.8);
+	animation: mote-rise var(--dur, 16s) ease-in-out var(--delay, 0s) infinite;
+	will-change: transform, opacity;
+}
+@keyframes mote-rise {
+	0%   { transform: translate(0, 0);                          opacity: 0; }
+	18%  { opacity: var(--opacity, 0.55); }
+	50%  { transform: translate(calc(var(--drift, 0px) * 0.5), -55vh); opacity: 1; }
+	82%  { opacity: var(--opacity, 0.45); }
+	100% { transform: translate(var(--drift, 0), -120vh);       opacity: 0; }
+}
+
 /* ----- shimmer one-shot -----
  *
  * Fired by # fx: shimmer ink tags. Manuscript: "a distortion

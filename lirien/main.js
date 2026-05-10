@@ -1943,6 +1943,7 @@ function saveAutosave() {
 			bg: currentBgName,
 			music: currentMusicName,
 			chapter: currentChapterName,
+			atmosphere: currentAtmosphere,
 			lastChunk: lastTypedChunk,
 		};
 		localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(blob));
@@ -1979,6 +1980,12 @@ function applyAutosaveVisuals(saved) {
 		currentChapterName = saved.chapter;
 		showChapterTitleOverlay(saved.chapter);
 	}
+	// Atmosphere — set by # atmosphere: tags during narrative flow,
+	// doesn't re-fire on resume because LoadJson skips intermediate
+	// tags. Without this, a reader who'd seen ash falling came back
+	// to a clean (no-particle) viewport. Restore the persisted
+	// state so the world keeps its texture across sessions.
+	if (saved.atmosphere) setAtmosphere(saved.atmosphere);
 	if (saved.lastChunk) {
 		// Restore the last paragraph the user saw so they have anchored
 		// context. advance() will append the next chunk below if there

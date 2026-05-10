@@ -837,11 +837,17 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-011203";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-011441";  // bump on echoes/ deploys
+	const POLL_INTERVAL_MS = 90_000;
+	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
-	async function check(){
+	let lastCheck = 0;
+	async function check(force){
+		const now = Date.now();
+		if (!force && now - lastCheck < INTERACTION_RATE_LIMIT_MS) return;
 		if (inFlight) return;
 		inFlight = true;
+		lastCheck = now;
 		try {
 			const r = await fetch("/version.json?t=" + Date.now(), {cache:"no-store"});
 			if (!r.ok) return;
@@ -851,13 +857,20 @@ body.is-playing .progress{
 				console.log("[freshness] stale build " + BUILD_VERSION + " → " + live + ", reloading");
 				location.reload();
 			}
-		} catch (e) { /* offline — try again next visibility change */ }
+		} catch (e) { /* offline — try again next check */ }
 		finally { inFlight = false; }
 	}
-	setTimeout(check, 1500);  // initial check after first paint
+	// Initial check after first paint.
+	setTimeout(() => check(true), 1500);
+	// Periodic poll catches updates while the user stays in-app.
+	setInterval(() => check(true), POLL_INTERVAL_MS);
+	// Resume-from-background — always check, force-bypassing rate limit.
 	document.addEventListener("visibilitychange", () => {
-		if (!document.hidden) check();
+		if (!document.hidden) check(true);
 	});
+	// User-interaction trigger — picks up updates while the user is
+	// actively clicking around. Rate-limited so taps don't hammer.
+	document.addEventListener("pointerdown", () => check(false), { passive: true });
 })();
 
 // ─────────────────────────────────────────────────────────────────

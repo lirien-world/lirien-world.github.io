@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510g">
+	<link rel="stylesheet" href="style.css?v=20260510h">
 </head>
 <body>
 	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
@@ -198,11 +198,17 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-011242";
+		const BUILD_VERSION = "20260510-011441";
+		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
+		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
-		async function check(){
+		let lastCheck = 0;
+		async function check(force){
+			const now = Date.now();
+			if (!force && now - lastCheck < INTERACTION_RATE_LIMIT_MS) return;
 			if (inFlight) return;
 			inFlight = true;
+			lastCheck = now;
 			try {
 				const r = await fetch("/version.json?t=" + Date.now(), {cache:"no-store"});
 				if (!r.ok) return;
@@ -215,14 +221,28 @@
 			} catch (e) { /* offline */ }
 			finally { inFlight = false; }
 		}
-		setTimeout(check, 1500);
+		// Initial check shortly after first paint — picks up the most
+		// recent server-side BUILD_VERSION baked into version.json.
+		setTimeout(() => check(true), 1500);
+		// Periodic poll — catches updates while the user stays in the
+		// app and never backgrounds it. 90s is conservative; the
+		// payload is tiny (a JSON file) and only one in-flight at a
+		// time.
+		setInterval(() => check(true), POLL_INTERVAL_MS);
+		// Resume from background — important to always check immediately
+		// (force=true bypasses the rate limit).
 		document.addEventListener("visibilitychange", () => {
-			if (!document.hidden) check();
+			if (!document.hidden) check(true);
 		});
+		// User-interaction trigger — any tap / pointerdown nudges a
+		// check, rate-limited so a flurry of taps doesn't hammer the
+		// server. Picks up updates while the user is actively clicking
+		// around inside the app.
+		document.addEventListener("pointerdown", () => check(false), { passive: true });
 	})();
 	</script>
-	<script src="analytics.js?v=20260510g"></script>
-	<script src="ink.js?v=20260510g"></script>
-	<script src="main.js?v=20260510g"></script>
+	<script src="analytics.js?v=20260510h"></script>
+	<script src="ink.js?v=20260510h"></script>
+	<script src="main.js?v=20260510h"></script>
 </body>
 </html>

@@ -1500,19 +1500,6 @@ body.story-started .chrome-btn {
 	color: #fbf2d4;
 	font-weight: 500;
 }
-.dev-footer {
-	margin-top: 10px;
-	padding-top: 10px;
-	border-top: 1px solid rgba(245, 235, 210, 0.1);
-	font-size: 11px;
-	color: rgba(245, 235, 210, 0.5);
-	letter-spacing: 0.02em;
-}
-.dev-footer code {
-	background: rgba(245, 235, 210, 0.08);
-	padding: 1px 4px;
-	border-radius: 3px;
-}
 
 /* ----- mobile / small-screen layout -----
  *

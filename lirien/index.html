@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260511f">
+	<link rel="stylesheet" href="style.css?v=20260511g">
 </head>
 <body>
 	<script>
@@ -238,7 +238,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-133402";
+		const BUILD_VERSION = "20260510-134230";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -314,6 +314,31 @@
 			{ code: "es", name: "Español" },
 		];
 		const STORAGE_KEY = "lirien.lang";
+
+		// Chapter # chapter: tag values, by language. Used to
+		// translate the drawer "Chapters" bookmark list when the
+		// user switches languages mid-session: each bookmark holds
+		// the spec from the # chapter: tag at first encounter, in
+		// whichever language was active then. translateChapterSpec()
+		// looks up the spec across both languages and returns the
+		// equivalent in the new one. Add a row here whenever a new
+		// chapter ships.
+		const CHAPTER_SPECS = [
+			{ en: "One — Ash and Arrival",            es: "Uno — Ceniza y Llegada" },
+			{ en: "Two — Solrien's Light",            es: "Dos — La Luz de Solrien" },
+			{ en: "Three — The Day the City Breathed", es: "Tres — El Día en que la Ciudad Respiró" },
+			{ en: "Four — The One Who Waits",         es: "Cuatro — El que Espera" },
+		];
+		function translateChapterSpec(spec, toLang) {
+			for (const row of CHAPTER_SPECS) {
+				for (const fromLang in row) {
+					if (row[fromLang] === spec) {
+						return row[toLang] || spec;
+					}
+				}
+			}
+			return spec;  // unknown — pass through unchanged
+		}
 
 		const TR = {
 			"lirien.title.eyebrow":  { en: "Book One — Chronicles of Lirien",                                                            es: "Libro Uno — Crónicas de Lirien" },
@@ -433,12 +458,25 @@
 					// Chapter bookmarks (drawer "Chapters" list) carry
 					// the chapter name AS RECORDED at first encounter,
 					// in whichever language the user was reading then.
-					// Without clearing, the list mixes English and
-					// Spanish entries — a Steve-reported bug. Drop the
-					// list; it auto-rebuilds in the new language as the
-					// user crosses # chapter: tags going forward.
-					try { localStorage.removeItem("lirien.chapters"); } catch (e2) {}
+					// Translate each bookmark's name into the new
+					// language using CHAPTER_SPEC_TR. Names that don't
+					// match any known spec (forward-compat: a chapter
+					// added in a future build) pass through unchanged.
+					const bookmarksRaw = localStorage.getItem("lirien.chapters");
+					if (bookmarksRaw) {
+						const bookmarks = JSON.parse(bookmarksRaw);
+						if (Array.isArray(bookmarks)) {
+							for (const b of bookmarks) {
+								if (b && typeof b.name === "string") {
+									b.name = translateChapterSpec(b.name, lang);
+								}
+							}
+							localStorage.setItem("lirien.chapters", JSON.stringify(bookmarks));
+						}
+					}
 				} catch (e) {
+					// Malformed save or bookmarks — drop them rather
+					// than risk a broken state on resume.
 					try { localStorage.removeItem("lirien.save"); } catch (e2) {}
 					try { localStorage.removeItem("lirien.chapters"); } catch (e3) {}
 				}
@@ -470,8 +508,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260511f"></script>
-	<script src="ink.js?v=20260511f"></script>
-	<script src="main.js?v=20260511f"></script>
+	<script src="analytics.js?v=20260511g"></script>
+	<script src="ink.js?v=20260511g"></script>
+	<script src="main.js?v=20260511g"></script>
 </body>
 </html>

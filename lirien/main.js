@@ -788,7 +788,7 @@ if ($prose) {
 		clearTimeout(proseScrollEndTimer);
 		proseScrollEndTimer = setTimeout(() => {
 			snapScrollToWholeParagraphs();
-		}, 120);
+		}, 60);
 	}, { passive: true });
 }
 
@@ -926,12 +926,18 @@ function snapScrollToWholeParagraphs() {
 		// viewport top (paragraph fully scrolled out). The next
 		// paragraph's natural margin-top creates a clean gap before
 		// the visible content.
+		// behavior:"auto" (instant) rather than "smooth" so peek-
+		// through is never visible for the duration of a smooth-
+		// scroll animation. The user's finger has already lifted by
+		// the time this fires — they'll see the snap as a single
+		// crisp settling, not as a half-second slide that lets the
+		// peek linger. Trade: tiny pop instead of a long peek.
 		snapInProgress = true;
-		$prose.scrollTo({ top: pBottom, behavior: "smooth" });
-		// Clear the guard after enough time for the smooth scroll
-		// animation to settle so subsequent user scrolls re-arm
-		// the manual-scroll snap timer.
-		setTimeout(() => { snapInProgress = false; }, 700);
+		$prose.scrollTo({ top: pBottom, behavior: "auto" });
+		// Guard cleared one frame later — instant scroll completes
+		// synchronously, the guard just dodges the scroll event the
+		// assignment itself fires.
+		setTimeout(() => { snapInProgress = false; }, 80);
 		return;
 	}
 }

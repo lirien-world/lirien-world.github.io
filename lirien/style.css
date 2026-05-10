@@ -415,11 +415,13 @@ body.story-started .game { opacity: 1; }
 	border-radius: 12px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	/* padding-top must stay well below .prose-content p { margin-bottom }
-	 * — scrollChunkToTop scrolls to paragraph.offsetTop - padTop, so the
-	 * size of (margin-bottom - padTop) is the gap between viewport top
-	 * and the previous paragraph's bottom. Bigger gap = no peek. */
-	padding: 18px 36px 26px 36px;
+	/* Padding now lives on .prose-content (the inner scrolled
+	 * element) instead of here, so the .prose-fade-top sticky
+	 * overlay can sit at viewport y=0 of the scroll container
+	 * without being pushed down by padding. The visual padding
+	 * around the prose text is unchanged — just the layout owner
+	 * moved one level inward. */
+	padding: 0;
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;
@@ -473,10 +475,44 @@ body.story-started .game { opacity: 1; }
 }
 
 .prose-content {
+	/* Padding moved here from .prose so the .prose-fade-top sticky
+	 * overlay (a sibling of prose-content inside .prose) can sit
+	 * at viewport y=0 of the scroll container without being pushed
+	 * down by .prose's own padding. */
+	padding: 18px 36px 26px 36px;
 	font-size: var(--prose-font-size, 36px);
 	line-height: 1.4;
 	color: #f5ebd2;
 }
+
+/* Sticky fade-top sits inside the prose's scroll container, anchored
+ * to the viewport top via position:sticky. Anything that scrolls
+ * UNDER it (i.e. peek-through at the top edge) is gradient-faded.
+ * Hidden until the user actually scrolls (.prose.is-scrolled is set
+ * by JS on the first non-zero scrollTop) so the first paragraph at
+ * idle is never dimmed. The gold rim is OUTSIDE this overlay (on
+ * .prose's box-shadow), so it stays visible all the way around.
+ * margin-bottom: -22px so this sticky element doesn't displace
+ * .prose-content's natural position in the flow. */
+.prose-fade-top {
+	position: sticky;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 28px;
+	margin-bottom: -28px;
+	background: linear-gradient(
+		to bottom,
+		rgba(11, 11, 18, 0.95) 0%,
+		rgba(11, 11, 18, 0.55) 55%,
+		rgba(11, 11, 18, 0) 100%
+	);
+	pointer-events: none;
+	z-index: 5;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.prose.is-scrolled .prose-fade-top { opacity: 1; }
 .prose-content p {
 	margin: 0 0 1em 0;
 }
@@ -1543,8 +1579,12 @@ body.story-started .chrome-btn {
 		right: max(14px, env(safe-area-inset-right));
 		bottom: 14px;
 		top: 32%;
-		padding: 22px 18px 28px 18px;
+		/* padding stays 0 on .prose; the responsive padding lives
+		 * on .prose-content below */
 		border-radius: 8px;
+	}
+	.prose-content {
+		padding: 22px 18px 28px 18px;
 	}
 	/* Standalone (Add to Home Screen) gets the full viewport with no
 	 * browser chrome eating space, so the prose panel can shrink and

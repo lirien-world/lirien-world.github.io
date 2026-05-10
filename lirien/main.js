@@ -716,7 +716,7 @@ function typeChunk(text) {
 			// were what would have scrolled into view.
 			if (spans.length > 0) {
 				const last = spans[spans.length - 1];
-				const padBottom = parseInt(getComputedStyle($prose).paddingBottom, 10) || 0;
+				const padBottom = parseInt(getComputedStyle($proseContent).paddingBottom, 10) || 0;
 				const desiredScroll = Math.max(0,
 					last.offsetTop + last.offsetHeight - $prose.clientHeight + padBottom);
 				if (desiredScroll > $prose.scrollTop) {
@@ -740,7 +740,7 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 	// computing per-line offsets.
 	requestAnimationFrame(() => {
 		requestAnimationFrame(() => {
-			const padBottom = parseInt(getComputedStyle($prose).paddingBottom, 10) || 0;
+			const padBottom = parseInt(getComputedStyle($proseContent).paddingBottom, 10) || 0;
 			const panelHeight = $prose.clientHeight;
 
 			let lastTop = null;
@@ -776,6 +776,14 @@ let proseScrollEndTimer = 0;
 let snapInProgress = false;
 if ($prose) {
 	$prose.addEventListener("scroll", () => {
+		// Toggle .is-scrolled so the sticky fade-top reveals (CSS
+		// fades opacity 0→1). Hidden at scrollTop=0 means the very
+		// first paragraph at idle is never dimmed by the overlay.
+		if ($prose.scrollTop > 4) {
+			$prose.classList.add("is-scrolled");
+		} else {
+			$prose.classList.remove("is-scrolled");
+		}
 		if (snapInProgress) return;
 		clearTimeout(proseScrollEndTimer);
 		proseScrollEndTimer = setTimeout(() => {
@@ -864,7 +872,7 @@ function scrollChunkToTop(paragraph) {
 	// pixel or two of those descenders into the visible area as a
 	// ghost-text artifact at the top edge.
 	requestAnimationFrame(() => {
-		const padTop = parseInt(getComputedStyle($prose).paddingTop, 10) || 0;
+		const padTop = parseInt(getComputedStyle($proseContent).paddingTop, 10) || 0;
 		let offset = Math.max(0, paragraph.offsetTop - padTop);
 		const prev = paragraph.previousElementSibling;
 		if (prev && prev.tagName === "P") {
@@ -1552,8 +1560,13 @@ function spawnAshParticles(count) {
 		p.className = "ash-particle";
 		const dur = 10 + Math.random() * 9;
 		p.style.setProperty("--x",       `${Math.random() * 100}%`);
-		p.style.setProperty("--size",    `${(1 + Math.random() * 2).toFixed(1)}px`);
-		p.style.setProperty("--opacity", (0.22 + Math.random() * 0.42).toFixed(2));
+		// Bumped from 1-3px → 2-5px. Splits the difference between
+		// the original "barely visible flecks" and the chunky 7px
+		// echoes motes — readable as ash without becoming snow.
+		p.style.setProperty("--size",    `${(2 + Math.random() * 3).toFixed(1)}px`);
+		// Slight opacity bump too so larger particles still feel
+		// restrained, not "filling the air".
+		p.style.setProperty("--opacity", (0.32 + Math.random() * 0.46).toFixed(2));
 		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
 		// Negative delay → particle is already partway through its
 		// fall cycle on first paint, screen fills instantly.
@@ -1561,7 +1574,9 @@ function spawnAshParticles(count) {
 		// Small horizontal drift so particles read as ASH (slightly
 		// fluttering) rather than rain (perfectly vertical).
 		p.style.setProperty("--drift",   `${((Math.random() - 0.5) * 30).toFixed(0)}px`);
-		p.style.setProperty("--glow",    `${(0.5 + Math.random() * 1.5).toFixed(1)}px`);
+		// Halo larger so each particle has a soft glow rather than
+		// a hard pixel — same trick echoes motes use.
+		p.style.setProperty("--glow",    `${(2 + Math.random() * 3).toFixed(1)}px`);
 		frag.appendChild(p);
 	}
 	$atmosphereLayer.appendChild(frag);
@@ -2486,8 +2501,8 @@ function renderDevVersion() {
 	// count, and the offsetTop of each paragraph plus a "..." if
 	// long. If something's leaking at the top edge, a screenshot
 	// of this row tells us exactly where the math went sideways.
-	const padTop = parseInt(getComputedStyle($prose).paddingTop, 10) || 0;
-	const padBottom = parseInt(getComputedStyle($prose).paddingBottom, 10) || 0;
+	const padTop = parseInt(getComputedStyle($proseContent).paddingTop, 10) || 0;
+	const padBottom = parseInt(getComputedStyle($proseContent).paddingBottom, 10) || 0;
 	const scrollTop = $prose.scrollTop;
 	const clientH = $prose.clientHeight;
 	const ps = $proseContent.querySelectorAll("p");

@@ -476,7 +476,7 @@ body.story-started .game { opacity: 1; }
 	 * respects the panel's inner padding so the snapped paragraph
 	 * lines up with the inner edge, not the rim. */
 	scroll-snap-type: y mandatory;
-	scroll-padding-top: 36px;
+	scroll-padding-top: 22px;
 }
 .prose-content p {
 	scroll-snap-align: start;
@@ -509,43 +509,13 @@ body.story-started .game { opacity: 1; }
 	color: #f5ebd2;
 }
 
-/* Sticky fade-top covers the top zone of the prose's scroll
- * container — anything scrolling under it dissolves to invisible.
- * Tuned so the gradient stays NEAR FULLY OPAQUE for the first
- * ~22px (where peek-through happens) and only transitions to
- * transparent in the last ~14px (where the snapped paragraph's
- * top lives, post scroll-padding-top:36). So peek-through is
- * fully obscured while the snapped first line is barely dimmed.
- *
- * Hidden until the user actually scrolls (.prose.is-scrolled is
- * set by JS) so the first paragraph at idle is never dimmed.
- * Gold rim is OUTSIDE this overlay (on .prose's box-shadow), so
- * it stays visible all the way around. */
-.prose-fade-top {
-	position: sticky;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 28px;
-	margin-bottom: -28px;
-	/* Much subtler now — per-character fade in main.js does the
-	 * primary peek-through hiding for the active chunk, so this
-	 * overlay only needs to handle simplified-post-reveal old
-	 * chunks (no .ch spans → char-fade can't apply). At 0.55
-	 * top opacity it reads as a soft edge feather, not the dark
-	 * band Steve flagged. */
-	background: linear-gradient(
-		to bottom,
-		rgba(11, 11, 18, 0.55) 0%,
-		rgba(11, 11, 18, 0.30) 55%,
-		rgba(11, 11, 18, 0) 100%
-	);
-	pointer-events: none;
-	z-index: 5;
-	opacity: 0;
-	transition: opacity 0.3s ease;
-}
-.prose.is-scrolled .prose-fade-top { opacity: 1; }
+/* The sticky fade-top overlay was removed — it kept reading as
+ * a "dark mask" Steve disliked even at minimum opacity. The
+ * per-character fade in main.js handles peek-through for the
+ * active chunk; the snap-to-paragraph routine handles
+ * post-simplification old chunks by ensuring scrollTop always
+ * lands on a paragraph break (no straddling = nothing to hide).
+ * Belt-and-suspenders is gone; we trust the primary mechanisms. */
 .prose-content p {
 	margin: 0 0 1em 0;
 }

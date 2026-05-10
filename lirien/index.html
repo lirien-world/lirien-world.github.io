@@ -69,15 +69,6 @@
 	<div id="game" class="game">
 		<div id="prose" class="prose">
 			<!--
-				Sticky fade-top sits at the viewport top of the prose
-				scroll container. It gradient-fades any content that
-				scrolls under the top edge — so partial-line peek-
-				through dissolves to invisible as it enters. Only
-				visible when the user has actually scrolled (.prose
-				gets .is-scrolled in main.js); first paragraph at
-				idle is never dimmed.
-			-->
-			<div class="prose-fade-top" aria-hidden="true"></div>
 			<div id="prose-content" class="prose-content"></div>
 		</div>
 		<div id="continue-hint" class="continue-hint" aria-hidden="true">
@@ -238,7 +229,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-031126";
+		const BUILD_VERSION = "20260510-031404";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511c";
+const ASSET_VERSION = "20260511d";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -484,13 +484,16 @@ let allBgNames = [];
 	try {
 		// Load the language-specific compiled story. test.ink and
 		// test_es.ink share knot names + tag structure exactly, so
-		// state JSON migrates 1:1 in theory — but only after a clean
-		// restart. The Language section in the menu drawer clears
-		// the autosave and reloads on switch (see i18n module in
-		// index.html).
+		// state JSON migrates 1:1 between the two compiled stories.
+		// The Language section in the menu drawer migrates the
+		// autosave + reloads on switch (see i18n module in index.html).
+		// ASSET_VERSION is appended to defeat HTTP cache: Steve hit a
+		// case where switching languages mid-Ch2 left the prose in the
+		// old language for several advances, and HTTP-cached story
+		// bytes are the most likely cause.
 		const lang = (document.documentElement && document.documentElement.lang) || "en";
 		const storyFile = lang === "es" ? "story_es.json" : "story.json";
-		const parsed = await fetch(storyFile).then(r => r.json());
+		const parsed = await fetch(storyFile + "?v=" + ASSET_VERSION).then(r => r.json());
 		story = new inkjs.Story(parsed);
 		// Route inkjs warnings + errors through a dedicated handler
 		// instead of letting StoryException bubble to window.onerror.

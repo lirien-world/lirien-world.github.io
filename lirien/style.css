@@ -991,11 +991,25 @@ body.story-started .chrome-btn {
 .drawer-section-body {
 	display: grid;
 	grid-template-rows: 0fr;
-	transition: grid-template-rows 0.45s cubic-bezier(.2, .7, .2, 1);
+	/* visibility:hidden when collapsed prevents inner padding/border
+	 * hairlines from rendering through the 0fr grid row in some
+	 * browsers (Steve flagged thin grey bars below Chapters and
+	 * Music in desktop). visibility transition delayed so the
+	 * collapsing animation completes before content goes invisible.
+	 * On expand, visibility flips to visible immediately so content
+	 * is paint-ready as the grid expands. */
+	visibility: hidden;
+	transition:
+		grid-template-rows 0.45s cubic-bezier(.2, .7, .2, 1),
+		visibility 0s 0.45s;
 	overflow: hidden;
 }
 .drawer-section.is-open .drawer-section-body {
 	grid-template-rows: 1fr;
+	visibility: visible;
+	transition:
+		grid-template-rows 0.45s cubic-bezier(.2, .7, .2, 1),
+		visibility 0s 0s;
 }
 .drawer-section-content {
 	overflow: hidden;

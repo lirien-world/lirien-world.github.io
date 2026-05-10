@@ -427,6 +427,38 @@ body.story-started .game { opacity: 1; }
 		0 6px 18px rgba(0, 0, 0, 0.38),
 		inset 0 0 0 1px rgba(196, 147, 90, 0.14),
 		inset 0 1px 0 rgba(245, 238, 216, 0.07);
+	/* Soft feather at top + bottom edges. Two purposes:
+	 *   1. Hides prior-chunk text peeking into the padding zone
+	 *      after a progressive-scroll has parked us deep in a
+	 *      tall chunk. Without this, the bottom-half of an
+	 *      orphan line ("responded.") could read as un-styled
+	 *      clutter at the very top edge of the panel.
+	 *   2. The same feather gives the panel a softened "page
+	 *      held in candlelight" feel — material presence, not
+	 *      a hard rectangle.
+	 * The outer drop-shadow box-shadows live OUTSIDE the box
+	 * and aren't affected by the mask, so the panel still
+	 * lifts off the world. The inner gold rim DOES get masked
+	 * at the very edges, which reads as the rim feathering
+	 * rather than a hard line — desirable.
+	 * Heights tuned to stay just inside the padding zones
+	 * (top 18px / bottom 26px) so first/last lines of actual
+	 * prose are NOT touched by the fade — they sit fully past
+	 * the masked region. */
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		black 16px,
+		black calc(100% - 22px),
+		transparent 100%
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		black 16px,
+		black calc(100% - 22px),
+		transparent 100%
+	);
 }
 .prose::-webkit-scrollbar { width: 8px; }
 .prose::-webkit-scrollbar-track { background: transparent; }

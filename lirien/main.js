@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511d";
+const ASSET_VERSION = "20260511e";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -729,9 +729,9 @@ function typeChunk(text) {
 				const last = spans[spans.length - 1];
 				const padBottom = parseInt(getComputedStyle($proseContent).paddingBottom, 10) || 0;
 				const desiredScroll = Math.max(0,
-					last.offsetTop + last.offsetHeight - $prose.clientHeight + padBottom);
-				if (desiredScroll > $prose.scrollTop) {
-					$prose.scrollTo({ top: desiredScroll, behavior: "auto" });
+					last.offsetTop + last.offsetHeight - $proseContent.clientHeight + padBottom);
+				if (desiredScroll > $proseContent.scrollTop) {
+					$proseContent.scrollTo({ top: desiredScroll, behavior: "auto" });
 				}
 			}
 			onChunkRevealed();
@@ -752,7 +752,7 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 	requestAnimationFrame(() => {
 		requestAnimationFrame(() => {
 			const padBottom = parseInt(getComputedStyle($proseContent).paddingBottom, 10) || 0;
-			const panelHeight = $prose.clientHeight;
+			const panelHeight = $proseContent.clientHeight;
 
 			let lastTop = null;
 			for (let i = 0; i < spans.length; i++) {
@@ -762,11 +762,11 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 
 				const lineBottom = top + spans[i].offsetHeight;
 				const desiredScroll = lineBottom - panelHeight + padBottom;
-				if (desiredScroll <= $prose.scrollTop + 1) continue;
+				if (desiredScroll <= $proseContent.scrollTop + 1) continue;
 
 				const t = setTimeout(() => {
-					if (desiredScroll > $prose.scrollTop) {
-						$prose.scrollTo({ top: desiredScroll, behavior: "smooth" });
+					if (desiredScroll > $proseContent.scrollTop) {
+						$proseContent.scrollTo({ top: desiredScroll, behavior: "smooth" });
 					}
 					timers.delete(t);
 				}, spanTimes[i]);
@@ -808,7 +808,11 @@ function scheduleCharFade() {
 }
 function updateCharFade() {
 	if (!$prose || !$proseContent) return;
-	const proseRect = $prose.getBoundingClientRect();
+	// Anchor fade to the inner scroll viewport's top edge — that's
+	// where character Y positions are relative to. Using .prose's
+	// outer rect would put the fade zone 14px above any actual
+	// character, shrinking the effective fade band.
+	const proseRect = $proseContent.getBoundingClientRect();
 	const fadeTopPx = proseRect.top;
 	const fadeBottomPx = fadeTopPx + CHAR_FADE_PX;
 	const ps = $proseContent.querySelectorAll("p");
@@ -851,14 +855,14 @@ function updateCharFade() {
 // events that would otherwise re-trigger the timer.
 let proseScrollEndTimer = 0;
 let snapInProgress = false;
-if ($prose) {
-	$prose.addEventListener("scroll", () => {
-		// Toggle .is-scrolled so the sticky fade-top reveals (CSS
-		// fades opacity 0→1). Still useful as a base-layer safety
-		// even with per-character fade — covers chunks whose .ch
-		// spans have been simplified post-reveal (no spans = no
-		// per-char fade applies).
-		if ($prose.scrollTop > 4) {
+if ($proseContent) {
+	$proseContent.addEventListener("scroll", () => {
+		// .is-scrolled flag (currently unstyled but kept as a
+		// base-layer hook) — applied to the visual .prose panel
+		// since that's what any future scroll-state styling would
+		// target. Read scroll position from .prose-content (the
+		// actual scroll container).
+		if ($proseContent.scrollTop > 4) {
 			$prose.classList.add("is-scrolled");
 		} else {
 			$prose.classList.remove("is-scrolled");
@@ -970,7 +974,7 @@ function scrollChunkToTop(paragraph) {
 			const safety = 10;  // px headroom for descenders + AA
 			offset = Math.max(offset, prevBottom + safety);
 		}
-		$prose.scrollTo({ top: offset, behavior: "auto" });
+		$proseContent.scrollTo({ top: offset, behavior: "auto" });
 	});
 }
 
@@ -990,8 +994,8 @@ function scrollChunkToTop(paragraph) {
 function snapScrollToWholeParagraphs() {
 	const paragraphs = $proseContent.querySelectorAll("p");
 	if (paragraphs.length === 0) return;
-	const scrollTop = $prose.scrollTop;
-	const viewportH = $prose.clientHeight;
+	const scrollTop = $proseContent.scrollTop;
+	const viewportH = $proseContent.clientHeight;
 	for (const p of paragraphs) {
 		const pTop = p.offsetTop;
 		const pBottom = pTop + p.offsetHeight;
@@ -1023,7 +1027,7 @@ function snapScrollToWholeParagraphs() {
 		// crisp settling, not as a half-second slide that lets the
 		// peek linger. Trade: tiny pop instead of a long peek.
 		snapInProgress = true;
-		$prose.scrollTo({ top: pBottom, behavior: "auto" });
+		$proseContent.scrollTo({ top: pBottom, behavior: "auto" });
 		// Guard cleared one frame later — instant scroll completes
 		// synchronously, the guard just dodges the scroll event the
 		// assignment itself fires.
@@ -1195,7 +1199,7 @@ function clearTranscript() {
 	// New chapter = empty prose panel. The chapter overlay lands over
 	// the cleared panel; first prose chunk types into a clean surface.
 	$proseContent.innerHTML = "";
-	$prose.scrollTop = 0;
+	$proseContent.scrollTop = 0;
 }
 
 // Visual-only chapter overlay: parses the spec, paints it, and fades
@@ -1402,40 +1406,80 @@ function onFirstUserGesture() {
 // When the app comes back from background (iOS standalone PWA: user
 // swipes home, locks the screen, switches apps — or any browser tab
 // loses focus and returns), the AudioContext gets auto-suspended by
-// the system. Without recovery, music never comes back until the user
-// force-quits. We resume on visibility, pageshow, and focus, and re-
-// trigger play() on the active player if the resume succeeded.
+// the system. Sometimes the audio element's src also gets dropped by
+// the OS reclaiming the media decoder. Without recovery, music never
+// comes back until the user force-quits.
 //
-// resume() is allowed without a fresh user gesture when the context
-// was running and was auto-suspended by the system. If iOS refuses
-// (rare), the next prose-panel tap will also try via the path above.
-function recoverAudioOnReturn() {
-	if (!audioCtx) return;
-	if (audioCtx.state === "running") return;
-	const p = audioCtx.resume();
-	const onResumed = () => {
-		if (!settings.musicOn) return;
-		if (!currentMusicName) return;
-		const ap = activePlayer;
-		if (!ap || !ap.el) return;
-		if (!ap.el.paused) return;
-		const pp = ap.el.play();
-		if (pp && pp.catch) pp.catch(() => {});
-	};
-	if (p && p.then) p.then(onResumed, () => {});
-	else onResumed();
+// Strategy: ensureMusicPlayingForScene() is the single idempotent
+// "make the right track play" entry point. It checks audio state
+// and src, and re-engages swapMusic() if anything's missing. Called
+// from visibility/focus/pageshow handlers, from a periodic health
+// poll while music is enabled, and from the music-toggle on path.
+function ensureMusicPlayingForScene() {
+	if (!settings.musicOn) return;
+	// pendingMusicName holds the last real track requested by ink
+	// (set in swapMusic). Use it as the fallback when currentMusicName
+	// has been cleared by stopAllMusic / fade_out / dim — those leave
+	// pendingMusicName intact specifically so the scene's track can
+	// be re-engaged on resume without walking the ink graph.
+	const trackName = currentMusicName || pendingMusicName;
+	if (!trackName) return;
+	if (!audioCtx) return;     // first user gesture hasn't happened yet
+	if (!userGestured) return; // browser autoplay policy still applies
+	if (audioCtx.state !== "running") {
+		const p = audioCtx.resume();
+		if (p && p.then) p.then(() => ensureMusicPlayingForScene(), () => {});
+		return;
+	}
+	const ap = activePlayer;
+	if (!ap || !ap.el) {
+		// No active player — re-engage from scratch via swapMusic.
+		// Clear currentMusicName so swapMusic doesn't short-circuit
+		// on the same-track-already-playing branch.
+		currentMusicName = "";
+		swapMusic(trackName);
+		return;
+	}
+	// Active player exists but its src may have been dropped by the
+	// OS (iOS reclaims media decoders aggressively when the app is
+	// backgrounded). If src is empty or playback is stopped, restart.
+	if (!ap.el.src || ap.el.paused || ap.el.ended) {
+		currentMusicName = "";
+		swapMusic(trackName);
+		return;
+	}
 }
 
 document.addEventListener("visibilitychange", () => {
-	if (document.visibilityState === "visible") recoverAudioOnReturn();
+	if (document.visibilityState === "visible") ensureMusicPlayingForScene();
 });
 // pageshow fires when the page is restored from bfcache (iOS Safari
 // back-forward cache, and some standalone PWA resume paths).
-window.addEventListener("pageshow", () => recoverAudioOnReturn());
+window.addEventListener("pageshow", () => ensureMusicPlayingForScene());
 // focus is a third belt — covers the case where the tab regains
 // focus without a visibility transition (rare desktop window-manager
 // edge cases).
-window.addEventListener("focus", recoverAudioOnReturn);
+window.addEventListener("focus", ensureMusicPlayingForScene);
+
+// Periodic health poll — visibility/pageshow/focus catch most resume
+// paths, but Steve hit a case (iPhone PWA, phone slept overnight)
+// where music didn't come back even after foregrounding the app and
+// reading several paragraphs. The poll is the safety net: every 8s
+// while music is enabled, re-check that the active player has src
+// + isn't paused, and re-engage if not. Cheap (one paused-check per
+// tick) and only runs while music is on.
+const MUSIC_HEALTH_POLL_MS = 8000;
+let musicHealthPollId = 0;
+function startMusicHealthPoll() {
+	if (musicHealthPollId) return;
+	musicHealthPollId = setInterval(ensureMusicPlayingForScene, MUSIC_HEALTH_POLL_MS);
+}
+function stopMusicHealthPoll() {
+	if (!musicHealthPollId) return;
+	clearInterval(musicHealthPollId);
+	musicHealthPollId = 0;
+}
+if (settings.musicOn) startMusicHealthPoll();
 
 function stopAllMusic() {
 	// Pause both players and release their decoded buffers. Keep
@@ -1880,11 +1924,15 @@ function bindSettingsMenu() {
 			refreshSelectionMarkers();
 			if (!want) {
 				stopAllMusic();
-			} else if (userGestured && pendingMusicName) {
-				// Re-engage the scene's current track at full volume.
-				const n = pendingMusicName;
-				currentMusicName = "";
-				swapMusic(n);
+				stopMusicHealthPoll();
+			} else {
+				// Toggle on: fire ensureMusicPlayingForScene immediately
+				// (no waiting for the next 8s poll tick) so the user
+				// hears music as soon as they flip the switch. Also
+				// kick the periodic health poll so future sleep/wake
+				// cycles auto-recover.
+				ensureMusicPlayingForScene();
+				startMusicHealthPoll();
 			}
 			if (window.lirienAnalytics) {
 				window.lirienAnalytics.track("setting_changed", { key: "music", value: want });
@@ -2659,8 +2707,8 @@ function renderDevVersion() {
 	// of this row tells us exactly where the math went sideways.
 	const padTop = parseInt(getComputedStyle($proseContent).paddingTop, 10) || 0;
 	const padBottom = parseInt(getComputedStyle($proseContent).paddingBottom, 10) || 0;
-	const scrollTop = $prose.scrollTop;
-	const clientH = $prose.clientHeight;
+	const scrollTop = $proseContent.scrollTop;
+	const clientH = $proseContent.clientHeight;
 	const ps = $proseContent.querySelectorAll("p");
 	let paraStr = "0";
 	if (ps.length > 0) {

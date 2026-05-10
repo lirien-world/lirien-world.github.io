@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-022053";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260510-132842";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -905,6 +905,7 @@ body.is-playing .progress{
 		"echoes.label.content": { en: "content",                                          es: "contenido" },
 		"echoes.mode.shuffled":   { en: "shuffled",                                       es: "aleatorio" },
 		"echoes.mode.sequential": { en: "sequential",                                     es: "secuencial" },
+		"echoes.mode.repeat":     { en: "repeat",                                         es: "repetir" },
 		"echoes.content.played": { en: "played",                                          es: "escuchadas" },
 		"echoes.content.all":    { en: "all",                                             es: "todas" },
 		"echoes.content.minimal":{ en: "minimal",                                         es: "mínimo" },
@@ -1162,11 +1163,16 @@ const $contentValue     = document.getElementById("contentValue");
 // ─────────────────────────────────────────────────────────────────
 // Queue + mode
 //
-// Two play modes, switchable from the brand-meta in the corner:
+// Three play modes, switchable from the brand-meta in the corner:
 //
 //   "shuffled"   — per-pass Fisher-Yates: each track plays exactly
 //                  once before any repeats, then reshuffles.
 //   "sequential" — play in TRACKS array order, looping at the end.
+//   "repeat"     — current track loops indefinitely (audio.loop=true).
+//                  Drawer + prev/next still navigate; landing on a
+//                  new track in repeat mode means THAT track loops.
+//                  Queue order is the visible-tracks default — repeat
+//                  doesn't reshuffle.
 //
 // History tracks visited-order regardless of mode, so Previous walks
 // back the way you came.
@@ -1376,8 +1382,10 @@ function reshuffle(skipFirst){
 			[idx[0],idx[1]] = [idx[1],idx[0]];
 		}
 	}
-	// Sequential mode: leave idx in visibleIndices order — that IS
-	// the play order, so the drawer can render it directly.
+	// Sequential and repeat modes: leave idx in visibleIndices order.
+	// For sequential that IS the play order; for repeat the queue
+	// order only matters for explicit prev/next navigation since
+	// the audio element loops the current track on its own.
 	queue = idx;
 	// If a track is currently active, sync queueIdx to its position
 	// in the new queue so next/previous work coherently after a
@@ -1392,11 +1400,16 @@ function reshuffle(skipFirst){
 }
 
 function nextIndex(){
-	if (mode === "sequential"){
+	if (mode === "sequential" || mode === "repeat"){
+		// Repeat mode handles auto-loop via $audio.loop=true, so this
+		// path only fires on explicit next-button presses or drawer
+		// taps that route through here. In both, "next" means the
+		// next visible track — same behaviour as sequential. Once
+		// the user lands there, the loop attribute keeps it playing.
 		const visible = visibleIndices();
 		if (!visible.length) return null;
 		const pos = visible.indexOf(activeIdx);
-		if (pos === -1) return visible[0];     // current not visible (e.g. just switched content) — start from first visible
+		if (pos === -1) return visible[0];
 		return visible[(pos + 1) % visible.length];
 	}
 	// shuffled — wrap through the same fixed queue rather than
@@ -1407,7 +1420,7 @@ function nextIndex(){
 }
 
 function previousQueueIndex(){
-	if (mode === "sequential"){
+	if (mode === "sequential" || mode === "repeat"){
 		const visible = visibleIndices();
 		if (!visible.length) return null;
 		const pos = visible.indexOf(activeIdx);
@@ -1422,19 +1435,48 @@ function previousQueueIndex(){
 }
 
 function toggleMode(){
-	mode = (mode === "shuffled") ? "sequential" : "shuffled";
-	// Always regenerate the queue on mode change — sequential and
-	// shuffled produce different orders, and the drawer renders the
-	// queue directly so it must match what's actually about to play.
+	const order = ["shuffled", "sequential", "repeat"];
+	mode = order[(order.indexOf(mode) + 1) % order.length];
+	// Regenerate the queue on mode change. shuffled and sequential
+	// produce different orders; repeat preserves the current
+	// order (reshuffle treats repeat like sequential = visible
+	// order in TRACKS sequence). The drawer renders the queue
+	// directly so it must match what's actually about to play.
 	reshuffle(activeIdx);
+	// In repeat mode the audio element loops the current track;
+	// flip $audio.loop now so the change takes effect on the
+	// currently-playing track without waiting for a track switch.
+	applyRepeatLoop();
 	updateModeLabel();
 	buildTracklist();
 	updateActiveRow();
 }
 
+function applyRepeatLoop(){
+	// Repeat mode forces audio.loop=true regardless of per-track
+	// loop config. Other modes restore the original (only Lirien
+	// Remembers in minimal mode is loop:true; everything else is
+	// loop:false so it yields to next() on `ended`).
+	if (!$audio) return;
+	if (mode === "repeat"){
+		$audio.loop = true;
+	} else if (activeIdx >= 0 && TRACKS[activeIdx]){
+		const track = TRACKS[activeIdx];
+		// In repeat mode the audio element loops the active track so
+	// it plays indefinitely. In other modes the per-track loop
+	// flag only applies in minimal mode (Lirien Remembers seamless).
+	$audio.loop = (mode === "repeat") || (!!track.loop && content === "minimal");
+	} else {
+		$audio.loop = false;
+	}
+}
+
 function updateModeLabel(){
 	$modeValue.textContent = (window.lirienT && window.lirienT("echoes.mode." + mode)) || mode;
-	$modeToggle.setAttribute("aria-pressed", mode === "sequential" ? "true" : "false");
+	// aria-pressed is binary; mark as "pressed" whenever we're in
+	// any non-default mode so screen readers can convey "the
+	// toggle is doing something other than the default."
+	$modeToggle.setAttribute("aria-pressed", mode !== "shuffled" ? "true" : "false");
 }
 
 function toggleContent(){
@@ -1574,7 +1616,10 @@ function loadTrack(idx, opts){
 	// gap on the `ended` → next() roundtrip when it's the sole queue
 	// entry. In played/all it sits in the rotation like any other
 	// track and must yield to next() on `ended`.
-	$audio.loop = !!track.loop && content === "minimal";
+	// In repeat mode the audio element loops the active track so
+	// it plays indefinitely. In other modes the per-track loop
+	// flag only applies in minimal mode (Lirien Remembers seamless).
+	$audio.loop = (mode === "repeat") || (!!track.loop && content === "minimal");
 	// New track means new "ahead-of" reference point — clear the
 	// prefetch markers so the next 2 (relative to the new position)
 	// can be queued up when we hit 80% again.
@@ -2059,7 +2104,10 @@ window.echoesRefreshDynamicLabels = function(){
 		if (track){
 			activeIdx = idx;
 			$audio.src = trackAudioUrl(track);
-			$audio.loop = !!track.loop && content === "minimal";
+			// In repeat mode the audio element loops the active track so
+	// it plays indefinitely. In other modes the per-track loop
+	// flag only applies in minimal mode (Lirien Remembers seamless).
+	$audio.loop = (mode === "repeat") || (!!track.loop && content === "minimal");
 			$trackTitle.textContent = track.title;
 			$trackCaption.textContent = captionFor(track, currentLang());
 			updateActiveRow();

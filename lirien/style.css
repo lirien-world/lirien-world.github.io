@@ -437,25 +437,17 @@ body.story-started .game { opacity: 1; }
 	top: 50%;
 	background: rgba(11, 11, 18, 0.62);
 	border-radius: 12px;
-	overflow-y: auto;
-	overflow-x: hidden;
-	/* Padding now lives on .prose-content (the inner scrolled
-	 * element) instead of here, so the .prose-fade-top sticky
-	 * overlay can sit at viewport y=0 of the scroll container
-	 * without being pushed down by padding. The visual padding
-	 * around the prose text is unchanged — just the layout owner
-	 * moved one level inward. */
-	padding: 0;
-	-webkit-overflow-scrolling: touch;
-	scrollbar-width: thin;
-	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;
-	/* Depth + warmth. The prose panel was previously a flat translucent
-	 * rectangle, which read as a dialog box rather than a held page.
-	 * Now: an outer drop shadow lifts it off the background image; a
-	 * subtle inner gold rim suggests reflected candle-light along the
-	 * edge of parchment; a faint inner top highlight gives the panel
-	 * an "edge of paper" accent. The combination reads as a held
-	 * object with material presence rather than a translucent overlay. */
+	/* The scroll container is now .prose-content (one level inward),
+	 * which is sized smaller than .prose by the vertical padding
+	 * below. The dark backdrop + drop shadow extend past the text
+	 * region into the buffer zone, so even if a transient render
+	 * (mid-snap, mid-fade) leaves stray text at the top edge of the
+	 * inner scroll viewport, that text still sits over the dark
+	 * panel — never on the lighter atmosphere image. Steve's
+	 * suggestion 2026-05-10 after seeing prior paragraphs leaking
+	 * above the dark band on iPad/desktop at very-large text size. */
+	overflow: hidden;
+	padding: 14px 0;
 	box-shadow:
 		0 24px 64px rgba(0, 0, 0, 0.55),
 		0 6px 18px rgba(0, 0, 0, 0.38),
@@ -467,46 +459,46 @@ body.story-started .game { opacity: 1; }
 		 * this is purely atmospheric: the panel reads as a held page
 		 * with light catching its top inside edge. ~14px tall. */
 		inset 0 14px 16px -10px rgba(11, 11, 18, 0.45);
-	/* CSS scroll-snap: scroll always settles on a paragraph boundary
-	 * (mandatory). For prose reading, paragraph alignment is the
-	 * universal intent — there's no good reason to want to park
-	 * mid-line at the top edge. proximity was leaving 11-px-style
-	 * peek-through when the browser decided no snap point was "close
-	 * enough"; mandatory removes the choice. scroll-padding-top
-	 * respects the panel's inner padding so the snapped paragraph
-	 * lines up with the inner edge, not the rim. */
-	scroll-snap-type: y mandatory;
-	scroll-padding-top: 22px;
 }
 .prose-content p {
 	scroll-snap-align: start;
 	scroll-snap-stop: normal;
 }
 
-/* Edge fade overlays were tried (mask-image, then sibling-overlay
- * gradients) — both replaced because they hid the symptom rather
- * than fixing it. The right fix is computational: after the
- * progressive-scroll lands its final position, snapScrollToWhole
- * Paragraphs() in main.js detects whether a paragraph is being
- * clipped at the top of the viewport and adjusts scrollTop so
- * the paragraph is either FULLY visible or FULLY scrolled out.
- * No partial-line leakage means no need for a fade. */
-.prose::-webkit-scrollbar { width: 8px; }
-.prose::-webkit-scrollbar-track { background: transparent; }
-.prose::-webkit-scrollbar-thumb {
+/* Scroll container moved from .prose to .prose-content so the
+ * visual panel can extend slightly past the text region. */
+.prose-content::-webkit-scrollbar { width: 8px; }
+.prose-content::-webkit-scrollbar-track { background: transparent; }
+.prose-content::-webkit-scrollbar-thumb {
 	background: rgba(245, 235, 210, 0.3);
 	border-radius: 4px;
 }
 
 .prose-content {
-	/* Padding moved here from .prose so the .prose-fade-top sticky
-	 * overlay (a sibling of prose-content inside .prose) can sit
-	 * at viewport y=0 of the scroll container without being pushed
-	 * down by .prose's own padding. */
-	padding: 18px 36px 26px 36px;
+	height: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;
+	/* CSS scroll-snap: scroll always settles on a paragraph boundary
+	 * (mandatory). For prose reading, paragraph alignment is the
+	 * universal intent — there's no good reason to want to park
+	 * mid-line at the top edge. proximity was leaving 11-px-style
+	 * peek-through when the browser decided no snap point was "close
+	 * enough"; mandatory removes the choice. scroll-padding-top
+	 * respects the inner top edge so the snapped paragraph lines up
+	 * cleanly with the start of the visible text region. */
+	scroll-snap-type: y mandatory;
+	scroll-padding-top: 8px;
+	/* Vertical padding is split with .prose's 14px buffer above —
+	 * total visual offset from the panel's outer top to where text
+	 * starts is still ~22px, matching the previous design. */
+	padding: 4px 36px 12px 36px;
 	font-size: var(--prose-font-size, 36px);
 	line-height: 1.4;
 	color: #f5ebd2;
+	box-sizing: border-box;
 }
 
 /* The sticky fade-top overlay was removed — it kept reading as

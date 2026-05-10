@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260510x">
+	<link rel="stylesheet" href="style.css?v=20260510y">
 </head>
 <body>
 	<script>
@@ -52,14 +52,14 @@
 	<div id="shimmer-fx" class="shimmer-fx" aria-hidden="true"></div>
 	<div id="title-screen" class="title-screen">
 		<div class="title-content">
-			<div class="title-eyebrow">Book One &mdash; Chronicles of Lirien</div>
-			<h1 class="title-main">The Spiral That <em>Remembers</em></h1>
-			<p class="title-tagline">The world forgot itself.<br>One man is walking forward into what remains.</p>
+			<div class="title-eyebrow" data-i18n="lirien.title.eyebrow">Book One &mdash; Chronicles of Lirien</div>
+			<h1 class="title-main" data-i18n-html="lirien.title.main">The Spiral That <em>Remembers</em></h1>
+			<p class="title-tagline" data-i18n-html="lirien.title.tagline">The world forgot itself.<br>One man is walking forward into what remains.</p>
 		</div>
 		<div id="title-hint" class="title-hint">
-			<span class="title-hint-loading">loading&hellip;</span>
-			<button id="title-continue" class="title-continue" hidden>Continue</button>
-			<span class="title-hint-ready title-hint-text" hidden>Enter</span>
+			<span class="title-hint-loading" data-i18n="lirien.title.loading">loading&hellip;</span>
+			<button id="title-continue" class="title-continue" hidden data-i18n="lirien.title.continue">Continue</button>
+			<span class="title-hint-ready title-hint-text" hidden data-i18n="lirien.title.enter">Enter</span>
 		</div>
 	</div>
 	<div id="chapter-title" class="chapter-title">
@@ -75,7 +75,7 @@
 				<path d="M2 2 L12 10 L22 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 			</svg>
 		</div>
-		<div id="offline-hint" class="offline-hint" hidden aria-live="polite">Waiting for connection&hellip;</div>
+		<div id="offline-hint" class="offline-hint" hidden aria-live="polite" data-i18n="lirien.offline">Waiting for connection&hellip;</div>
 		<div id="choices" class="choices"></div>
 	</div>
 	<div class="drawer-scrim" id="drawer-scrim" aria-hidden="true"></div>
@@ -83,68 +83,78 @@
 	<button id="menu-btn" class="chrome-btn menu-btn" aria-label="Menu"></button>
 	<aside id="menu-panel" class="drawer menu-drawer" aria-hidden="true">
 		<div class="drawer-head">
-			<h2 class="drawer-title">Menu</h2>
-			<button class="drawer-close" type="button" data-close-drawer>Close</button>
+			<h2 class="drawer-title" data-i18n="lirien.menu.title">Menu</h2>
+			<button class="drawer-close" type="button" data-close-drawer data-i18n="lirien.menu.close">Close</button>
 		</div>
 		<div class="drawer-body">
 			<section class="drawer-section">
 				<button class="drawer-section-summary" type="button" aria-expanded="false">
-					<span class="drawer-section-title">Chapters</span>
+					<span class="drawer-section-title" data-i18n="lirien.section.chapters">Chapters</span>
 					<span class="drawer-section-caret" aria-hidden="true"></span>
 				</button>
 				<div class="drawer-section-body"><div class="drawer-section-content">
 					<div id="chapter-list" class="chapter-list">
-						<div class="chapter-empty">Chapter list will appear here as you read.</div>
+						<div class="chapter-empty" data-i18n="lirien.chapter.empty">Chapter list will appear here as you read.</div>
 					</div>
 				</div></div>
 			</section>
 			<section class="drawer-section">
 				<button class="drawer-section-summary" type="button" aria-expanded="false">
-					<span class="drawer-section-title">Reading speed</span>
+					<span class="drawer-section-title" data-i18n="lirien.section.speed">Reading speed</span>
 					<span class="drawer-section-caret" aria-hidden="true"></span>
 				</button>
 				<div class="drawer-section-body"><div class="drawer-section-content">
-					<button class="setting-row speed-btn" data-multiplier="0.2">Very slow</button>
-					<button class="setting-row speed-btn" data-multiplier="0.3">Slow</button>
-					<button class="setting-row speed-btn" data-multiplier="0.4">Normal</button>
-					<button class="setting-row speed-btn" data-multiplier="0.7">Fast</button>
-					<button class="setting-row speed-btn" data-multiplier="1.0">Very fast</button>
+					<button class="setting-row speed-btn" data-multiplier="0.2" data-i18n="lirien.speed.very-slow">Very slow</button>
+					<button class="setting-row speed-btn" data-multiplier="0.3" data-i18n="lirien.speed.slow">Slow</button>
+					<button class="setting-row speed-btn" data-multiplier="0.4" data-i18n="lirien.speed.normal">Normal</button>
+					<button class="setting-row speed-btn" data-multiplier="0.7" data-i18n="lirien.speed.fast">Fast</button>
+					<button class="setting-row speed-btn" data-multiplier="1.0" data-i18n="lirien.speed.very-fast">Very fast</button>
 				</div></div>
 			</section>
 			<section class="drawer-section">
 				<button class="drawer-section-summary" type="button" aria-expanded="false">
-					<span class="drawer-section-title">Text size</span>
+					<span class="drawer-section-title" data-i18n="lirien.section.size">Text size</span>
 					<span class="drawer-section-caret" aria-hidden="true"></span>
 				</button>
 				<div class="drawer-section-body"><div class="drawer-section-content">
-					<button class="setting-row size-btn" data-size="28">Small</button>
-					<button class="setting-row size-btn" data-size="32">Medium</button>
-					<button class="setting-row size-btn" data-size="36">Large</button>
-					<button class="setting-row size-btn" data-size="42">Very large</button>
+					<button class="setting-row size-btn" data-size="28" data-i18n="lirien.size.small">Small</button>
+					<button class="setting-row size-btn" data-size="32" data-i18n="lirien.size.medium">Medium</button>
+					<button class="setting-row size-btn" data-size="36" data-i18n="lirien.size.large">Large</button>
+					<button class="setting-row size-btn" data-size="42" data-i18n="lirien.size.very-large">Very large</button>
 				</div></div>
 			</section>
 			<section class="drawer-section">
 				<button class="drawer-section-summary" type="button" aria-expanded="false">
-					<span class="drawer-section-title">Music</span>
+					<span class="drawer-section-title" data-i18n="lirien.section.music">Music</span>
 					<span class="drawer-section-caret" aria-hidden="true"></span>
 				</button>
 				<div class="drawer-section-body"><div class="drawer-section-content">
-					<button class="setting-row music-btn" data-music="on">On</button>
-					<button class="setting-row music-btn" data-music="off">Off</button>
+					<button class="setting-row music-btn" data-music="on" data-i18n="lirien.music.on">On</button>
+					<button class="setting-row music-btn" data-music="off" data-i18n="lirien.music.off">Off</button>
+				</div></div>
+			</section>
+			<section class="drawer-section">
+				<button class="drawer-section-summary" type="button" aria-expanded="false">
+					<span class="drawer-section-title" data-i18n="lirien.section.language">Language</span>
+					<span class="drawer-section-caret" aria-hidden="true"></span>
+				</button>
+				<div class="drawer-section-body"><div class="drawer-section-content">
+					<button class="setting-row lang-btn" data-lang-set="en">English</button>
+					<button class="setting-row lang-btn" data-lang-set="es">Español</button>
 				</div></div>
 			</section>
 		</div>
 		<div class="drawer-foot-actions">
-			<button id="return-recent-btn" class="drawer-action" hidden>Return to most recent point</button>
-			<button id="restart-btn" class="drawer-action drawer-action--danger">Restart from beginning</button>
+			<button id="return-recent-btn" class="drawer-action" hidden data-i18n="lirien.action.return-recent">Return to most recent point</button>
+			<button id="restart-btn" class="drawer-action drawer-action--danger" data-i18n="lirien.action.restart">Restart from beginning</button>
 		</div>
 	</aside>
-	<div id="rotate-prompt" class="rotate-prompt">Please rotate your device to landscape</div>
+	<div id="rotate-prompt" class="rotate-prompt" data-i18n="lirien.rotate">Please rotate your device to landscape</div>
 	<div id="install-splash" class="install-splash" hidden>
 		<div class="install-splash-content">
 			<img src="../apple-touch-icon-v3.png" alt="" class="install-splash-icon" aria-hidden="true">
-			<h2 class="install-splash-title">Read it like a book</h2>
-			<p class="install-splash-body">Add Chronicles of Lirien to your home screen and it opens full&#8209;screen, the way the story is meant to be read.</p>
+			<h2 class="install-splash-title" data-i18n="lirien.install.title">Read it like a book</h2>
+			<p class="install-splash-body" data-i18n="lirien.install.body">Add Chronicles of Lirien to your home screen and it opens full&#8209;screen, the way the story is meant to be read.</p>
 
 			<div id="install-splash-ios" class="install-splash-platform" hidden>
 				<ol class="install-splash-steps">
@@ -208,8 +218,8 @@
 			<div id="confirm-title" class="confirm-title"></div>
 			<div id="confirm-message" class="confirm-message"></div>
 			<div class="confirm-actions">
-				<button id="confirm-cancel" class="confirm-cancel">Cancel</button>
-				<button id="confirm-ok" class="confirm-ok">Confirm</button>
+				<button id="confirm-cancel" class="confirm-cancel" data-i18n="lirien.confirm.cancel">Cancel</button>
+				<button id="confirm-ok" class="confirm-ok" data-i18n="lirien.confirm.confirm">Confirm</button>
 			</div>
 		</div>
 	</div>
@@ -228,7 +238,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260510-033039";
+		const BUILD_VERSION = "20260510-034613";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -290,8 +300,133 @@
 		};
 	})();
 	</script>
-	<script src="analytics.js?v=20260510x"></script>
-	<script src="ink.js?v=20260510x"></script>
-	<script src="main.js?v=20260510x"></script>
+	<script>
+	// i18n module — applies translations to all [data-i18n] /
+	// [data-i18n-html] elements based on the user's chosen language.
+	// Same architecture as /echoes/'s i18n. Auto-detects from
+	// navigator.language with a localStorage override; runtime swap
+	// on user pick via the Language section in the menu drawer.
+	// window.lirienT(key) gives main.js a way to translate dynamic
+	// strings (confirm dialogs, etc.) on demand.
+	(function () {
+		const LANGUAGES = [
+			{ code: "en", name: "English" },
+			{ code: "es", name: "Español" },
+		];
+		const STORAGE_KEY = "lirien.lang";
+
+		const TR = {
+			"lirien.title.eyebrow":  { en: "Book One — Chronicles of Lirien",                                                            es: "Libro Uno — Crónicas de Lirien" },
+			"lirien.title.main":     { en: "The Spiral That <em>Remembers</em>",                                                          es: "La Espiral Que <em>Recuerda</em>" },
+			"lirien.title.tagline":  { en: "The world forgot itself.<br>One man is walking forward into what remains.",                   es: "El mundo se olvidó de sí mismo.<br>Un hombre camina hacia lo que queda." },
+			"lirien.title.loading":  { en: "loading…",                                                                                    es: "cargando…" },
+			"lirien.title.continue": { en: "Continue",                                                                                    es: "Continuar" },
+			"lirien.title.enter":    { en: "Enter",                                                                                       es: "Entrar" },
+
+			"lirien.menu.title":     { en: "Menu",                                                                                        es: "Menú" },
+			"lirien.menu.close":     { en: "Close",                                                                                       es: "Cerrar" },
+
+			"lirien.section.chapters": { en: "Chapters",          es: "Capítulos" },
+			"lirien.section.speed":    { en: "Reading speed",     es: "Velocidad de lectura" },
+			"lirien.section.size":     { en: "Text size",         es: "Tamaño del texto" },
+			"lirien.section.music":    { en: "Music",             es: "Música" },
+			"lirien.section.language": { en: "Language",          es: "Idioma" },
+
+			"lirien.speed.very-slow":  { en: "Very slow",         es: "Muy lento" },
+			"lirien.speed.slow":       { en: "Slow",              es: "Lento" },
+			"lirien.speed.normal":     { en: "Normal",            es: "Normal" },
+			"lirien.speed.fast":       { en: "Fast",              es: "Rápido" },
+			"lirien.speed.very-fast":  { en: "Very fast",         es: "Muy rápido" },
+
+			"lirien.size.small":       { en: "Small",             es: "Pequeño" },
+			"lirien.size.medium":      { en: "Medium",            es: "Mediano" },
+			"lirien.size.large":       { en: "Large",             es: "Grande" },
+			"lirien.size.very-large":  { en: "Very large",        es: "Muy grande" },
+
+			"lirien.music.on":         { en: "On",                es: "Activada" },
+			"lirien.music.off":        { en: "Off",               es: "Desactivada" },
+
+			"lirien.action.return-recent": { en: "Return to most recent point",  es: "Volver al punto más reciente" },
+			"lirien.action.restart":       { en: "Restart from beginning",       es: "Reiniciar desde el principio" },
+
+			"lirien.chapter.empty":    { en: "Chapter list will appear here as you read.",  es: "La lista de capítulos aparecerá aquí mientras lees." },
+
+			"lirien.confirm.restart.title":   { en: "Restart from beginning?",                                                                  es: "¿Reiniciar desde el principio?" },
+			"lirien.confirm.restart.message": { en: "Your reading position and chapter list will be cleared. This can't be undone.",            es: "Tu posición de lectura y la lista de capítulos se borrarán. Esto no se puede deshacer." },
+			"lirien.confirm.cancel":          { en: "Cancel",                                                                                   es: "Cancelar" },
+			"lirien.confirm.confirm":         { en: "Confirm",                                                                                  es: "Confirmar" },
+			"lirien.confirm.restart.action":  { en: "Restart",                                                                                  es: "Reiniciar" },
+
+			"lirien.offline":          { en: "Waiting for connection…",                            es: "Esperando conexión…" },
+			"lirien.rotate":           { en: "Please rotate your device to landscape",             es: "Por favor, gira tu dispositivo a horizontal" },
+
+			"lirien.install.title":    { en: "Read it like a book",                                                                           es: "Léelo como un libro" },
+			"lirien.install.body":     { en: "Add Chronicles of Lirien to your home screen and it opens full‑screen, the way the story is meant to be read.", es: "Añade Crónicas de Lirien a tu pantalla de inicio y se abrirá a pantalla completa, como la historia está pensada para leerse." },
+		};
+
+		function detectLang() {
+			try {
+				const stored = localStorage.getItem(STORAGE_KEY);
+				if (stored && LANGUAGES.some(l => l.code === stored)) return stored;
+			} catch (e) {}
+			const browser = (navigator.language || "en").toLowerCase().slice(0, 2);
+			if (LANGUAGES.some(l => l.code === browser)) return browser;
+			return "en";
+		}
+
+		function applyLang(lang) {
+			document.documentElement.lang = lang;
+			document.querySelectorAll("[data-i18n]").forEach(el => {
+				const tr = TR[el.getAttribute("data-i18n")];
+				if (tr && tr[lang] != null) el.textContent = tr[lang];
+			});
+			document.querySelectorAll("[data-i18n-html]").forEach(el => {
+				const tr = TR[el.getAttribute("data-i18n-html")];
+				if (tr && tr[lang] != null) el.innerHTML = tr[lang];
+			});
+			document.querySelectorAll("[data-lang-set]").forEach(btn => {
+				btn.setAttribute("aria-pressed", btn.getAttribute("data-lang-set") === lang ? "true" : "false");
+				btn.classList.toggle("current", btn.getAttribute("data-lang-set") === lang);
+			});
+			// Notify main.js so it can re-render dynamic content
+			// (chapter list, current-selection markers, anything
+			// built via lirienT() at runtime). Without this, the
+			// drawer's chapter list and current-selection diamonds
+			// don't refresh on language change — bug Steve hit on
+			// /echoes/ after adding ch4 music.
+			if (typeof window.lirienRefreshDynamicLabels === "function") {
+				window.lirienRefreshDynamicLabels();
+			}
+		}
+
+		function setLang(lang) {
+			if (!LANGUAGES.some(l => l.code === lang)) return;
+			try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+			applyLang(lang);
+		}
+
+		window.lirienT = function (key) {
+			const lang = document.documentElement.lang || "en";
+			const entry = TR[key];
+			if (!entry) return key;
+			return entry[lang] != null ? entry[lang] : (entry.en != null ? entry.en : key);
+		};
+
+		// Apply at module load — affects first-paint of the title
+		// screen + drawer if pre-rendered server-side.
+		applyLang(detectLang());
+
+		// Wire the Language section's buttons. Delegated click on
+		// any element with data-lang-set so it works for elements
+		// added later too.
+		document.addEventListener("click", (e) => {
+			const btn = e.target.closest("[data-lang-set]");
+			if (btn) setLang(btn.getAttribute("data-lang-set"));
+		});
+	})();
+	</script>
+	<script src="analytics.js?v=20260510y"></script>
+	<script src="ink.js?v=20260510y"></script>
+	<script src="main.js?v=20260510y"></script>
 </body>
 </html>

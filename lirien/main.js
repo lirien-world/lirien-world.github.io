@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510x";
+const ASSET_VERSION = "20260510y";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1888,10 +1888,12 @@ function bindSettingsMenu() {
 
 function bindChaptersMenu() {
 	$restartBtn.addEventListener("click", () => {
+		const t = (window.lirienT || ((k) => k));
 		showConfirm({
-			title: "Restart from beginning?",
-			message: "Your reading position and chapter list will be cleared. This can't be undone.",
-			confirmLabel: "Restart",
+			title: t("lirien.confirm.restart.title"),
+			message: t("lirien.confirm.restart.message"),
+			confirmLabel: t("lirien.confirm.restart.action"),
+			cancelLabel: t("lirien.confirm.cancel"),
 		}, () => {
 			closeDrawer($chaptersPanel);
 			restartFromBeginning();
@@ -2326,12 +2328,28 @@ function recordChapterBookmark(spec) {
 	renderChapterList();
 }
 
+// Hook called by the inline i18n module after applyLang. Re-renders
+// any content that's built at runtime via lirienT() — chapter list
+// (rebuilt from saved bookmarks each time), and the current-
+// selection markers on the speed/size/music rows. Without this,
+// the bug Steve hit on /echoes/ also bites here: language flips
+// but dynamically-rendered drawer content stays in the previous
+// language until the next user action.
+window.lirienRefreshDynamicLabels = function () {
+	if ($chaptersPanel && !$chaptersPanel.hidden && typeof renderChapterList === "function") {
+		renderChapterList();
+	}
+	if (typeof refreshSelectionMarkers === "function") {
+		refreshSelectionMarkers();
+	}
+};
+
 function renderChapterList() {
 	$chapterList.innerHTML = "";
 	if (chapterBookmarks.length === 0) {
 		const empty = document.createElement("div");
 		empty.className = "chapter-empty";
-		empty.textContent = "Chapter list will appear here as you read.";
+		empty.textContent = (window.lirienT || ((k) => k))("lirien.chapter.empty");
 		$chapterList.appendChild(empty);
 		return;
 	}

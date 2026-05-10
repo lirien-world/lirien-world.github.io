@@ -115,8 +115,13 @@ html, body {
 			rgba(8, 6, 15, 0.55) 100%),
 		url("../spiral_stone.png") center/cover no-repeat,
 		var(--void);
-	opacity: 0;
-	transition: opacity 1.6s ease-in;
+	/* Title screen is the FIRST thing painted at PWA boot. Used to
+	 * fade in over 1.6s, but during that window the chrome behind
+	 * (menu icon's gold halo, prose box outline, anything z-index
+	 * < 100) was visibly bleeding through. Now we paint at full
+	 * opacity from the start — the dismissed transition below is
+	 * the only opacity change in this element's life. */
+	opacity: 1;
 }
 .title-screen.visible    { opacity: 1; }
 .title-screen.dismissed  { opacity: 0; transition: opacity 1.4s ease-out; pointer-events: none; }
@@ -240,21 +245,51 @@ html, body {
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 2.5s ease-in-out;
+	/* Isolation so the ::before backdrop sits behind only this
+	 * subtree's text, not somewhere weird in the parent stack. */
+	isolation: isolate;
 }
 .chapter-title.visible { opacity: 1; }
+/* Localized dark scrim behind the chapter title text, fading out
+ * to the right + bottom so it doesn't read as a card or panel —
+ * just a soft darkening of the upper-left where the text sits.
+ * Necessary because chapter titles fire over arbitrary atmosphere
+ * images, and on bright/washed-out art the cream/gold text was
+ * unreadable even with the existing text-shadow. */
+.chapter-title::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background: radial-gradient(
+		ellipse at top left,
+		rgba(8, 6, 15, 0.62) 0%,
+		rgba(8, 6, 15, 0.35) 40%,
+		rgba(8, 6, 15, 0) 75%
+	);
+}
 
 .chapter-number {
 	font-size: 22px;
 	letter-spacing: 0.18em;
-	color: rgba(240, 230, 200, 0.9);
-	text-shadow: 0 0 6px rgba(0,0,0,0.8);
+	color: rgba(240, 230, 200, 0.92);
+	/* Stronger, layered text-shadow so the type stays legible
+	 * even where the backdrop scrim has faded. Two passes: a
+	 * tight near-black shadow for edge contrast, plus a wider
+	 * softer one for a halo of darkness around each letter. */
+	text-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.95),
+		0 0 14px rgba(0, 0, 0, 0.7);
 	margin-bottom: 12px;
 }
 .chapter-name {
 	font-size: 56px;
 	line-height: 1.05;
 	color: #f7eed1;
-	text-shadow: 0 0 8px rgba(0,0,0,0.85);
+	text-shadow:
+		0 2px 4px rgba(0, 0, 0, 0.95),
+		0 0 18px rgba(0, 0, 0, 0.75);
 }
 
 /* ----- game layer (prose + choices) ----- */
@@ -471,8 +506,18 @@ body.story-started .game { opacity: 1; }
 	z-index: 50;
 	padding: 0;
 	color: var(--mist);
-	transition: color 0.3s ease, filter 0.3s ease;
+	transition: color 0.3s ease, filter 0.3s ease, opacity 0.6s ease;
 	-webkit-tap-highlight-color: transparent;
+	/* Hidden until the title is dismissed. Prevents the gold halo
+	 * from being visible at top-right during the title's fade-out
+	 * window, when the user is still meant to be focused on the
+	 * cover. */
+	opacity: 0;
+	pointer-events: none;
+}
+body.story-started .chrome-btn {
+	opacity: 1;
+	pointer-events: auto;
 }
 @media (hover: hover) and (pointer: fine) {
 	.chrome-btn:hover {
@@ -530,6 +575,7 @@ body.story-started .game { opacity: 1; }
 	);
 	background-size: 260% 100%;
 	background-repeat: no-repeat;
+	background-position: 100% 0%;
 	-webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M4 7h16'/><path d='M4 12h16'/><path d='M4 17h16'/></svg>");
 	mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M4 7h16'/><path d='M4 12h16'/><path d='M4 17h16'/></svg>");
 	-webkit-mask-position: center;
@@ -538,24 +584,20 @@ body.story-started .game { opacity: 1; }
 	mask-size: 24px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
-	animation: menu-btn-shimmer 5.5s ease-in-out infinite;
 }
-/* Pause shimmer on hover/focus so the icon settles into its
- * "active" gold-bright state without the moving highlight
- * fighting for attention. */
-@media (hover: hover) and (pointer: fine) {
-	.menu-btn:hover::before {
-		animation: none;
-		background-position: 50% 0%;
-	}
-}
-.menu-btn:focus-visible::before {
-	animation: none;
-	background-position: 50% 0%;
+/* Shimmer is no longer a constant loop — it's a once-in-a-while
+ * pulse, scheduled by JS. First fires ~6-12s after load ("hi,
+ * I'm here") and then on a long random interval (~20-35 minutes)
+ * so it reads as a tonal echo of the world's actual shimmer
+ * rather than as a UI animation. The .is-shimmering class
+ * triggers a single pass; JS removes it on animationend so it
+ * can re-fire later. */
+.menu-btn.is-shimmering::before {
+	animation: menu-btn-shimmer 1.6s ease-in-out 1;
 }
 @keyframes menu-btn-shimmer {
-	0%, 100% { background-position: 100% 0%; }
-	50%      { background-position: 0% 0%; }
+	0%   { background-position: 100% 0%; }
+	100% { background-position: 0% 0%; }
 }
 
 /* ----- drawer chrome (settings + chapters) -----

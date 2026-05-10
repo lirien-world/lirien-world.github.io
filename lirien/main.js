@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510d";
+const ASSET_VERSION = "20260510e";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -123,6 +123,34 @@ if ($menuBtn) {
 			if (typeof refreshSelectionMarkers === "function") refreshSelectionMarkers();
 		}
 	});
+
+	// Rare shimmer — one pass shortly after load, then on a long
+	// random schedule. Tonally: the menu icon "shimmers" the way
+	// the world does, not the way a UI loops. Steve's note: "I
+	// like the idea that it would do it very rarely and on a
+	// random schedule just like the shimmer haha".
+	const triggerShimmer = () => {
+		if (document.hidden) return scheduleShimmer();   // skip while tab/PWA is backgrounded
+		$menuBtn.classList.remove("is-shimmering");
+		void $menuBtn.offsetWidth;                       // force reflow → animation re-fires
+		$menuBtn.classList.add("is-shimmering");
+	};
+	const scheduleShimmer = () => {
+		const min = 20 * 60 * 1000;  // 20 minutes
+		const max = 38 * 60 * 1000;  // 38 minutes
+		const delay = min + Math.random() * (max - min);
+		setTimeout(triggerShimmer, delay);
+	};
+	$menuBtn.addEventListener("animationend", (ev) => {
+		if (ev.animationName === "menu-btn-shimmer") {
+			$menuBtn.classList.remove("is-shimmering");
+			scheduleShimmer();
+		}
+	});
+	// Initial "hi, I'm here" pulse 6-12s after load — long enough
+	// for the user to settle in but short enough to teach them the
+	// icon exists.
+	setTimeout(triggerShimmer, 6000 + Math.random() * 6000);
 }
 
 // Accordion sections inside the drawer. Click a section's summary

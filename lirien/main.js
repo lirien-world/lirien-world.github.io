@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510h";
+const ASSET_VERSION = "20260510i";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -164,24 +164,44 @@ document.addEventListener("click", (ev) => {
 	if (!section) return;
 	const open = section.classList.toggle("is-open");
 	summary.setAttribute("aria-expanded", open ? "true" : "false");
-	// On expand, scroll the drawer body so this section's header is
-	// near the top of the visible area. Without this, sections that
-	// open near the bottom of the drawer expand below the fold —
-	// the user clicks "Text size" and sees no choices because they're
-	// all rendered below the visible scroll region.
+	// On expand, "pull up" the section so its choices are visible.
+	// Two failure modes the simple "scroll-header-to-top" approach hit:
+	//   1. The LAST section (Music) had its expanding content clipped
+	//      by drawer-foot-actions — scrolling its header to the top
+	//      didn't guarantee its body fit on screen.
+	//   2. requestAnimationFrame fires WHILE the grid-row animation
+	//      is still mid-transition; getBoundingClientRect returned
+	//      partial-expansion height, so we computed a too-shallow
+	//      scroll target.
+	// New behaviour:
+	//   - Defer scroll until the 0.45s grid-row animation has settled,
+	//     so the section's measured height is its full expanded height.
+	//   - If section fits in the visible drawer-body height, bottom-
+	//     align it (its choices end up just above the foot, header
+	//     still visible above). If it's taller than the viewport, top-
+	//     align (header visible, user scrolls down to see more).
 	if (open) {
 		const body = section.closest(".drawer-body");
 		if (body) {
-			// rAF lets the just-toggled grid-row animation start so
-			// the section's outline includes its expanding height —
-			// otherwise we'd scroll to its current (collapsed) top
-			// and the content would still expand below the fold.
-			requestAnimationFrame(() => {
+			setTimeout(() => {
 				const sectionRect = section.getBoundingClientRect();
 				const bodyRect = body.getBoundingClientRect();
-				const target = body.scrollTop + (sectionRect.top - bodyRect.top);
-				body.scrollTo({ top: target, behavior: "smooth" });
-			});
+				const viewportH = body.clientHeight;
+				const sectionH = sectionRect.height;
+				const sectionTopRel = sectionRect.top - bodyRect.top;
+				const sectionBotRel = sectionRect.bottom - bodyRect.top;
+				let target;
+				if (sectionH <= viewportH) {
+					// Fits — bottom-align: pulls the section up into
+					// view so its choices are revealed below the header.
+					target = body.scrollTop + sectionBotRel - viewportH;
+				} else {
+					// Too tall — top-align so the header anchors and
+					// the user can scroll down to see the rest.
+					target = body.scrollTop + sectionTopRel;
+				}
+				body.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+			}, 470);
 		}
 	}
 });

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510l";
+const ASSET_VERSION = "20260510m";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -224,6 +224,7 @@ const $titleHint = document.getElementById("title-hint");
 const $devPanel = document.getElementById("dev-panel");
 const $devSearch = document.getElementById("dev-search");
 const $devList = document.getElementById("dev-list");
+const $devVersion = document.getElementById("dev-version");
 const $devClose = document.getElementById("dev-close");
 const $devCurrent = document.getElementById("dev-current");
 
@@ -2343,14 +2344,49 @@ function bindDevMenu() {
 			$devPanel.hidden = true;
 		}
 	});
+	// Mobile entry point: 3-finger tap anywhere. Hard to trigger
+	// accidentally during normal one-finger reading; easy on purpose.
+	// Same convention several iOS apps use for hidden settings.
+	document.addEventListener("touchstart", (ev) => {
+		if (ev.touches && ev.touches.length >= 3) {
+			ev.preventDefault();
+			toggleDevPanel();
+		}
+	}, { passive: false });
 	$devClose.addEventListener("click", () => { $devPanel.hidden = true; });
 	$devSearch.addEventListener("input", buildDevList);
+}
+
+// Render the version row at the top of the dev panel. Reads the
+// PWA freshness BUILD_VERSION via window.lirienFreshness (exposed
+// by the inline script in index.html) plus the ASSET_VERSION
+// constant from this module. Last-checked time is computed live
+// each time the panel opens.
+function renderDevVersion() {
+	if (!$devVersion) return;
+	const fresh = window.lirienFreshness || {};
+	const buildVersion = fresh.buildVersion || "(unknown)";
+	const lastCheck = (typeof fresh.lastCheck === "function") ? fresh.lastCheck() : 0;
+	let lastCheckStr = "(never)";
+	if (lastCheck > 0) {
+		const ago = Math.round((Date.now() - lastCheck) / 1000);
+		if (ago < 60) lastCheckStr = `${ago}s ago`;
+		else if (ago < 3600) lastCheckStr = `${Math.round(ago / 60)}m ago`;
+		else lastCheckStr = `${Math.round(ago / 3600)}h ago`;
+	}
+	const isStandalone = document.body.classList.contains("is-standalone");
+	$devVersion.innerHTML =
+		`<span class="label">build:</span> <span class="value">${buildVersion}</span><br>` +
+		`<span class="label">asset:</span> <span class="value">${ASSET_VERSION}</span><br>` +
+		`<span class="label">checked:</span> <span class="value">${lastCheckStr}</span><br>` +
+		`<span class="label">mode:</span> <span class="value">${isStandalone ? "PWA standalone" : "browser"}</span>`;
 }
 
 function toggleDevPanel() {
 	$devPanel.hidden = !$devPanel.hidden;
 	if (!$devPanel.hidden) {
 		$devSearch.value = "";
+		renderDevVersion();
 		// Sub-header: show the bg the user is currently looking at so
 		// they can orient and skip forward/back from where they are.
 		if (currentBgName) {

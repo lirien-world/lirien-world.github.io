@@ -209,6 +209,14 @@ html, body {
 .title-screen.visible    { opacity: 1; }
 .title-screen.dismissed  { opacity: 0; transition: opacity 1.4s ease-out; pointer-events: none; }
 .title-screen[hidden]    { display: none; }
+/* Auto-resume after a freshness reload: never paint the title.
+ * The inline pre-paint script in index.html sets this class on
+ * <html> synchronously before first paint when sessionStorage
+ * indicates we're booting because of an automatic version update.
+ * Without this rule there was a brief flash of the title screen
+ * before init() ran the auto-Continue click. */
+html.is-auto-resuming .title-screen { display: none; }
+html.is-auto-resuming .game { opacity: 1; }
 
 .title-content {
 	max-width: min(960px, 92vw);
@@ -427,38 +435,52 @@ body.story-started .game { opacity: 1; }
 		0 6px 18px rgba(0, 0, 0, 0.38),
 		inset 0 0 0 1px rgba(196, 147, 90, 0.14),
 		inset 0 1px 0 rgba(245, 238, 216, 0.07);
-	/* Soft feather at top + bottom edges. Two purposes:
-	 *   1. Hides prior-chunk text peeking into the padding zone
-	 *      after a progressive-scroll has parked us deep in a
-	 *      tall chunk. Without this, the bottom-half of an
-	 *      orphan line ("responded.") could read as un-styled
-	 *      clutter at the very top edge of the panel.
-	 *   2. The same feather gives the panel a softened "page
-	 *      held in candlelight" feel — material presence, not
-	 *      a hard rectangle.
-	 * The outer drop-shadow box-shadows live OUTSIDE the box
-	 * and aren't affected by the mask, so the panel still
-	 * lifts off the world. The inner gold rim DOES get masked
-	 * at the very edges, which reads as the rim feathering
-	 * rather than a hard line — desirable.
-	 * Heights tuned to stay just inside the padding zones
-	 * (top 18px / bottom 26px) so first/last lines of actual
-	 * prose are NOT touched by the fade — they sit fully past
-	 * the masked region. */
-	-webkit-mask-image: linear-gradient(
+}
+
+/* Inside-only fade overlays for the prose box. Sibling elements
+ * inside .game, positioned absolutely to match .prose's edges
+ * exactly. They sit ABOVE .prose visually (z-index) but DON'T
+ * scroll with the prose's content — they stay fixed at the
+ * prose's top + bottom edges, hiding any text that scrolls
+ * through the padding zones (the "responded." orphan-line
+ * leakage from progressive-scroll-parked-deep cases).
+ *
+ * Critically: the gold rim stays visible all the way around
+ * because these overlays sit INSIDE the rim (1px inset on each
+ * side), and only cover top/bottom strips. Sides + corners
+ * remain crisp. */
+.prose-fade {
+	position: absolute;
+	pointer-events: none;
+	z-index: 11;
+	left: calc(80px + 1px);
+	right: calc(80px + 1px);
+}
+.prose-fade--top {
+	top: calc(50% + 1px);
+	height: 32px;
+	background: linear-gradient(
 		to bottom,
-		transparent 0,
-		black 16px,
-		black calc(100% - 22px),
-		transparent 100%
+		rgba(11, 11, 18, 0.95) 0%,
+		rgba(11, 11, 18, 0.62) 45%,
+		rgba(11, 11, 18, 0.22) 78%,
+		rgba(11, 11, 18, 0) 100%
 	);
-	mask-image: linear-gradient(
-		to bottom,
-		transparent 0,
-		black 16px,
-		black calc(100% - 22px),
-		transparent 100%
+	border-top-left-radius: 11px;
+	border-top-right-radius: 11px;
+}
+.prose-fade--bottom {
+	bottom: calc(56px + 1px);
+	height: 38px;
+	background: linear-gradient(
+		to top,
+		rgba(11, 11, 18, 0.95) 0%,
+		rgba(11, 11, 18, 0.62) 45%,
+		rgba(11, 11, 18, 0.22) 78%,
+		rgba(11, 11, 18, 0) 100%
 	);
+	border-bottom-left-radius: 11px;
+	border-bottom-right-radius: 11px;
 }
 .prose::-webkit-scrollbar { width: 8px; }
 .prose::-webkit-scrollbar-track { background: transparent; }
@@ -1474,6 +1496,29 @@ body.story-started .chrome-btn {
 	transform: translateY(-1px);
 }
 
+/* Version row at the top of the dev panel — BUILD_VERSION (PWA
+ * freshness stamp), ASSET_VERSION (?v= cache-buster), and time
+ * since last freshness check. Rendered live by main.js whenever
+ * the panel opens. */
+.dev-version {
+	font-family: ui-monospace, Menlo, monospace;
+	font-size: 11px;
+	color: rgba(245, 235, 210, 0.7);
+	padding: 0 0 8px 0;
+	margin-bottom: 6px;
+	border-bottom: 1px dashed rgba(245, 235, 210, 0.15);
+	letter-spacing: 0.02em;
+	line-height: 1.6;
+}
+.dev-version .label {
+	color: rgba(245, 235, 210, 0.45);
+	display: inline-block;
+	min-width: 4.2em;
+}
+.dev-version .value {
+	color: var(--gold-bright);
+}
+
 /* Sub-header showing the user's current bg so they can orient quickly
  * and skip forward/back from where they are. */
 .dev-current {
@@ -1527,6 +1572,21 @@ body.story-started .chrome-btn {
 		padding: 22px 18px 28px 18px;
 		border-radius: 8px;
 	}
+	.prose-fade {
+		left: calc(max(14px, env(safe-area-inset-left)) + 1px);
+		right: calc(max(14px, env(safe-area-inset-right)) + 1px);
+	}
+	.prose-fade--top {
+		top: calc(32% + 1px);
+		border-top-left-radius: 7px;
+		border-top-right-radius: 7px;
+	}
+	.prose-fade--bottom {
+		bottom: calc(14px + 1px);
+		border-bottom-left-radius: 7px;
+		border-bottom-right-radius: 7px;
+	}
+	body.is-standalone .prose-fade--top { top: calc(45% + 1px); }
 	/* Standalone (Add to Home Screen) gets the full viewport with no
 	 * browser chrome eating space, so the prose panel can shrink and
 	 * still hold a comfortable amount of text per chunk — letting the

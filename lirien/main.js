@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510p";
+const ASSET_VERSION = "20260510q";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -830,9 +830,23 @@ function scrollChunkToTop(paragraph) {
 	// padding-height below the top of the visible area — i.e. flush
 	// with the inner padding edge, not the bare panel border. After
 	// settling, the user can scroll up freely to re-read prior chunks.
+	//
+	// Defensive: also ensure the previous paragraph's bottom is at
+	// least `safety` pixels above the viewport top, regardless of
+	// what the padTop+margin math says. Vollkorn (and other serifs)
+	// render descenders that extend beyond a line's offsetHeight,
+	// and sub-pixel rendering / non-integer scrollTop can leak a
+	// pixel or two of those descenders into the visible area as a
+	// ghost-text artifact at the top edge.
 	requestAnimationFrame(() => {
 		const padTop = parseInt(getComputedStyle($prose).paddingTop, 10) || 0;
-		const offset = Math.max(0, paragraph.offsetTop - padTop);
+		let offset = Math.max(0, paragraph.offsetTop - padTop);
+		const prev = paragraph.previousElementSibling;
+		if (prev && prev.tagName === "P") {
+			const prevBottom = prev.offsetTop + prev.offsetHeight;
+			const safety = 10;  // px headroom for descenders + AA
+			offset = Math.max(offset, prevBottom + safety);
+		}
 		$prose.scrollTo({ top: offset, behavior: "auto" });
 	});
 }
@@ -2423,11 +2437,34 @@ function renderDevVersion() {
 	}
 	const isStandalone = document.body.classList.contains("is-standalone");
 	const modeStr = isStandalone ? "PWA" : "browser";
+
+	// Scroll diagnostic — useful when investigating peek-through /
+	// edge-case scroll bugs. Shows current scrollTop, paragraph
+	// count, and the offsetTop of each paragraph plus a "..." if
+	// long. If something's leaking at the top edge, a screenshot
+	// of this row tells us exactly where the math went sideways.
+	const padTop = parseInt(getComputedStyle($prose).paddingTop, 10) || 0;
+	const padBottom = parseInt(getComputedStyle($prose).paddingBottom, 10) || 0;
+	const scrollTop = $prose.scrollTop;
+	const clientH = $prose.clientHeight;
+	const ps = $proseContent.querySelectorAll("p");
+	let paraStr = "0";
+	if (ps.length > 0) {
+		const summaries = [];
+		for (let i = Math.max(0, ps.length - 4); i < ps.length; i++) {
+			const p = ps[i];
+			summaries.push(`${i}:[${p.offsetTop}-${p.offsetTop + p.offsetHeight}]`);
+		}
+		paraStr = `${ps.length} ${(ps.length > 4 ? "…" : "")}${summaries.join(" ")}`;
+	}
+
 	$devVersion.innerHTML =
 		`<span class="pair"><span class="label">build:</span> <span class="value">${buildVersion}</span></span>` +
 		`<span class="pair"><span class="label">asset:</span> <span class="value">${ASSET_VERSION}</span></span>` +
 		`<span class="pair"><span class="label">checked:</span> <span class="value">${lastCheckStr}</span></span>` +
-		`<span class="pair"><span class="label">mode:</span> <span class="value">${modeStr}</span></span>`;
+		`<span class="pair"><span class="label">mode:</span> <span class="value">${modeStr}</span></span>` +
+		`<span class="pair"><span class="label">scroll:</span> <span class="value">${scrollTop}/${clientH} pad ${padTop}/${padBottom}</span></span>` +
+		`<span class="pair"><span class="label">paras:</span> <span class="value">${paraStr}</span></span>`;
 }
 
 function toggleDevPanel() {

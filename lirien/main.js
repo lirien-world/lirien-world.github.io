@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260510t";
+const ASSET_VERSION = "20260510u";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -765,6 +765,25 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 	});
 }
 
+// Manual-scroll snap. After the user stops scrolling for ~250ms,
+// re-run snapScrollToWholeParagraphs so the prose settles on a
+// whole-paragraph boundary even when the scroll wasn't driven by
+// a chunk reveal. CSS scroll-snap covers the common path; this
+// is the belt-and-suspenders. The snapInProgress guard avoids a
+// feedback loop — the smooth scrollTo inside snap fires scroll
+// events that would otherwise re-trigger the timer.
+let proseScrollEndTimer = 0;
+let snapInProgress = false;
+if ($prose) {
+	$prose.addEventListener("scroll", () => {
+		if (snapInProgress) return;
+		clearTimeout(proseScrollEndTimer);
+		proseScrollEndTimer = setTimeout(() => {
+			snapScrollToWholeParagraphs();
+		}, 250);
+	}, { passive: true });
+}
+
 function onChunkRevealed() {
 	currentReveal = null;
 	state = "waiting";
@@ -899,7 +918,12 @@ function snapScrollToWholeParagraphs() {
 		// viewport top (paragraph fully scrolled out). The next
 		// paragraph's natural margin-top creates a clean gap before
 		// the visible content.
+		snapInProgress = true;
 		$prose.scrollTo({ top: pBottom, behavior: "smooth" });
+		// Clear the guard after enough time for the smooth scroll
+		// animation to settle so subsequent user scrolls re-arm
+		// the manual-scroll snap timer.
+		setTimeout(() => { snapInProgress = false; }, 700);
 		return;
 	}
 }

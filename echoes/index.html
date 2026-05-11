@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-111252";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-112204";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -1700,42 +1700,30 @@ function play(){
 		loadTrack(nextIndex(), {play:true});
 		return;
 	}
-	// Signal intent BEFORE attempting play — iOS uses this to
-	// render the right lock-screen icon and to schedule the
-	// action delivery reliably.
-	if ("mediaSession" in navigator){
-		try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}
-	}
 	const track = TRACKS[activeIdx];
 	// Fast path: no src or audio errored — full reload from scratch.
 	if (track && (!$audio.src || $audio.src === "" || $audio.error)){
 		loadTrack(activeIdx, {play:true});
 		return;
 	}
+	// DON'T set mediaSession.playbackState optimistically here.
+	// Steve's report 2026-05-11: on iOS after audio-focus loss,
+	// $audio.play() resolves (no rejection) but produces no sound;
+	// an optimistic "playing" state painted the lock-screen icon
+	// as playing while the speaker stayed silent. playbackState is
+	// now set ONLY from the real audio 'play' / 'pause' events
+	// below, so the lock-screen icon always reflects truth.
 	const p = $audio.play();
 	if (p && p.catch){
+		// If play() rejects outright (the most reliable failure
+		// signal), reload the track from scratch — that's the
+		// same path our first-gesture flow uses, and iOS is more
+		// likely to re-acquire audio session focus from a fresh
+		// load than from a bare retry. We don't try to preserve
+		// currentTime here: getting audio back at all matters
+		// more than position when iOS has interrupted us.
 		p.catch(()=>{
-			// $audio.play() rejected. The most common cause on iOS
-			// is audio-focus loss while another app (mic, phone, etc.)
-			// had the foreground — the audio element still has a src
-			// but iOS released our session, and a fresh .play()
-			// can't regrab it without a re-load. Re-assign src to
-			// the same URL (forces iOS to re-acquire the audio
-			// session), then restore currentTime so the user resumes
-			// mid-track instead of starting over.
-			try {
-				const wasTime = $audio.currentTime;
-				const wasSrc = $audio.src;
-				const onReady = () => {
-					$audio.removeEventListener("loadedmetadata", onReady);
-					try { $audio.currentTime = wasTime; } catch (e) {}
-					const p2 = $audio.play();
-					if (p2 && p2.catch) p2.catch(()=>{ /* gave up */ });
-				};
-				$audio.addEventListener("loadedmetadata", onReady, { once: true });
-				$audio.src = wasSrc;
-				$audio.load();
-			} catch (e) { /* gave up */ }
+			try { loadTrack(activeIdx, {play:true}); } catch (e) {}
 		});
 	}
 }

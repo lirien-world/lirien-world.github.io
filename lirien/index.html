@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512k">
+	<link rel="stylesheet" href="style.css?v=20260512m">
 </head>
 <body>
 	<script>
@@ -156,6 +156,34 @@
 			</section>
 			<section class="drawer-section">
 				<button class="drawer-section-summary" type="button" aria-expanded="false">
+					<span class="drawer-section-title" data-i18n="lirien.section.image-quality">Image quality</span>
+					<span class="drawer-section-caret" aria-hidden="true"></span>
+				</button>
+				<div class="drawer-section-body"><div class="drawer-section-content">
+					<button class="setting-row quality-btn" data-quality="high"     data-i18n="lirien.quality.high">High</button>
+					<button class="setting-row quality-btn" data-quality="standard" data-i18n="lirien.quality.standard">Standard (smaller download)</button>
+				</div></div>
+			</section>
+			<section class="drawer-section">
+				<button class="drawer-section-summary" type="button" aria-expanded="false">
+					<span class="drawer-section-title" data-i18n="lirien.section.offline">Offline reading</span>
+					<span class="drawer-section-caret" aria-hidden="true"></span>
+				</button>
+				<div class="drawer-section-body"><div class="drawer-section-content">
+					<!--
+						Single dynamic panel. Its inner HTML is rebuilt by
+						renderOfflinePanel() in main.js based on:
+						  - settings.offlineMode (off / on)
+						  - preload state (idle / running / done)
+						  - integrity state (clean / has-gaps)
+						  - storage estimate (fits / doesn't fit)
+						See bindOfflineMode() for the state machine.
+					-->
+					<div id="offline-panel" class="offline-panel"></div>
+				</div></div>
+			</section>
+			<section class="drawer-section">
+				<button class="drawer-section-summary" type="button" aria-expanded="false">
 					<span class="drawer-section-title" data-i18n="lirien.section.language">Language</span>
 					<span class="drawer-section-caret" aria-hidden="true"></span>
 				</button>
@@ -259,7 +287,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260511-181233";
+		const BUILD_VERSION = "20260511-191744";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -375,8 +403,9 @@
 			"lirien.section.chapters": { en: "Chapters",          es: "Capítulos" },
 			"lirien.section.speed":    { en: "Reading speed",     es: "Velocidad de lectura" },
 			"lirien.section.size":     { en: "Text size",         es: "Tamaño del texto" },
-			"lirien.section.music":    { en: "Music",             es: "Música" },
-			"lirien.section.language": { en: "Language",          es: "Idioma" },
+			"lirien.section.music":         { en: "Music",                       es: "Música" },
+			"lirien.section.image-quality": { en: "Image quality",               es: "Calidad de imagen" },
+			"lirien.section.language":      { en: "Language",                    es: "Idioma" },
 
 			"lirien.speed.very-slow":  { en: "Very slow",         es: "Muy lento" },
 			"lirien.speed.slow":       { en: "Slow",              es: "Lento" },
@@ -391,6 +420,30 @@
 
 			"lirien.music.on":         { en: "On",                es: "Activada" },
 			"lirien.music.off":        { en: "Off",               es: "Desactivada" },
+
+			"lirien.quality.high":     { en: "High",                            es: "Alta" },
+			"lirien.quality.standard": { en: "Standard (smaller download)",     es: "Estándar (descarga más pequeña)" },
+
+			"lirien.section.offline":        { en: "Offline reading",                                       es: "Lectura sin conexión" },
+			"lirien.offline.intro":          { en: "Keep the book on your device for reading without an internet connection.",
+			                                   es: "Mantén el libro en tu dispositivo para leer sin conexión a internet." },
+			"lirien.offline.size":           { en: "Download size",                                         es: "Tamaño de descarga" },
+			"lirien.offline.available":      { en: "Available on this device",                              es: "Disponible en este dispositivo" },
+			"lirien.offline.enable":         { en: "Enable offline reading",                                es: "Activar lectura sin conexión" },
+			"lirien.offline.disable":        { en: "Disable",                                               es: "Desactivar" },
+			"lirien.offline.downloading":    { en: "Downloading…",                                          es: "Descargando…" },
+			"lirien.offline.cancel":         { en: "Cancel",                                                es: "Cancelar" },
+			"lirien.offline.ready":          { en: "Available offline.",                                    es: "Disponible sin conexión." },
+			"lirien.offline.needs-sync":     { en: "Some assets need to be re-downloaded.",                 es: "Algunos archivos necesitan volver a descargarse." },
+			"lirien.offline.resync":         { en: "Re-sync now",                                           es: "Volver a sincronizar" },
+			"lirien.offline.no-space":       { en: "Not enough space on this device.",                      es: "No hay espacio suficiente en este dispositivo." },
+			"lirien.offline.try-standard":   { en: "Switching to Standard image quality would fit. Switch and continue?",
+			                                   es: "Cambiar a calidad de imagen Estándar serviría. ¿Cambiar y continuar?" },
+			"lirien.offline.switch-and-go":  { en: "Switch + download",                                     es: "Cambiar + descargar" },
+			"lirien.offline.cant-fit":       { en: "Even Standard quality won't fit. Free some space and try again.",
+			                                   es: "Ni siquiera la calidad Estándar caberá. Libera espacio e inténtalo de nuevo." },
+			"lirien.offline.estimating":     { en: "Checking available storage…",                           es: "Comprobando almacenamiento disponible…" },
+			"lirien.offline.cached":         { en: "On device",                                             es: "En el dispositivo" },
 
 			"lirien.action.return-recent": { en: "Return to most recent point",  es: "Volver al punto más reciente" },
 			"lirien.action.restart":       { en: "Restart from beginning",       es: "Reiniciar desde el principio" },
@@ -529,8 +582,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512k"></script>
-	<script src="ink.js?v=20260512k"></script>
-	<script src="main.js?v=20260512k"></script>
+	<script src="analytics.js?v=20260512m"></script>
+	<script src="ink.js?v=20260512m"></script>
+	<script src="main.js?v=20260512m"></script>
 </body>
 </html>

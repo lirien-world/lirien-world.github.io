@@ -1,0 +1,1196 @@
+{
+  "manifest_version": "20260511-191744",
+  "generated_at": "2026-05-11T18:17:44Z",
+  "asset_count": 297,
+  "total_size": 533483588,
+  "assets": {
+    "atmosphere/aerin_hand_with_glyph_v1.png": {
+      "hash": "7e301e6062",
+      "size": 1864972
+    },
+    "atmosphere/aerin_hand_with_glyph_v1.webp": {
+      "hash": "1719b32c90",
+      "size": 90874
+    },
+    "atmosphere/aerin_writing.png": {
+      "hash": "47162517b3",
+      "size": 1794880
+    },
+    "atmosphere/aerin_writing.webp": {
+      "hash": "cd26bac3ea",
+      "size": 121818
+    },
+    "atmosphere/aerin_writing_in_ring.png": {
+      "hash": "99c9830356",
+      "size": 2452253
+    },
+    "atmosphere/aerin_writing_in_ring.webp": {
+      "hash": "220a569867",
+      "size": 294786
+    },
+    "atmosphere/ash_plain.png": {
+      "hash": "41b95b82fa",
+      "size": 1563929
+    },
+    "atmosphere/ash_plain.webp": {
+      "hash": "599a8bc629",
+      "size": 91076
+    },
+    "atmosphere/ash_plain_approach_to_solrien.png": {
+      "hash": "efe1092699",
+      "size": 2360588
+    },
+    "atmosphere/ash_plain_approach_to_solrien.webp": {
+      "hash": "d9e8cb5e22",
+      "size": 261138
+    },
+    "atmosphere/ash_plain_arrival.png": {
+      "hash": "0891028f36",
+      "size": 2140214
+    },
+    "atmosphere/ash_plain_arrival.webp": {
+      "hash": "68c4af386e",
+      "size": 195402
+    },
+    "atmosphere/ash_plain_displacement.png": {
+      "hash": "375756b6a3",
+      "size": 2358983
+    },
+    "atmosphere/ash_plain_displacement.webp": {
+      "hash": "e7b1e8c22a",
+      "size": 251520
+    },
+    "atmosphere/ash_plain_keyart.png": {
+      "hash": "22658b9f37",
+      "size": 2387069
+    },
+    "atmosphere/ash_plain_keyart.webp": {
+      "hash": "cbaa16b436",
+      "size": 185800
+    },
+    "atmosphere/ash_plain_ring_interior.png": {
+      "hash": "3b9c86f9d1",
+      "size": 2409966
+    },
+    "atmosphere/ash_plain_ring_interior.webp": {
+      "hash": "4fe50b646b",
+      "size": 274238
+    },
+    "atmosphere/ash_plain_stone_circle.png": {
+      "hash": "d45f80fecd",
+      "size": 2030332
+    },
+    "atmosphere/ash_plain_stone_circle.webp": {
+      "hash": "f5ddfe4dbc",
+      "size": 173548
+    },
+    "atmosphere/ch01_aerin_awakens.png": {
+      "hash": "d44368f980",
+      "size": 2450353
+    },
+    "atmosphere/ch01_aerin_awakens.webp": {
+      "hash": "c4169d6ca9",
+      "size": 273352
+    },
+    "atmosphere/ch01_aerin_glyph_awakened.png": {
+      "hash": "175e9b03d0",
+      "size": 3055646
+    },
+    "atmosphere/ch01_aerin_glyph_awakened.webp": {
+      "hash": "b2b198691c",
+      "size": 488518
+    },
+    "atmosphere/ch01_aerin_hand_with_glyph_v2.png": {
+      "hash": "0112fff256",
+      "size": 1716278
+    },
+    "atmosphere/ch01_aerin_hand_with_glyph_v2.webp": {
+      "hash": "6e341b2be9",
+      "size": 105242
+    },
+    "atmosphere/ch01_approach_to_solrien.png": {
+      "hash": "aff5411c08",
+      "size": 2214491
+    },
+    "atmosphere/ch01_approach_to_solrien.webp": {
+      "hash": "6ac9788b56",
+      "size": 208988
+    },
+    "atmosphere/ch01_approaching_ring.png": {
+      "hash": "043f9819e5",
+      "size": 2484873
+    },
+    "atmosphere/ch01_approaching_ring.webp": {
+      "hash": "98c9ca81e9",
+      "size": 311160
+    },
+    "atmosphere/ch01_ash_hollow_panorama.png": {
+      "hash": "ea7b4d91ba",
+      "size": 1999221
+    },
+    "atmosphere/ch01_ash_hollow_panorama.webp": {
+      "hash": "8aa13ea350",
+      "size": 168804
+    },
+    "atmosphere/ch01_charcoal_and_parchment.png": {
+      "hash": "eeb276e3c4",
+      "size": 2319769
+    },
+    "atmosphere/ch01_charcoal_and_parchment.webp": {
+      "hash": "3c634b940f",
+      "size": 245480
+    },
+    "atmosphere/ch01_displacement.png": {
+      "hash": "456c387d6c",
+      "size": 2347092
+    },
+    "atmosphere/ch01_displacement.webp": {
+      "hash": "e9bcb33dd5",
+      "size": 255282
+    },
+    "atmosphere/ch01_displacement_aftermath.png": {
+      "hash": "20807d25a2",
+      "size": 2261922
+    },
+    "atmosphere/ch01_displacement_aftermath.webp": {
+      "hash": "a68b3dd535",
+      "size": 243300
+    },
+    "atmosphere/ch01_dream_corridor.png": {
+      "hash": "d2107b9899",
+      "size": 2351456
+    },
+    "atmosphere/ch01_dream_corridor.webp": {
+      "hash": "d953339ada",
+      "size": 287194
+    },
+    "atmosphere/ch01_fallen_tree_touch.png": {
+      "hash": "2ed4b57aa6",
+      "size": 2746742
+    },
+    "atmosphere/ch01_fallen_tree_touch.webp": {
+      "hash": "ac0a82e969",
+      "size": 348190
+    },
+    "atmosphere/ch01_footprints_glimmer.png": {
+      "hash": "6be05f6d26",
+      "size": 2237104
+    },
+    "atmosphere/ch01_footprints_glimmer.webp": {
+      "hash": "259983b40d",
+      "size": 222682
+    },
+    "atmosphere/ch01_forehead_to_parchment.png": {
+      "hash": "755d2a9d65",
+      "size": 2712434
+    },
+    "atmosphere/ch01_forehead_to_parchment.webp": {
+      "hash": "e219d37fdb",
+      "size": 358728
+    },
+    "atmosphere/ch01_handle_door_recognition.png": {
+      "hash": "0ce8b57b52",
+      "size": 2401278
+    },
+    "atmosphere/ch01_handle_door_recognition.webp": {
+      "hash": "b7c2574e40",
+      "size": 301274
+    },
+    "atmosphere/ch01_hands_inventory.png": {
+      "hash": "2627925c3f",
+      "size": 1946542
+    },
+    "atmosphere/ch01_hands_inventory.webp": {
+      "hash": "12c8336040",
+      "size": 142584
+    },
+    "atmosphere/ch01_hollow_acknowledged.png": {
+      "hash": "a6603e6d49",
+      "size": 2505845
+    },
+    "atmosphere/ch01_hollow_acknowledged.webp": {
+      "hash": "2f9a82eafd",
+      "size": 309128
+    },
+    "atmosphere/ch01_parchment_six_words.png": {
+      "hash": "cbeafd4ae5",
+      "size": 2147321
+    },
+    "atmosphere/ch01_parchment_six_words.webp": {
+      "hash": "f561f9162d",
+      "size": 197712
+    },
+    "atmosphere/ch01_presence_chamber.png": {
+      "hash": "7d5b7d4945",
+      "size": 2147103
+    },
+    "atmosphere/ch01_presence_chamber.webp": {
+      "hash": "95723b0141",
+      "size": 217380
+    },
+    "atmosphere/ch01_reading_parchment.png": {
+      "hash": "c6fabe6202",
+      "size": 2690432
+    },
+    "atmosphere/ch01_reading_parchment.webp": {
+      "hash": "75b5a41b9f",
+      "size": 358448
+    },
+    "atmosphere/ch01_spiral_door_almost_touch.png": {
+      "hash": "2eadd750db",
+      "size": 2464207
+    },
+    "atmosphere/ch01_spiral_door_almost_touch.webp": {
+      "hash": "1b3294877b",
+      "size": 330130
+    },
+    "atmosphere/ch01_standing_in_hollow.png": {
+      "hash": "981d0d80f4",
+      "size": 2071856
+    },
+    "atmosphere/ch01_standing_in_hollow.webp": {
+      "hash": "ba702f83d1",
+      "size": 188980
+    },
+    "atmosphere/ch01_waking.png": {
+      "hash": "dbeaf5ed31",
+      "size": 2281321
+    },
+    "atmosphere/ch01_waking.webp": {
+      "hash": "872a3dcc62",
+      "size": 227764
+    },
+    "atmosphere/ch01_waking_after_dream.png": {
+      "hash": "627e667ae4",
+      "size": 2736484
+    },
+    "atmosphere/ch01_waking_after_dream.webp": {
+      "hash": "a87f4adc09",
+      "size": 370150
+    },
+    "atmosphere/ch01_walking_examining_hands.png": {
+      "hash": "75dbb63a6a",
+      "size": 1939131
+    },
+    "atmosphere/ch01_walking_examining_hands.webp": {
+      "hash": "a707f4ea0f",
+      "size": 150820
+    },
+    "atmosphere/ch01_walking_north.png": {
+      "hash": "6147803bbd",
+      "size": 2163759
+    },
+    "atmosphere/ch01_walking_north.webp": {
+      "hash": "39b518c806",
+      "size": 190318
+    },
+    "atmosphere/ch01_writing_six_words.png": {
+      "hash": "4a85ea3ced",
+      "size": 2785428
+    },
+    "atmosphere/ch01_writing_six_words.webp": {
+      "hash": "2b872e4803",
+      "size": 389332
+    },
+    "atmosphere/ch02_aerin_room_solrien.png": {
+      "hash": "1b9d5aee8f",
+      "size": 2584303
+    },
+    "atmosphere/ch02_aerin_room_solrien.webp": {
+      "hash": "97c632f342",
+      "size": 311846
+    },
+    "atmosphere/ch02_aerin_sleeping_room.png": {
+      "hash": "87b79e8c51",
+      "size": 2453535
+    },
+    "atmosphere/ch02_aerin_sleeping_room.webp": {
+      "hash": "c3c6af4933",
+      "size": 262124
+    },
+    "atmosphere/ch02_archive_establishing.png": {
+      "hash": "8394c1e87f",
+      "size": 2880836
+    },
+    "atmosphere/ch02_archive_establishing.webp": {
+      "hash": "575bc05c03",
+      "size": 476952
+    },
+    "atmosphere/ch02_archive_ink_explosion.png": {
+      "hash": "b0dbdc908c",
+      "size": 2771857
+    },
+    "atmosphere/ch02_archive_ink_explosion.webp": {
+      "hash": "63d3b73a0d",
+      "size": 419646
+    },
+    "atmosphere/ch02_archive_plinth_wisdom.png": {
+      "hash": "8395bd5993",
+      "size": 3038480
+    },
+    "atmosphere/ch02_archive_plinth_wisdom.webp": {
+      "hash": "bfeb2354c8",
+      "size": 523322
+    },
+    "atmosphere/ch02_archive_stops_reaching.png": {
+      "hash": "8aede9163f",
+      "size": 2783932
+    },
+    "atmosphere/ch02_archive_stops_reaching.webp": {
+      "hash": "15d2039183",
+      "size": 456038
+    },
+    "atmosphere/ch02_archive_we_remember_you.png": {
+      "hash": "51f0f34a79",
+      "size": 2640484
+    },
+    "atmosphere/ch02_archive_we_remember_you.webp": {
+      "hash": "6ea2e67f46",
+      "size": 407620
+    },
+    "atmosphere/ch02_bridge_threads.png": {
+      "hash": "19ca9e5f83",
+      "size": 2660686
+    },
+    "atmosphere/ch02_bridge_threads.webp": {
+      "hash": "2944acd601",
+      "size": 379978
+    },
+    "atmosphere/ch02_bridge_words_too_heavy.png": {
+      "hash": "24ab908fa9",
+      "size": 2859291
+    },
+    "atmosphere/ch02_bridge_words_too_heavy.webp": {
+      "hash": "9acee4cf9d",
+      "size": 418608
+    },
+    "atmosphere/ch02_elian_arrives_pool.png": {
+      "hash": "0c2b4e209b",
+      "size": 2870059
+    },
+    "atmosphere/ch02_elian_arrives_pool.webp": {
+      "hash": "15313acf48",
+      "size": 464522
+    },
+    "atmosphere/ch02_first_sight_solrien.png": {
+      "hash": "b445889d81",
+      "size": 2663638
+    },
+    "atmosphere/ch02_first_sight_solrien.webp": {
+      "hash": "2e22148f65",
+      "size": 366256
+    },
+    "atmosphere/ch02_hills_reveal_gap.png": {
+      "hash": "48a8373346",
+      "size": 2768832
+    },
+    "atmosphere/ch02_hills_reveal_gap.webp": {
+      "hash": "f0739864ca",
+      "size": 401296
+    },
+    "atmosphere/ch02_leaving_archive.png": {
+      "hash": "8c88a7e949",
+      "size": 2802354
+    },
+    "atmosphere/ch02_leaving_archive.webp": {
+      "hash": "e94f324d48",
+      "size": 444862
+    },
+    "atmosphere/ch02_map_room_alone.png": {
+      "hash": "b0895f76d1",
+      "size": 3302545
+    },
+    "atmosphere/ch02_map_room_alone.webp": {
+      "hash": "d798031733",
+      "size": 651954
+    },
+    "atmosphere/ch02_map_room_thistle.png": {
+      "hash": "624ecf369b",
+      "size": 3209036
+    },
+    "atmosphere/ch02_map_room_thistle.webp": {
+      "hash": "de0ba395f1",
+      "size": 616524
+    },
+    "atmosphere/ch02_plaza_of_motes.png": {
+      "hash": "393f046419",
+      "size": 2491420
+    },
+    "atmosphere/ch02_plaza_of_motes.webp": {
+      "hash": "eb54b16d21",
+      "size": 316094
+    },
+    "atmosphere/ch02_pool_arrival.png": {
+      "hash": "eda5e360d3",
+      "size": 2612004
+    },
+    "atmosphere/ch02_pool_arrival.webp": {
+      "hash": "bcedd207ff",
+      "size": 373154
+    },
+    "atmosphere/ch02_pool_memory_flash.png": {
+      "hash": "3bdc38b95b",
+      "size": 2755438
+    },
+    "atmosphere/ch02_pool_memory_flash.webp": {
+      "hash": "fef49758e4",
+      "size": 419262
+    },
+    "atmosphere/ch02_pool_name.png": {
+      "hash": "f6bc217d32",
+      "size": 2630903
+    },
+    "atmosphere/ch02_pool_name.webp": {
+      "hash": "d3d000555f",
+      "size": 366160
+    },
+    "atmosphere/ch02_stump_spiral.png": {
+      "hash": "96abc8df6d",
+      "size": 2673087
+    },
+    "atmosphere/ch02_stump_spiral.webp": {
+      "hash": "53cd2feec6",
+      "size": 391956
+    },
+    "atmosphere/ch02_threshold_inside.png": {
+      "hash": "5d30af8954",
+      "size": 2542709
+    },
+    "atmosphere/ch02_threshold_inside.webp": {
+      "hash": "94c315c148",
+      "size": 340172
+    },
+    "atmosphere/ch02_threshold_stones.png": {
+      "hash": "2f20a9e30b",
+      "size": 2668553
+    },
+    "atmosphere/ch02_threshold_stones.webp": {
+      "hash": "daf324d78d",
+      "size": 388482
+    },
+    "atmosphere/ch02_walk_in_approach.png": {
+      "hash": "6b3e093fca",
+      "size": 2479646
+    },
+    "atmosphere/ch02_walk_in_approach.webp": {
+      "hash": "127bb3059e",
+      "size": 323484
+    },
+    "atmosphere/ch02_walking_solrien_streets.png": {
+      "hash": "d36111f947",
+      "size": 2647498
+    },
+    "atmosphere/ch02_walking_solrien_streets.webp": {
+      "hash": "88b1de111e",
+      "size": 375466
+    },
+    "atmosphere/ch02_walking_with_elian.png": {
+      "hash": "5248268719",
+      "size": 2587955
+    },
+    "atmosphere/ch02_walking_with_elian.webp": {
+      "hash": "f6a27d0d61",
+      "size": 364732
+    },
+    "atmosphere/ch02_wall_of_glyphs.png": {
+      "hash": "13f5ee1f53",
+      "size": 2666049
+    },
+    "atmosphere/ch02_wall_of_glyphs.webp": {
+      "hash": "aa73eb87ed",
+      "size": 335868
+    },
+    "atmosphere/ch02_wall_recognition_close.png": {
+      "hash": "e165d5fa71",
+      "size": 2362723
+    },
+    "atmosphere/ch02_wall_recognition_close.webp": {
+      "hash": "df21a06202",
+      "size": 263318
+    },
+    "atmosphere/ch03_archive_aftermath.png": {
+      "hash": "62f5e8a43a",
+      "size": 2866972
+    },
+    "atmosphere/ch03_archive_aftermath.webp": {
+      "hash": "c7737d4ff8",
+      "size": 444728
+    },
+    "atmosphere/ch03_archive_fading_figure.png": {
+      "hash": "2d7d76b1b5",
+      "size": 3014693
+    },
+    "atmosphere/ch03_archive_fading_figure.webp": {
+      "hash": "c3ad10ee9f",
+      "size": 496734
+    },
+    "atmosphere/ch03_archive_restoration_mistake.png": {
+      "hash": "823e4a9f59",
+      "size": 3021458
+    },
+    "atmosphere/ch03_archive_restoration_mistake.webp": {
+      "hash": "59695a8b53",
+      "size": 520116
+    },
+    "atmosphere/ch03_breathing_streets.png": {
+      "hash": "555249e928",
+      "size": 2879142
+    },
+    "atmosphere/ch03_breathing_streets.webp": {
+      "hash": "e592ffce6a",
+      "size": 465860
+    },
+    "atmosphere/ch03_evening_with_shard.png": {
+      "hash": "7d5946e600",
+      "size": 2561905
+    },
+    "atmosphere/ch03_evening_with_shard.webp": {
+      "hash": "1402083d36",
+      "size": 354734
+    },
+    "atmosphere/ch03_failure_apologize.png": {
+      "hash": "980a91ea36",
+      "size": 2987689
+    },
+    "atmosphere/ch03_failure_apologize.webp": {
+      "hash": "61df5c8cb1",
+      "size": 481638
+    },
+    "atmosphere/ch03_failure_repair.png": {
+      "hash": "94fb554f9c",
+      "size": 3064830
+    },
+    "atmosphere/ch03_failure_repair.webp": {
+      "hash": "5b075bf355",
+      "size": 514932
+    },
+    "atmosphere/ch03_failure_silence.png": {
+      "hash": "f40dbc6296",
+      "size": 2911022
+    },
+    "atmosphere/ch03_failure_silence.webp": {
+      "hash": "7183148918",
+      "size": 451880
+    },
+    "atmosphere/ch03_mirror_agency.png": {
+      "hash": "0b86d0c81f",
+      "size": 2863650
+    },
+    "atmosphere/ch03_mirror_agency.webp": {
+      "hash": "29c472762d",
+      "size": 457680
+    },
+    "atmosphere/ch03_mirror_duty.png": {
+      "hash": "11aca57a0c",
+      "size": 3031881
+    },
+    "atmosphere/ch03_mirror_duty.webp": {
+      "hash": "216213a4c1",
+      "size": 483294
+    },
+    "atmosphere/ch03_mirror_joy.png": {
+      "hash": "827619169a",
+      "size": 2838398
+    },
+    "atmosphere/ch03_mirror_joy.webp": {
+      "hash": "071b9a905d",
+      "size": 443698
+    },
+    "atmosphere/ch03_mirror_shard_revealed.png": {
+      "hash": "eb7c92e65d",
+      "size": 2776876
+    },
+    "atmosphere/ch03_mirror_shard_revealed.webp": {
+      "hash": "e670d28a9d",
+      "size": 428166
+    },
+    "atmosphere/ch03_mirrored_square.png": {
+      "hash": "8b2d9534d6",
+      "size": 2854781
+    },
+    "atmosphere/ch03_mirrored_square.webp": {
+      "hash": "864a9aa2f5",
+      "size": 443750
+    },
+    "atmosphere/ch03_next_morning.png": {
+      "hash": "66f4a5b62c",
+      "size": 2656134
+    },
+    "atmosphere/ch03_next_morning.webp": {
+      "hash": "264e0aec33",
+      "size": 364040
+    },
+    "atmosphere/ch03_object_compass.png": {
+      "hash": "9ecf8affad",
+      "size": 2462437
+    },
+    "atmosphere/ch03_object_compass.webp": {
+      "hash": "acda3e4f54",
+      "size": 325802
+    },
+    "atmosphere/ch03_object_gooseberries.png": {
+      "hash": "9837efeb20",
+      "size": 2360040
+    },
+    "atmosphere/ch03_object_gooseberries.webp": {
+      "hash": "6d90fdf21e",
+      "size": 296754
+    },
+    "atmosphere/ch03_object_tea.png": {
+      "hash": "65dacc550b",
+      "size": 2511808
+    },
+    "atmosphere/ch03_object_tea.webp": {
+      "hash": "9419060c9b",
+      "size": 332372
+    },
+    "atmosphere/ch03_objects_on_shelf.png": {
+      "hash": "f7021810e6",
+      "size": 2422450
+    },
+    "atmosphere/ch03_objects_on_shelf.webp": {
+      "hash": "237e08086e",
+      "size": 302098
+    },
+    "atmosphere/ch03_reflecting_arcade.png": {
+      "hash": "701374c586",
+      "size": 3167069
+    },
+    "atmosphere/ch03_reflecting_arcade.webp": {
+      "hash": "67418de60f",
+      "size": 576512
+    },
+    "atmosphere/ch03_shard_cost.png": {
+      "hash": "5250138bd6",
+      "size": 2944227
+    },
+    "atmosphere/ch03_shard_cost.webp": {
+      "hash": "b2b04af44c",
+      "size": 467722
+    },
+    "atmosphere/ch03_shard_refuse.png": {
+      "hash": "52d47060d8",
+      "size": 2918054
+    },
+    "atmosphere/ch03_shard_refuse.webp": {
+      "hash": "fc0d9b44e1",
+      "size": 468096
+    },
+    "atmosphere/ch03_shard_why.png": {
+      "hash": "09c19181b5",
+      "size": 2882623
+    },
+    "atmosphere/ch03_shard_why.webp": {
+      "hash": "78e9fbdd11",
+      "size": 454728
+    },
+    "atmosphere/ch03_solrien_morning.png": {
+      "hash": "974d777532",
+      "size": 2737182
+    },
+    "atmosphere/ch03_solrien_morning.webp": {
+      "hash": "71b0cfd0c8",
+      "size": 411026
+    },
+    "atmosphere/ch03_spiral_path_forms.png": {
+      "hash": "3bf5127b22",
+      "size": 2666610
+    },
+    "atmosphere/ch03_spiral_path_forms.webp": {
+      "hash": "31a17cac4b",
+      "size": 379742
+    },
+    "atmosphere/ch03_thistle_ask.png": {
+      "hash": "036ea15310",
+      "size": 2514226
+    },
+    "atmosphere/ch03_thistle_ask.webp": {
+      "hash": "4a71fc8e57",
+      "size": 339150
+    },
+    "atmosphere/ch03_thistle_joke.png": {
+      "hash": "7a54d26d33",
+      "size": 2203370
+    },
+    "atmosphere/ch03_thistle_joke.webp": {
+      "hash": "fdb86b36d2",
+      "size": 251972
+    },
+    "atmosphere/ch03_thistle_rest.png": {
+      "hash": "fb40b336cf",
+      "size": 2126565
+    },
+    "atmosphere/ch03_thistle_rest.webp": {
+      "hash": "fb373c0afc",
+      "size": 221626
+    },
+    "atmosphere/ch03_tonescribe_conversation.png": {
+      "hash": "d592cf3e41",
+      "size": 2592673
+    },
+    "atmosphere/ch03_tonescribe_conversation.webp": {
+      "hash": "c1d89724c7",
+      "size": 374492
+    },
+    "atmosphere/ch03_tonescribe_room.png": {
+      "hash": "037252eb13",
+      "size": 2725178
+    },
+    "atmosphere/ch03_tonescribe_room.webp": {
+      "hash": "2d3a57f996",
+      "size": 405234
+    },
+    "atmosphere/ch03_tonescribe_tea.png": {
+      "hash": "878abe9e3d",
+      "size": 2577486
+    },
+    "atmosphere/ch03_tonescribe_tea.webp": {
+      "hash": "57baa1ed8c",
+      "size": 360588
+    },
+    "atmosphere/ch03_tower_path.png": {
+      "hash": "e10508ae4c",
+      "size": 2616552
+    },
+    "atmosphere/ch03_tower_path.webp": {
+      "hash": "0436cadb64",
+      "size": 376666
+    },
+    "atmosphere/ch03_tree_shard_offered.png": {
+      "hash": "e8feccb364",
+      "size": 2972841
+    },
+    "atmosphere/ch03_tree_shard_offered.webp": {
+      "hash": "1f37818044",
+      "size": 477708
+    },
+    "atmosphere/ch03_waking_with_thistle.png": {
+      "hash": "438b412945",
+      "size": 2847436
+    },
+    "atmosphere/ch03_waking_with_thistle.webp": {
+      "hash": "1c1305ddce",
+      "size": 447196
+    },
+    "atmosphere/ch03_ysolde_first_appearance.png": {
+      "hash": "2f775dadfd",
+      "size": 2961461
+    },
+    "atmosphere/ch03_ysolde_first_appearance.webp": {
+      "hash": "991b6be9a9",
+      "size": 473606
+    },
+    "atmosphere/ch04_archive_morning_elian.png": {
+      "hash": "2cfea6be99",
+      "size": 2886696
+    },
+    "atmosphere/ch04_archive_morning_elian.webp": {
+      "hash": "ac3140a542",
+      "size": 471880
+    },
+    "atmosphere/ch04_coherence_accident.png": {
+      "hash": "99326ec5e9",
+      "size": 3437867
+    },
+    "atmosphere/ch04_coherence_accident.webp": {
+      "hash": "8060513da9",
+      "size": 700980
+    },
+    "atmosphere/ch04_colorless_garden.png": {
+      "hash": "ebbd1777a0",
+      "size": 3114083
+    },
+    "atmosphere/ch04_colorless_garden.webp": {
+      "hash": "413200b9b0",
+      "size": 559726
+    },
+    "atmosphere/ch04_courtyard_practice.png": {
+      "hash": "281d2f989c",
+      "size": 3094194
+    },
+    "atmosphere/ch04_courtyard_practice.webp": {
+      "hash": "7884c154b4",
+      "size": 575322
+    },
+    "atmosphere/ch04_dream_old_solrien.png": {
+      "hash": "ae67abbe64",
+      "size": 2981953
+    },
+    "atmosphere/ch04_dream_old_solrien.webp": {
+      "hash": "312838ad70",
+      "size": 547604
+    },
+    "atmosphere/ch04_dream_older_aerin.png": {
+      "hash": "202c34796a",
+      "size": 3102260
+    },
+    "atmosphere/ch04_dream_older_aerin.webp": {
+      "hash": "ad3b239a23",
+      "size": 545942
+    },
+    "atmosphere/ch04_dream_statue_crack.png": {
+      "hash": "7a896c196b",
+      "size": 3039456
+    },
+    "atmosphere/ch04_dream_statue_crack.webp": {
+      "hash": "9d241395f8",
+      "size": 555726
+    },
+    "atmosphere/ch04_listening_stones.png": {
+      "hash": "46f8fc7530",
+      "size": 3037135
+    },
+    "atmosphere/ch04_listening_stones.webp": {
+      "hash": "7b740a199b",
+      "size": 528146
+    },
+    "atmosphere/ch04_locked_cafe.png": {
+      "hash": "8808bd46ef",
+      "size": 2824521
+    },
+    "atmosphere/ch04_locked_cafe.webp": {
+      "hash": "b90814f977",
+      "size": 476994
+    },
+    "atmosphere/ch04_memory_manual.png": {
+      "hash": "73191243ca",
+      "size": 2964678
+    },
+    "atmosphere/ch04_memory_manual.webp": {
+      "hash": "fb8a6e5f7f",
+      "size": 518260
+    },
+    "atmosphere/ch04_napkin_city.png": {
+      "hash": "256bcb066d",
+      "size": 3109707
+    },
+    "atmosphere/ch04_napkin_city.webp": {
+      "hash": "6f5cd927c2",
+      "size": 545622
+    },
+    "atmosphere/ch04_napkin_relic.png": {
+      "hash": "99c01bcf00",
+      "size": 3294797
+    },
+    "atmosphere/ch04_napkin_relic.webp": {
+      "hash": "14b615c29b",
+      "size": 628522
+    },
+    "atmosphere/ch04_napkin_snacks.png": {
+      "hash": "23b6b8f1f3",
+      "size": 3184170
+    },
+    "atmosphere/ch04_napkin_snacks.webp": {
+      "hash": "184eb76358",
+      "size": 582802
+    },
+    "atmosphere/ch04_opinion_mirror.png": {
+      "hash": "d7490a903c",
+      "size": 3055626
+    },
+    "atmosphere/ch04_opinion_mirror.webp": {
+      "hash": "819919ac54",
+      "size": 560576
+    },
+    "atmosphere/ch04_practice_ask_thistle.png": {
+      "hash": "c5204a6875",
+      "size": 3042671
+    },
+    "atmosphere/ch04_practice_ask_thistle.webp": {
+      "hash": "2e3ce462b0",
+      "size": 539080
+    },
+    "atmosphere/ch04_practice_feel_courtyard.png": {
+      "hash": "999a96f6bf",
+      "size": 3044609
+    },
+    "atmosphere/ch04_practice_feel_courtyard.webp": {
+      "hash": "dab3fc41f0",
+      "size": 538276
+    },
+    "atmosphere/ch04_practice_try_again.png": {
+      "hash": "f70789f6f0",
+      "size": 3218646
+    },
+    "atmosphere/ch04_practice_try_again.webp": {
+      "hash": "9b723382ab",
+      "size": 616446
+    },
+    "atmosphere/ch04_rooftop_admit.png": {
+      "hash": "1a55a46a4f",
+      "size": 2859507
+    },
+    "atmosphere/ch04_rooftop_admit.webp": {
+      "hash": "2e604284da",
+      "size": 467074
+    },
+    "atmosphere/ch04_rooftop_ask.png": {
+      "hash": "772c9a23b5",
+      "size": 3008613
+    },
+    "atmosphere/ch04_rooftop_ask.webp": {
+      "hash": "abbe1c2fe6",
+      "size": 519708
+    },
+    "atmosphere/ch04_rooftop_let_joke.png": {
+      "hash": "7cf47391c9",
+      "size": 2945507
+    },
+    "atmosphere/ch04_rooftop_let_joke.webp": {
+      "hash": "4a46d69212",
+      "size": 498978
+    },
+    "atmosphere/ch04_rooftop_thistle.png": {
+      "hash": "30bbc7f83e",
+      "size": 3032202
+    },
+    "atmosphere/ch04_rooftop_thistle.webp": {
+      "hash": "80a99f6808",
+      "size": 541492
+    },
+    "atmosphere/ch04_skyglass_birds.png": {
+      "hash": "c701a9e529",
+      "size": 3072833
+    },
+    "atmosphere/ch04_skyglass_birds.webp": {
+      "hash": "cd60e5e0a3",
+      "size": 533090
+    },
+    "atmosphere/ch04_solrien_paths_suggest.png": {
+      "hash": "13d2c96945",
+      "size": 3153195
+    },
+    "atmosphere/ch04_solrien_paths_suggest.webp": {
+      "hash": "2b292e1fc3",
+      "size": 587324
+    },
+    "atmosphere/ch04_stone_disc_returned.png": {
+      "hash": "0c5a6874a9",
+      "size": 2453489
+    },
+    "atmosphere/ch04_stone_disc_returned.webp": {
+      "hash": "2e2cd7a5a7",
+      "size": 325308
+    },
+    "atmosphere/ch04_thistle_names_coherence.png": {
+      "hash": "d47d03d791",
+      "size": 3089141
+    },
+    "atmosphere/ch04_thistle_names_coherence.webp": {
+      "hash": "54cabe938d",
+      "size": 562106
+    },
+    "atmosphere/ch04_thread_cafe.png": {
+      "hash": "133ce50d0b",
+      "size": 2985025
+    },
+    "atmosphere/ch04_thread_cafe.webp": {
+      "hash": "51460181aa",
+      "size": 493124
+    },
+    "atmosphere/ch04_velhara_arrives.png": {
+      "hash": "4a25b0d217",
+      "size": 2922858
+    },
+    "atmosphere/ch04_velhara_arrives.webp": {
+      "hash": "0c283f19d3",
+      "size": 469546
+    },
+    "atmosphere/ch04_velhara_napkin.png": {
+      "hash": "7373b4605a",
+      "size": 3227857
+    },
+    "atmosphere/ch04_velhara_napkin.webp": {
+      "hash": "ccb2a1ccf2",
+      "size": 583950
+    },
+    "atmosphere/glyph_in_air.png": {
+      "hash": "8b0745a949",
+      "size": 1176208
+    },
+    "atmosphere/glyph_in_air.webp": {
+      "hash": "53ce97e342",
+      "size": 73260
+    },
+    "atmosphere/ring_of_stones.png": {
+      "hash": "89811db1e5",
+      "size": 2087366
+    },
+    "atmosphere/ring_of_stones.webp": {
+      "hash": "e1d0fe1b23",
+      "size": 193944
+    },
+    "atmosphere/solrien_dream_corridor.png": {
+      "hash": "424750a126",
+      "size": 2479981
+    },
+    "atmosphere/solrien_dream_corridor.webp": {
+      "hash": "f150ac5614",
+      "size": 314220
+    },
+    "atmosphere/threshold.png": {
+      "hash": "66404022bd",
+      "size": 1890208
+    },
+    "atmosphere/threshold.webp": {
+      "hash": "6987aec19f",
+      "size": 126678
+    },
+    "atmosphere/threshold_to_solrien.png": {
+      "hash": "efe1092699",
+      "size": 2360588
+    },
+    "atmosphere/threshold_to_solrien.webp": {
+      "hash": "d9e8cb5e22",
+      "size": 261138
+    },
+    "music/archive.m4a": {
+      "hash": "f8a6b387bd",
+      "size": 3677945
+    },
+    "music/archive_gravitas.m4a": {
+      "hash": "4d440b5863",
+      "size": 4624603
+    },
+    "music/ash_plains.m4a": {
+      "hash": "f0629bd7e5",
+      "size": 5546417
+    },
+    "music/coherence_quiet.m4a": {
+      "hash": "d7ac3228d5",
+      "size": 4253093
+    },
+    "music/coherence_unstable.m4a": {
+      "hash": "0f35835aac",
+      "size": 5049957
+    },
+    "music/corrupted_areas.m4a": {
+      "hash": "606a236b2d",
+      "size": 1549731
+    },
+    "music/lost_city_first_sight.m4a": {
+      "hash": "396c3e4628",
+      "size": 4443199
+    },
+    "music/lost_city_room.m4a": {
+      "hash": "4a636adcc1",
+      "size": 3855879
+    },
+    "music/lost_city_threshold.m4a": {
+      "hash": "41cb5881a8",
+      "size": 4346717
+    },
+    "music/lost_road.m4a": {
+      "hash": "974bafd761",
+      "size": 4178273
+    },
+    "music/memory_flash.m4a": {
+      "hash": "a8315a0d48",
+      "size": 4714851
+    },
+    "music/memory_near_miss.m4a": {
+      "hash": "104ee1f7cf",
+      "size": 4952587
+    },
+    "music/old_solrien_dream.m4a": {
+      "hash": "bda7169481",
+      "size": 4860175
+    },
+    "music/quiet_room.m4a": {
+      "hash": "593c7170cb",
+      "size": 3243833
+    },
+    "music/road_quiet.m4a": {
+      "hash": "175c2a134a",
+      "size": 3146360
+    },
+    "music/road_strange.m4a": {
+      "hash": "69df0b36f0",
+      "size": 3289508
+    },
+    "music/rooftop_quiet.m4a": {
+      "hash": "9814c7a544",
+      "size": 5633337
+    },
+    "music/solrien_1.m4a": {
+      "hash": "7901505760",
+      "size": 3520097
+    },
+    "music/solrien_2.m4a": {
+      "hash": "405d6b11e8",
+      "size": 3719481
+    },
+    "music/solrien_morning.m4a": {
+      "hash": "85c1072621",
+      "size": 4617863
+    },
+    "music/solrien_morning_shifted.m4a": {
+      "hash": "1a69f162c5",
+      "size": 3971253
+    },
+    "music/solrien_morning_training.m4a": {
+      "hash": "14034f0071",
+      "size": 2584600
+    },
+    "music/solrien_night.m4a": {
+      "hash": "b9e39eb634",
+      "size": 5183435
+    },
+    "music/solrien_wandering.m4a": {
+      "hash": "9b4419124a",
+      "size": 3637038
+    },
+    "music/stars_listening.m4a": {
+      "hash": "0cf9691ed5",
+      "size": 4476764
+    },
+    "music/thistle_1.m4a": {
+      "hash": "7a5f6a15f0",
+      "size": 4266664
+    },
+    "music/thistle_2.m4a": {
+      "hash": "d4873a078b",
+      "size": 3887583
+    },
+    "music/thistle_theme.m4a": {
+      "hash": "f3c1efb398",
+      "size": 2368968
+    },
+    "music/thread_cafe.m4a": {
+      "hash": "9beddc4b6c",
+      "size": 6079555
+    },
+    "music/threshold_walk.m4a": {
+      "hash": "08705fcc8f",
+      "size": 3816368
+    },
+    "music/velhara_recognition.m4a": {
+      "hash": "15b93e0bef",
+      "size": 3987743
+    },
+    "music/warm_transition.m4a": {
+      "hash": "0f70ae933c",
+      "size": 3615329
+    },
+    "music/world_waking.m4a": {
+      "hash": "587993b5a9",
+      "size": 3755240
+    },
+    "music/ysolde_theme.m4a": {
+      "hash": "4746736ab8",
+      "size": 3898837
+    },
+    "shimmer_anchors.json": {
+      "hash": "98dfb66c68",
+      "size": 8214
+    },
+    "story.json": {
+      "hash": "4f35cb107d",
+      "size": 110671
+    },
+    "story_es.json": {
+      "hash": "81e87a4915",
+      "size": 116907
+    }
+  }
+}

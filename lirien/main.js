@@ -27,15 +27,462 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512j";
-function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
+// ASSET_VERSION used to be the global cache-buster: bump it and the
+// browser refetched every asset (because every URL changed). Now
+// per-asset content hashes from assets_manifest.json handle that:
+// a bg whose bytes didn't change keeps its URL → keeps its cache
+// entry. ASSET_VERSION is kept only as a fallback hash for assets
+// that aren't in the manifest yet (race during boot, missing entry,
+// etc.) — its presence ensures we never emit a hashless URL.
+const ASSET_VERSION = "20260512m";
+
+// Lookup table populated by loadAssetManifest() before any bg/music
+// request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
+// content hash). Empty until manifest loads; bgUrl/musicUrl fall
+// back to ASSET_VERSION until then.
+let ASSET_HASHES = Object.create(null);
+
+function assetHash(relPath) {
+	const entry = ASSET_HASHES[relPath];
+	return (entry && entry.hash) || ASSET_VERSION;
+}
+function bgUrl(name) {
+	// imageQuality "standard" → WebP variant. WebP file may not exist
+	// yet for newly-added bgs (encode_webp_variants.py hasn't been
+	// run); fall back to PNG so the runtime doesn't 404.
+	const wantWebP = settings && settings.imageQuality === "standard";
+	const ext = wantWebP ? ".webp" : ".png";
+	const rel = "atmosphere/" + name + ext;
+	if (wantWebP && !ASSET_HASHES[rel]) {
+		// No WebP for this bg — fall back to PNG.
+		const png = "atmosphere/" + name + ".png";
+		return ATMOSPHERE_DIR + name + ".png?h=" + assetHash(png);
+	}
+	return ATMOSPHERE_DIR + name + ext + "?h=" + assetHash(rel);
+}
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
 // playback (audible pops, intermittent dropouts). AAC is Safari-
 // native and equally well-supported by Chrome / Firefox / Edge /
 // mobile. Files live alongside their .wav sources in assets/music/
 // and are encoded by tools/convert_audio_to_m4a.sh.
-function musicUrl(name) { return MUSIC_DIR      + name + ".m4a?v=" + ASSET_VERSION; }
+function musicUrl(name) {
+	const rel = "music/" + name + ".m4a";
+	return MUSIC_DIR + name + ".m4a?h=" + assetHash(rel);
+}
+
+// ----- asset manifest + service worker -----
+//
+// Loaded once at boot, populates ASSET_HASHES so bg/music URLs carry
+// the per-asset content hash. Network-only (no `?v=`) so we always
+// see the latest catalog; falls back to an empty manifest if the
+// fetch fails (offline first visit, or pre-deploy state without a
+// manifest yet) — bgUrl/musicUrl then use ASSET_VERSION as a fallback
+// and we lose per-asset invalidation for that session, but nothing
+// breaks.
+let ASSET_MANIFEST = null;
+async function loadAssetManifest() {
+	try {
+		const res = await fetch("assets_manifest.json", { cache: "no-cache" });
+		if (!res.ok) throw new Error("manifest fetch " + res.status);
+		const m = await res.json();
+		if (m && m.assets && typeof m.assets === "object") {
+			ASSET_HASHES = m.assets;
+			ASSET_MANIFEST = m;
+		}
+	} catch (e) {
+		console.warn("[manifest] load failed, falling back to ASSET_VERSION:", e);
+	}
+}
+
+// Registers the lirien-reader service worker. Cache-first for bgs +
+// music + story.json + shimmer_anchors.json (see sw.js for the full
+// rule set). Updates ship via the existing freshness-check path; the
+// SW handles asset invalidation per-URL via the content-hash query
+// string.
+//
+// Best-effort: failures (insecure context, restricted browser, opt-
+// out) just mean the SW layer doesn't run — the page continues to
+// work over plain HTTP via direct fetch.
+function registerServiceWorker() {
+	if (!("serviceWorker" in navigator)) return;
+	// SW only works over https or http://localhost. Skip on insecure
+	// origins so we don't generate spurious registration errors.
+	const loc = self.location;
+	const isSecure = loc.protocol === "https:" || loc.hostname === "localhost" || loc.hostname === "127.0.0.1";
+	if (!isSecure) return;
+	// Register on next tick — we don't need to await the registration
+	// promise; the SW takes over fetches once it's claimed clients.
+	navigator.serviceWorker.register("sw.js", { scope: "/lirien/" })
+		.then((reg) => {
+			// `reg.active` is populated once the SW is fully installed
+			// + activated. We don't gate anything on it — fetches that
+			// happen before activation just go to the network and
+			// flow into the cache on the next visit.
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.track("sw_registered", {
+					scope: reg.scope,
+					state: reg.active ? "active" : "installing",
+				});
+			}
+		})
+		.catch((e) => console.warn("[sw] registration failed:", e));
+}
+
+// Sends a message to the active SW. Resolves to the SW's reply or
+// times out after 5s (e.g., no controller yet, dead SW). Used by
+// Phase 2 settings UI for cache state / preload / purge.
+function postToServiceWorker(msg, timeoutMs = 5000) {
+	return new Promise((resolve, reject) => {
+		const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+		if (!sw) return reject(new Error("no SW controller"));
+		const channel = new MessageChannel();
+		const timer = setTimeout(() => reject(new Error("SW reply timeout")), timeoutMs);
+		channel.port1.onmessage = (ev) => {
+			clearTimeout(timer);
+			resolve(ev.data);
+		};
+		sw.postMessage(msg, [channel.port2]);
+	});
+}
+
+// ----- offline-reading mode (Phase 2 + 3) -----
+//
+// Drives the "Offline reading" panel in the menu drawer. Three jobs:
+//   1. Pre-toggle: estimate device storage, compute manifest size for
+//      the user's quality, and either start the download or recommend
+//      switching to Standard quality (or refuse if neither fits).
+//   2. Download: send {type:preloadAll} to the SW, render progress.
+//   3. Integrity: on every boot, ask SW for cache vs manifest. Show
+//      "all good" or "N missing" + silently re-sync when online.
+//
+// Truth lives in two places:
+//   - settings.offlineMode (user intent, persisted to localStorage)
+//   - SW cache contents (actual state, queried via getCacheState)
+// The panel always renders from BOTH so a user who toggled it on
+// then had storage evicted by iOS Safari sees the truthful "N
+// missing, will re-sync" instead of a false "all good".
+const offline = {
+	cacheState: null,           // { cached:[paths], missing:[paths] } from SW
+	preloading: false,
+	preloadDone: 0,
+	preloadTotal: 0,
+	preloadDoneBytes: 0,
+	preloadTotalBytes: 0,
+	storageEstimate: null,      // { quota, usage } from navigator.storage.estimate
+	preloadChannel: null,       // MessageChannel kept alive for the duration of a preload
+};
+
+function fmtMB(bytes) {
+	if (!bytes || bytes < 0) return "0 MB";
+	const mb = bytes / (1024 * 1024);
+	return (mb >= 100 ? mb.toFixed(0) : mb.toFixed(1)) + " MB";
+}
+
+function pathExt(path) {
+	const i = path.lastIndexOf(".");
+	return i >= 0 ? path.slice(i + 1).toLowerCase() : "";
+}
+
+// Total bytes that would be downloaded if offline mode were enabled
+// at the given image quality. Includes all music + json regardless;
+// adds PNG or WebP bgs based on quality.
+function computeOfflineSizeFor(quality) {
+	if (!ASSET_MANIFEST || !ASSET_MANIFEST.assets) return 0;
+	let bytes = 0;
+	for (const [path, entry] of Object.entries(ASSET_MANIFEST.assets)) {
+		const ext = pathExt(path);
+		if (ext === "m4a" || ext === "json")        bytes += entry.size;
+		else if (ext === "png" && quality === "high")    bytes += entry.size;
+		else if (ext === "webp" && quality === "standard") bytes += entry.size;
+	}
+	return bytes;
+}
+
+// Bytes currently in cache for assets the manifest knows about. Sums
+// the manifest sizes of paths the SW reports as cached. Falls back to
+// 0 if cacheState hasn't been fetched yet.
+function bytesCachedForCurrentQuality() {
+	if (!offline.cacheState || !ASSET_MANIFEST) return 0;
+	const cached = offline.cacheState.cached || [];
+	let bytes = 0;
+	for (const path of cached) {
+		if (!shouldCountForQuality(path, settings.imageQuality)) continue;
+		const entry = ASSET_MANIFEST.assets[path];
+		if (entry) bytes += entry.size;
+	}
+	return bytes;
+}
+
+function shouldCountForQuality(path, quality) {
+	const ext = pathExt(path);
+	if (ext === "m4a" || ext === "json") return true;
+	if (ext === "png")  return quality === "high";
+	if (ext === "webp") return quality === "standard";
+	return false;
+}
+
+function missingForCurrentQuality() {
+	if (!offline.cacheState || !ASSET_MANIFEST) return 0;
+	const cachedSet = new Set(offline.cacheState.cached || []);
+	let n = 0;
+	for (const path of Object.keys(ASSET_MANIFEST.assets)) {
+		if (!shouldCountForQuality(path, settings.imageQuality)) continue;
+		if (!cachedSet.has(path)) n += 1;
+	}
+	return n;
+}
+
+async function estimateStorage() {
+	if (!navigator.storage || !navigator.storage.estimate) return null;
+	try { return await navigator.storage.estimate(); }
+	catch (e) { return null; }
+}
+
+async function fetchCacheState() {
+	if (!ASSET_MANIFEST) return null;
+	try {
+		return await postToServiceWorker({ type: "getCacheState", manifest: ASSET_MANIFEST });
+	} catch (e) {
+		// SW not controller yet (first-load race), or message timed
+		// out. Caller handles null by deferring the check.
+		return null;
+	}
+}
+
+function renderOfflinePanel() {
+	const $panel = document.getElementById("offline-panel");
+	if (!$panel) return;
+	const t = (window.lirienT || ((k) => k));
+	const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
+		"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+	}[c]));
+
+	const need = computeOfflineSizeFor(settings.imageQuality);
+	const cached = bytesCachedForCurrentQuality();
+	const missing = missingForCurrentQuality();
+	const available = offline.storageEstimate
+		? Math.max(0, offline.storageEstimate.quota - offline.storageEstimate.usage)
+		: null;
+
+	let html = "";
+
+	if (offline.preloading) {
+		const pct = offline.preloadTotal > 0
+			? Math.round(100 * offline.preloadDone / offline.preloadTotal)
+			: 0;
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${esc(t("lirien.offline.downloading"))}</span>`
+		     +    `<span class="val">${pct}% &middot; ${esc(fmtMB(offline.preloadDoneBytes))} / ${esc(fmtMB(offline.preloadTotalBytes))}</span>`
+		     + `</div>`;
+		html += `<div class="offline-progress"><div class="offline-progress-bar" style="width:${pct}%"></div></div>`;
+		html += `<div class="offline-actions">`
+		     +    `<button class="offline-btn offline-btn--ghost" data-offline-action="cancel">${esc(t("lirien.offline.cancel"))}</button>`
+		     + `</div>`;
+	} else if (settings.offlineMode) {
+		const allGood = missing === 0;
+		const intro = allGood ? t("lirien.offline.ready") : t("lirien.offline.needs-sync");
+		html += `<p class="offline-intro">${esc(intro)}</p>`;
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${esc(t("lirien.offline.cached"))}</span>`
+		     +    `<span class="val ${allGood ? "ok" : "warn"}">${esc(fmtMB(cached))} / ${esc(fmtMB(need))}</span>`
+		     + `</div>`;
+		html += `<div class="offline-actions">`;
+		if (!allGood) {
+			html += `<button class="offline-btn" data-offline-action="resync">${esc(t("lirien.offline.resync"))}</button>`;
+		}
+		html += `<button class="offline-btn offline-btn--ghost" data-offline-action="disable">${esc(t("lirien.offline.disable"))}</button>`;
+		html += `</div>`;
+	} else {
+		html += `<p class="offline-intro">${esc(t("lirien.offline.intro"))}</p>`;
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${esc(t("lirien.offline.size"))}</span>`
+		     +    `<span class="val">${esc(fmtMB(need))}</span>`
+		     + `</div>`;
+		if (available != null) {
+			const fits = available >= need;
+			html += `<div class="offline-line">`
+			     +    `<span class="lbl">${esc(t("lirien.offline.available"))}</span>`
+			     +    `<span class="val ${fits ? "ok" : "warn"}">${esc(fmtMB(available))}</span>`
+			     + `</div>`;
+		}
+		html += `<div class="offline-actions">`
+		     +    `<button class="offline-btn" data-offline-action="enable">${esc(t("lirien.offline.enable"))}</button>`
+		     + `</div>`;
+	}
+
+	$panel.innerHTML = html;
+}
+
+function bindOfflineMode() {
+	const $panel = document.getElementById("offline-panel");
+	if (!$panel) return;
+	$panel.addEventListener("click", (ev) => {
+		const btn = ev.target.closest("[data-offline-action]");
+		if (!btn) return;
+		const action = btn.dataset.offlineAction;
+		if (action === "enable")  enableOfflineMode();
+		else if (action === "disable") disableOfflineMode();
+		else if (action === "resync")  startPreload();
+		else if (action === "cancel")  cancelPreload();
+	});
+	// Initial render so the panel isn't empty when the section is opened.
+	refreshOfflineState();
+}
+
+// Refreshes the data the panel reads from: navigator.storage estimate
+// + SW cache state. Cheap (~50ms total). Called on bind, on enable,
+// on disable, and after preload completes.
+async function refreshOfflineState() {
+	offline.storageEstimate = await estimateStorage();
+	if (settings.offlineMode) {
+		offline.cacheState = await fetchCacheState();
+	}
+	renderOfflinePanel();
+}
+
+async function enableOfflineMode() {
+	// Need the manifest to know how big the download is.
+	if (!ASSET_MANIFEST) {
+		await loadAssetManifest();
+		if (!ASSET_MANIFEST) return; // manifest fetch failed; bail silently
+	}
+	const t = (window.lirienT || ((k) => k));
+
+	const est = offline.storageEstimate || await estimateStorage();
+	offline.storageEstimate = est;
+	const available = est ? (est.quota - est.usage) : Infinity;
+	const need = computeOfflineSizeFor(settings.imageQuality);
+
+	if (available < need) {
+		// Doesn't fit at current quality. If we're at High AND Standard
+		// would fit, recommend the switch.
+		if (settings.imageQuality === "high") {
+			const stdNeed = computeOfflineSizeFor("standard");
+			if (available >= stdNeed) {
+				const proceed = window.confirm(t("lirien.offline.try-standard"));
+				if (!proceed) return;
+				settings.imageQuality = "standard";
+				saveSettings();
+				refreshSelectionMarkers();
+				if (currentBgName) {
+					const name = currentBgName;
+					currentBgName = "";
+					swapBackground(name);
+				}
+			} else {
+				window.alert(t("lirien.offline.cant-fit"));
+				return;
+			}
+		} else {
+			window.alert(t("lirien.offline.cant-fit"));
+			return;
+		}
+	}
+
+	// Ask the browser to mark our storage persistent — best-effort.
+	// On Chrome this is often granted silently for installed PWAs.
+	// On Safari it tends to be a no-op, but we still try.
+	if (navigator.storage && navigator.storage.persist) {
+		try { await navigator.storage.persist(); } catch (e) { /* ignore */ }
+	}
+
+	settings.offlineMode = true;
+	saveSettings();
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track("offline_enabled", { quality: settings.imageQuality, need_mb: Math.round(need / 1048576) });
+	}
+	startPreload();
+}
+
+async function disableOfflineMode() {
+	settings.offlineMode = false;
+	saveSettings();
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track("offline_disabled", {});
+	}
+	// Don't purge the cache — entries are still useful as warm cache
+	// for the lazy-mode path, and re-downloading later costs the user
+	// bandwidth. A separate "Clear cache" action can take care of it
+	// if/when users want the space back.
+	await refreshOfflineState();
+}
+
+async function startPreload() {
+	if (offline.preloading) return;
+	if (!ASSET_MANIFEST) {
+		await loadAssetManifest();
+		if (!ASSET_MANIFEST) return;
+	}
+	const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+	if (!sw) {
+		// No controller yet — try again after a tick.
+		setTimeout(startPreload, 800);
+		return;
+	}
+	offline.preloading = true;
+	offline.preloadDone = 0;
+	offline.preloadTotal = 0;
+	offline.preloadDoneBytes = 0;
+	offline.preloadTotalBytes = 0;
+	renderOfflinePanel();
+
+	const channel = new MessageChannel();
+	offline.preloadChannel = channel;
+	channel.port1.onmessage = (ev) => {
+		const m = ev.data;
+		if (!m) return;
+		if (m.type === "preloadProgress") {
+			offline.preloadDone       = m.done;
+			offline.preloadTotal      = m.total;
+			offline.preloadDoneBytes  = m.doneBytes;
+			offline.preloadTotalBytes = m.totalBytes;
+			renderOfflinePanel();
+		} else if (m.type === "preloadComplete") {
+			offline.preloading = false;
+			offline.preloadChannel = null;
+			refreshOfflineState();
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.track("offline_preload_complete", {
+					cancelled: !!m.cancelled,
+					failed: (m.failed || []).length,
+				});
+			}
+		}
+	};
+	sw.postMessage({
+		type: "preloadAll",
+		manifest: ASSET_MANIFEST,
+		qualityFilter: settings.imageQuality,
+	}, [channel.port2]);
+}
+
+function cancelPreload() {
+	const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+	if (sw) sw.postMessage({ type: "preloadCancel" });
+}
+
+// Boot-time integrity check: if the user has previously enabled
+// offline mode, see what's actually cached vs what the manifest
+// says. If gaps exist and we're online, silently re-sync. The
+// settings panel will surface the truthful state when next opened.
+async function bootIntegrityCheck() {
+	if (!settings.offlineMode) return;
+	if (!ASSET_MANIFEST) return;  // manifest fetch failed; defer
+	// Wait briefly for the SW to claim. On returning visits this is
+	// usually immediate.
+	const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+	if (!sw) return;
+	const state = await fetchCacheState();
+	if (!state) return;
+	offline.cacheState = state;
+	const missing = missingForCurrentQuality();
+	if (missing > 0 && navigator.onLine) {
+		// Silent resync — don't pop UI, just start the preload. If the
+		// user opens the panel they'll see "Downloading…" naturally.
+		startPreload();
+	}
+}
 
 // ----- DOM refs -----
 
@@ -249,7 +696,17 @@ const $devCurrent = document.getElementById("dev-current");
 // ----- settings (persisted to localStorage) -----
 
 const SETTINGS_KEY = "lirien.settings";
-const DEFAULT_SETTINGS = { speedMultiplier: 0.4, fontSize: 36, musicOn: true };
+// imageQuality: "high" → PNG (pristine, ~329 MB total bgs)
+//               "standard" → WebP at original resolution + q90
+//                            (~48 MB total, visually very close to PNG).
+// Default is "high" — let pristine be the baseline, opt-in to smaller
+// downloads via the menu. Phase 2 offline-toggle will recommend
+// "standard" when the device's storage quota can't fit "high".
+// offlineMode: user has opted in to "Offline reading" (the toggle in
+// the menu drawer). When on, on every boot we do an integrity check
+// against the manifest and auto-resync any missing assets while
+// online. Default off — opt-in only.
+const DEFAULT_SETTINGS = { speedMultiplier: 0.4, fontSize: 36, musicOn: true, imageQuality: "high", offlineMode: false };
 let settings = loadSettings();
 applyFontSize();
 
@@ -449,10 +906,30 @@ let allBgNames = [];
 	// Mobile-only first-visit splash prompting Add-to-Home-Screen.
 	maybeShowInstallSplash();
 
+	// Register the service worker BEFORE we start firing asset requests
+	// so it can intercept (and cache) them on first visit, not just on
+	// repeat visits. Best-effort: if registration fails, asset requests
+	// still resolve via plain HTTP — the SW is an optimization layer,
+	// not a correctness dependency.
+	registerServiceWorker();
+
+	// Load the per-asset content-hash catalog before anything calls
+	// bgUrl() or musicUrl(). Without this, those functions fall back
+	// to ASSET_VERSION (the old global cache-buster) and we lose the
+	// per-asset invalidation that the SW + manifest are built for.
+	// Awaited so the title-Continue handler can't fire bg/music swaps
+	// against an empty ASSET_HASHES table.
+	await loadAssetManifest();
+
 	bindSettingsMenu();
 	bindChaptersMenu();
 	bindAdvanceInput();
 	bindDevMenu();
+	bindOfflineMode();
+	// Run integrity check after the SW has had a moment to claim
+	// clients. Non-blocking: kicks off silently in the background; if
+	// gaps are detected and we're online, a resync starts.
+	setTimeout(bootIntegrityCheck, 1500);
 
 	$titleContinue.addEventListener("click", () => {
 		// Title-screen Continue: unlock audio (autoplay policy), dismiss
@@ -1884,6 +2361,37 @@ function spawnAshParticles(count) {
 // stronger horizontal drift so they sway as they ascend. Mote
 // elements use the same animation-delay trick to fill the screen
 // instantly rather than spending the full cycle warming up.
+// Sparse pale motes for # atmosphere: dream. Fewer than light-motes
+// (8-12 vs 40), drifting more slowly (24-34s vs 14-24s), with a wider
+// drift radius — they wander across larger distances over their
+// lifetime, reinforcing the "different rules of air" feel. Distinct
+// from light-motes (which rise) and shimmer (which spirals): dream
+// motes meander.
+function spawnDreamMotes(count) {
+	if (!$atmosphereLayer) return;
+	const frag = document.createDocumentFragment();
+	for (let i = 0; i < count; i++) {
+		const p = document.createElement("div");
+		p.className = "dream-mote";
+		const dur = 24 + Math.random() * 10;
+		p.style.setProperty("--x",        `${10 + Math.random() * 80}%`);
+		p.style.setProperty("--y",        `${20 + Math.random() * 50}%`);
+		p.style.setProperty("--size",     `${(4 + Math.random() * 4).toFixed(1)}px`);
+		p.style.setProperty("--dur",      `${dur.toFixed(1)}s`);
+		// Negative delay so each mote starts at a random point in its
+		// drift cycle — otherwise all 10 motes would fade in/out in
+		// sync, which reads as mechanical.
+		p.style.setProperty("--delay",    `-${(Math.random() * dur).toFixed(1)}s`);
+		// Drift vector: per-mote x/y delta in pixels over half the cycle.
+		// Range chosen so motes wander noticeably but stay roughly in
+		// their "zone" — they don't fly across the whole screen.
+		p.style.setProperty("--drift-x",  `${((Math.random() - 0.5) * 90).toFixed(0)}px`);
+		p.style.setProperty("--drift-y",  `${((Math.random() - 0.5) * 40 - 6).toFixed(0)}px`);
+		frag.appendChild(p);
+	}
+	$atmosphereLayer.appendChild(frag);
+}
+
 function spawnLightMotes(count) {
 	if (!$atmosphereLayer) return;
 	const frag = document.createDocumentFragment();
@@ -2056,9 +2564,10 @@ let atmosphereGen = 0;
 const ATMOSPHERE_FADE_MS = 3600;
 
 function spawnAtmosphereFor(name) {
-	if (name === "ash-falling")   spawnAshParticles(70);
+	if (name === "ash-falling")      spawnAshParticles(70);
 	else if (name === "light-motes") spawnLightMotes(40);
 	else if (name === "shimmer")     spawnShimmerParticles(36);
+	else if (name === "dream")       spawnDreamMotes(10);
 }
 
 function setAtmosphere(name) {
@@ -2072,6 +2581,13 @@ function setAtmosphere(name) {
 	const myGen = atmosphereGen;
 	const wasAt = currentAtmosphere;
 	currentAtmosphere = targetName;
+
+	// body.is-dream drives page-wide visual treatment for the
+	// # atmosphere: dream beats (bg hue-rotate + saturate + breathing
+	// + vignette overlay). CSS handles the fade in/out via 2.5s
+	// transitions, so just toggle the class — no JS animation needed.
+	if (targetName === "dream") document.body.classList.add("is-dream");
+	else document.body.classList.remove("is-dream");
 
 	const swap = () => {
 		if (myGen !== atmosphereGen) return;  // superseded
@@ -2295,6 +2811,28 @@ function bindSettingsMenu() {
 			}
 			if (window.lirienAnalytics) {
 				window.lirienAnalytics.track("setting_changed", { key: "music", value: want });
+			}
+		});
+	}
+	for (const btn of $settingsPanel.querySelectorAll(".quality-btn")) {
+		btn.addEventListener("click", () => {
+			const want = btn.dataset.quality;
+			if (want !== "high" && want !== "standard") return;
+			if (want === settings.imageQuality) return;
+			settings.imageQuality = want;
+			saveSettings();
+			refreshSelectionMarkers();
+			// Reload the currently-visible bg in the new format. We
+			// stash + clear currentBgName so swapBackground() doesn't
+			// short-circuit on the "same name" guard, then rewrite the
+			// URL via bgUrl() which now reads the new setting.
+			if (currentBgName) {
+				const name = currentBgName;
+				currentBgName = "";
+				swapBackground(name);
+			}
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.track("setting_changed", { key: "image_quality", value: want });
 			}
 		});
 	}
@@ -2884,6 +3422,9 @@ function refreshSelectionMarkers() {
 	for (const btn of $settingsPanel.querySelectorAll(".music-btn")) {
 		const want = btn.dataset.music === "on";
 		btn.classList.toggle("current", want === !!settings.musicOn);
+	}
+	for (const btn of $settingsPanel.querySelectorAll(".quality-btn")) {
+		btn.classList.toggle("current", btn.dataset.quality === settings.imageQuality);
 	}
 }
 

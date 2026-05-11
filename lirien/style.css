@@ -293,6 +293,104 @@ html, body {
 	50%      { color: rgba(255, 245, 220, 1); }   /* near-white peak */
 }
 
+/* ----- dream atmosphere (otherworldly) -----
+ *
+ * # atmosphere: dream — applied on body.is-dream while the dream is
+ * active. Steve picked the "otherworldly + recognition" direction
+ * (2026-05-11): a calm room you've been in before but can't place,
+ * not anxious, not memory/sepia.
+ *
+ * Composition:
+ *   - bg hue-rotate(15deg) + saturate(1.05) lifts the palette
+ *     toward blue-violet without crushing existing color
+ *   - radial vignette via body::after dims edges 0→25%
+ *   - imperceptible breathing scale 1.0↔1.003 over 12s on the bg
+ *   - sparse pale motes (8-12) drift very slowly across the layer
+ *
+ * Transitions: filter/transform on .bg-image transition smoothly
+ * over 2.5s on dream entry/exit so the world doesn't snap-shift.
+ * The vignette overlay fades via opacity on body.is-dream.
+ */
+body.is-dream .bg .bg-image {
+	filter: saturate(1.05) brightness(0.94);
+	transition: filter 2.5s ease-in-out, opacity 500ms ease-out;
+	animation: dream-breathing 12s ease-in-out infinite;
+}
+@keyframes dream-breathing {
+	0%, 100% { transform: scale(1); }
+	50%      { transform: scale(1.003); }
+}
+/* Blue-violet color tint via mix-blend-mode: color. This blends the
+ * overlay's hue + saturation with the underlying's luminance — so the
+ * bg's value/contrast is preserved but its color shifts toward
+ * violet. Cleaner than filter: hue-rotate, which depends on the
+ * starting hue (our warm-amber bgs barely shift from a small rotate).
+ * Sits at z:3 above the bg images (z:0 absolute) but below the
+ * atmosphere-layer (z:5) and game (z:10). */
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: 3;
+	pointer-events: none;
+	opacity: 0;
+	background: rgba(72, 52, 130, 1);
+	mix-blend-mode: color;
+	transition: opacity 2.5s ease-in-out;
+}
+body.is-dream::before { opacity: 0.32; }
+/* Vignette overlay — sits above the tint, below atmosphere-layer +
+ * prose. Pointer-events: none so it never eats taps. Opacity fades
+ * when the body class flips. Inverted radial-gradient (transparent
+ * center, dark edges) creates the "looking from inside" feel. */
+body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: 4;
+	pointer-events: none;
+	opacity: 0;
+	background: radial-gradient(
+		ellipse at center,
+		rgba(0, 0, 0, 0) 38%,
+		rgba(20, 12, 36, 0.28) 78%,
+		rgba(20, 12, 36, 0.50) 100%
+	);
+	transition: opacity 2.5s ease-in-out;
+}
+body.is-dream::after { opacity: 1; }
+
+/* Dream motes — sparse, pale, very slow drift. Distinct from ash
+ * (gray, falling fast) and shimmer (gold, spiraling). Reads as the
+ * air being made of something different. */
+.dream-mote {
+	position: absolute;
+	left: var(--x, 50%);
+	top: var(--y, 50%);
+	width: var(--size, 4px);
+	height: var(--size, 4px);
+	border-radius: 50%;
+	background: radial-gradient(
+		circle,
+		rgba(220, 215, 240, 0.85) 0%,
+		rgba(190, 180, 220, 0.45) 50%,
+		rgba(170, 160, 210, 0) 80%
+	);
+	mix-blend-mode: screen;
+	filter: blur(0.4px);
+	opacity: 0;
+	will-change: transform, opacity;
+	animation: dream-mote-drift var(--dur, 28s) ease-in-out infinite;
+	animation-delay: var(--delay, 0s);
+}
+@keyframes dream-mote-drift {
+	0%       { transform: translate(0, 0)                                   scale(0.8); opacity: 0;    }
+	14%      {                                                                          opacity: 0.55; }
+	50%      { transform: translate(var(--drift-x, 12px), var(--drift-y, -8px)) scale(1.1); opacity: 0.8;  }
+	86%      {                                                                          opacity: 0.55; }
+	100%     { transform: translate(calc(var(--drift-x, 12px) * 2), calc(var(--drift-y, -8px) * 2)) scale(0.85); opacity: 0; }
+}
+
 /* ----- shimmer one-shot -----
  *
  * Fired by # fx: shimmer ink tags. Manuscript: "a distortion
@@ -1202,6 +1300,101 @@ body.story-started .chrome-btn {
 	border-radius: 4px;
 	transition: color 0.3s ease, background 0.3s ease;
 	-webkit-tap-highlight-color: transparent;
+}
+
+/* ----- offline-reading panel -----
+ * Dynamic panel inside the "Offline reading" drawer section. Its
+ * inner HTML is rebuilt by renderOfflinePanel() in main.js based on
+ * the current state (off / preparing / downloading / on / needs-
+ * sync / no-space). The styles below match the visual register of
+ * the other drawer rows: muted Cormorant italic for body text, gold
+ * accents on action buttons, generous padding so the section feels
+ * substantial (it's the most important toggle in the drawer). */
+.offline-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	padding: 0.4rem 0.5rem;
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 1rem;
+	color: var(--mist);
+}
+.offline-panel .offline-line {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.6rem;
+}
+.offline-panel .offline-line .lbl {
+	color: rgba(245, 235, 210, 0.55);
+	font-style: italic;
+}
+.offline-panel .offline-line .val {
+	font-variant-numeric: tabular-nums;
+	color: var(--mist);
+}
+.offline-panel .offline-line .val.warn {
+	color: #e89a6e;
+}
+.offline-panel .offline-line .val.ok {
+	color: var(--gold-bright);
+}
+.offline-panel .offline-intro {
+	font-style: italic;
+	color: rgba(245, 235, 210, 0.78);
+	line-height: 1.5;
+	margin: 0 0 0.2rem 0;
+}
+.offline-panel .offline-progress {
+	height: 4px;
+	background: rgba(245, 235, 210, 0.12);
+	border-radius: 2px;
+	overflow: hidden;
+	margin: 0.2rem 0 0.1rem 0;
+}
+.offline-panel .offline-progress-bar {
+	height: 100%;
+	background: linear-gradient(90deg, rgba(196, 147, 90, 0.85), rgba(220, 178, 110, 1));
+	width: 0%;
+	transition: width 0.2s ease-out;
+}
+.offline-panel .offline-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin-top: 0.35rem;
+}
+.offline-panel .offline-btn {
+	all: unset;
+	cursor: pointer;
+	font-family: 'Cormorant Garamond', serif;
+	font-style: italic;
+	font-size: 1rem;
+	letter-spacing: 0.03em;
+	color: var(--gold-bright);
+	padding: 0.45rem 0.7rem;
+	border: 1px solid rgba(196, 147, 90, 0.42);
+	border-radius: 4px;
+	transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+	.offline-panel .offline-btn:hover {
+		background: rgba(196, 147, 90, 0.10);
+		border-color: rgba(196, 147, 90, 0.75);
+	}
+}
+.offline-panel .offline-btn:focus-visible {
+	outline: none;
+	background: rgba(196, 147, 90, 0.10);
+	border-color: rgba(196, 147, 90, 0.85);
+}
+.offline-panel .offline-btn--ghost {
+	color: rgba(245, 235, 210, 0.65);
+	border-color: rgba(245, 235, 210, 0.25);
+}
+.offline-panel .offline-btn[disabled] {
+	cursor: not-allowed;
+	opacity: 0.5;
 }
 @media (hover: hover) and (pointer: fine) {
 	.drawer-action:hover {

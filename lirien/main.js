@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511r";
+const ASSET_VERSION = "20260511s";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1810,12 +1810,21 @@ function shimmerAnchorFor(bgName) {
 
 let $shimmerCluster = null;  // current cluster element (or null)
 
-// Glyph pool for shimmer particles — each particle picks one at
-// spawn, so the cluster reads as a mix of sparkle shapes rather
-// than uniform pips. All Unicode dingbats / common symbols, no
-// asset download. Ordered roughly small → bold so a random pick
-// gives a believable mix of subtle and prominent sparkles.
-const SHIMMER_GLYPHS = ["✦", "✧", "✶", "✷", "·", "✺", "❋"];
+// Shimmer glyph — one shape only. Steve 2026-05-11: the earlier
+// mix read as snowflakes; sticking to a single four-point star
+// keeps the look consistent with fairy-dust rather than wintery.
+const SHIMMER_GLYPH = "✦";
+
+// Synchronized motion params — all particles share the SAME rise
+// and orbit durations and are distributed in even phase offsets
+// around both cycles. Result: instead of N independent spirals,
+// the cluster reads as one continuous spiral stream where each
+// star is on the same path, just at a different point along it.
+// Steve 2026-05-11: "glyphs kinda following each other so they
+// create a spiral 'flow' vs. all independently moving in a spiral."
+const SHIMMER_RISE_DUR  = 9;   // seconds — full bottom→top life
+const SHIMMER_ORBIT_DUR = 7;   // seconds — full revolution
+const SHIMMER_RADIUS    = 14;  // base orbit radius (px), compact
 
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing
@@ -1847,43 +1856,43 @@ function spawnShimmerParticles(count) {
 	cluster.style.setProperty("--cluster-y", anchor.y.toFixed(1) + "%");
 	$shimmerCluster = cluster;
 	for (let i = 0; i < count; i++) {
+		// Phase position 0..1 — uniformly distributes each particle
+		// along the SHARED rise+orbit cycle so they trace the same
+		// helix and read as a continuous spiral stream.
+		const phase = i / count;
 		const p = document.createElement("div");
 		p.className = "shimmer-particle";
-		// Each particle "lives" 5-9s of vertical rise. Negative
-		// delay staggers them so the cluster is always populated
-		// (no startup ramp where everyone fades in at once).
-		const riseDur = 5 + Math.random() * 4;
-		p.style.setProperty("--rise-dur",    riseDur.toFixed(1) + "s");
-		p.style.setProperty("--rise-delay",  "-" + (Math.random() * riseDur).toFixed(1) + "s");
+		// All particles share rise duration; only the delay differs
+		// (negative + phase-distributed). That means every particle
+		// is on the same vertical path, just at a different point
+		// in its life.
+		p.style.setProperty("--rise-dur",    SHIMMER_RISE_DUR + "s");
+		p.style.setProperty("--rise-delay",  "-" + (phase * SHIMMER_RISE_DUR).toFixed(2) + "s");
 		// Peak opacity varies — some particles are dim ghosts, some
 		// catch the light fully. Stack of opacities = visual depth.
 		p.style.setProperty("--opacity",     (0.55 + Math.random() * 0.40).toFixed(2));
-		// Each particle is a span carrying a randomly-picked glyph
-		// (Steve 2026-05-11 wanted cute sparkle shapes, not round
-		// dots). The CSS handles the warm halo + dark contrast ring
-		// via text-shadow, which shapes the glow to the glyph's
-		// outline. Span rather than div because the text rendering
-		// path is what we want.
+		// Span carries the star glyph. text-shadow in CSS handles
+		// the warm halo + dark contrast ring (shapes the glow to
+		// the star's outline rather than a generic circle).
 		const d = document.createElement("span");
 		d.className = "shimmer-dot";
-		d.textContent = SHIMMER_GLYPHS[Math.floor(Math.random() * SHIMMER_GLYPHS.length)];
-		// Glyph font-size 6-14px — much bigger than the previous
-		// round-dot range (1.5-2.5px) because a 2px glyph is
-		// illegible. Halo (text-shadow blur) 6-13px sized to match.
-		d.style.setProperty("--size",          (6 + Math.random() * 8).toFixed(1) + "px");
-		d.style.setProperty("--glow",          (6 + Math.random() * 7).toFixed(1) + "px");
-		// Orbit radius gives the cluster its width. 18-70px ~
-		// 130px-wide swarm.
-		d.style.setProperty("--radius",        (18 + Math.random() * 52).toFixed(0) + "px");
-		// Orbit speed: slow + deliberate. 7-13s/revolution per
-		// Steve's "the shimmer moves purposefully with alignment"
-		// 2026-05-11 — previous 2-5s read as too eager. Varied per
-		// particle so the cluster doesn't tick in unison.
-		const orbitDur = 7 + Math.random() * 6;
-		d.style.setProperty("--orbit-dur",     orbitDur.toFixed(1) + "s");
-		d.style.setProperty("--orbit-delay",   "-" + (Math.random() * orbitDur).toFixed(1) + "s");
-		// Random start angle decouples particles from each other.
-		d.style.setProperty("--start",         (Math.random() * 360).toFixed(0) + "deg");
+		d.textContent = SHIMMER_GLYPH;
+		// Glyph font-size 7-13px — slight per-particle variation
+		// for depth without breaking the stream feel.
+		d.style.setProperty("--size",          (7 + Math.random() * 6).toFixed(1) + "px");
+		d.style.setProperty("--glow",          (6 + Math.random() * 6).toFixed(1) + "px");
+		// Compact orbit radius — small variation (±4px) keeps the
+		// stream consistent while preventing perfect-mechanical look.
+		d.style.setProperty("--radius",        (SHIMMER_RADIUS + (Math.random() - 0.5) * 8).toFixed(1) + "px");
+		// SHARED orbit duration. Delay matches rise-delay so each
+		// particle's orbit phase tracks its rise phase — every
+		// particle traces the same helix arc, offset only in time.
+		d.style.setProperty("--orbit-dur",     SHIMMER_ORBIT_DUR + "s");
+		d.style.setProperty("--orbit-delay",   "-" + (phase * SHIMMER_ORBIT_DUR).toFixed(2) + "s");
+		// All particles start at the same angle — the delay does
+		// the spacing around the orbit. Together with rise-delay,
+		// this places particles uniformly along the helix.
+		d.style.setProperty("--start",         "0deg");
 		// Twinkle — each particle's opacity oscillates 0.55 → 1.0 →
 		// 0.55 on its own schedule. 1.8-4s/cycle is "not too fast"
 		// per Steve — reads as fairy-dust twinkle, not nervous
@@ -1930,13 +1939,14 @@ function setAtmosphere(name) {
 		spawnLightMotes(40);
 	} else if (name === "shimmer") {
 		// Shimmer presence — distinct from the # fx: shimmer
-		// one-shot flash. Sparkly gold particles spiraling outward
-		// from random anchors. Lots of variation in size, speed,
-		// orbit-radius so it reads as a moving cloud, not a clock.
-		// Manuscript moments: Ch1 "a shimmer waited at the furthest
-		// limit of the flat light", Ch2 "had stopped feeling like a
-		// direction and started feeling like company."
-		spawnShimmerParticles(50);
+		// one-shot flash. Single star glyph, synchronized helical
+		// stream — 25 particles is enough to make the spiral flow
+		// read continuously without packing the cluster tight
+		// (Steve: "slightly more compact"). Manuscript moments:
+		// Ch1 "a shimmer waited at the furthest limit of the flat
+		// light", Ch2 "had stopped feeling like a direction and
+		// started feeling like company."
+		spawnShimmerParticles(25);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

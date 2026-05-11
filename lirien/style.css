@@ -193,12 +193,20 @@ html, body {
 	height: var(--size, 1.5px);
 	border-radius: 50%;
 	/* Base color (the menu's --gold). The core's color shifts
-	 * gold→amber→gold inside shimmer-twinkle. Halo uses the
-	 * --gold-bright tone (rgba 224, 176, 112) so it stays warm
-	 * across the whole twinkle cycle rather than cooling at the
-	 * dim end. */
+	 * gold→amber→gold inside shimmer-twinkle. Three-layer
+	 * box-shadow gives each particle definition against ANY
+	 * background — Steve 2026-05-11 noticed the warm halo
+	 * disappeared against bright sky horizons:
+	 *   1. tight warm halo (the visible glow)
+	 *   2. outer soft warm halo (atmospheric reach)
+	 *   3. tight dark ring for contrast (pops the particle
+	 *      against pale/bright bgs without darkening dark ones
+	 *      noticeably) */
 	background: rgba(196, 147, 90, 1);
-	box-shadow: 0 0 var(--glow, 5px) rgba(224, 176, 112, 0.95);
+	box-shadow:
+		0 0 var(--glow, 8px)              rgba(255, 200, 130, 0.95),
+		0 0 calc(var(--glow, 8px) * 1.8)  rgba(255, 180, 100, 0.4),
+		0 0 3px 0.5px                     rgba(20, 12, 8, 0.55);
 	/* Center the dot on the orbit point. */
 	margin-left: calc(var(--size, 1.5px) * -0.5);
 	margin-top:  calc(var(--size, 1.5px) * -0.5);
@@ -239,7 +247,10 @@ html, body {
 	}
 	50%      {
 		opacity: 1.0;
-		background-color: rgba(255, 195, 115, 1);  /* warm amber peak */
+		/* Hot amber-white peak — the particle's tiny core flashes
+		 * almost-white against the warm halo, so it reads even
+		 * over a bright sky horizon. */
+		background-color: rgba(255, 230, 175, 1);
 	}
 }
 

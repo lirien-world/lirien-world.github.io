@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511i";
+const ASSET_VERSION = "20260511j";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1775,6 +1775,41 @@ function spawnLightMotes(count) {
 	$atmosphereLayer.appendChild(frag);
 }
 
+// Shimmer-presence particles — sparkly gold, each spirals outward
+// from its own random anchor, ~60 of them at varied radii / speeds
+// / start angles so the swarm doesn't feel like a metronome. The
+// outward spiral matches Lirien's spiral-shaped magic system. Used
+// for the "shimmer is in the air" atmosphere (NOT the one-shot
+// flash, which is fireFx("shimmer") / $shimmerFx).
+function spawnShimmerParticles(count) {
+	if (!$atmosphereLayer) return;
+	const frag = document.createDocumentFragment();
+	for (let i = 0; i < count; i++) {
+		const p = document.createElement("div");
+		p.className = "shimmer-particle";
+		// Duration ~5-10s per spiral cycle. Negative delay so each
+		// particle is already partway through on first paint.
+		const dur = 5 + Math.random() * 5;
+		p.style.setProperty("--x",       `${Math.random() * 100}%`);
+		p.style.setProperty("--y",       `${Math.random() * 100}%`);
+		p.style.setProperty("--size",    `${(2 + Math.random() * 2.5).toFixed(1)}px`);
+		p.style.setProperty("--opacity", (0.55 + Math.random() * 0.40).toFixed(2));
+		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
+		p.style.setProperty("--delay",   `-${(Math.random() * dur).toFixed(1)}s`);
+		// Orbit radius varies widely so close-anchor particles tickle
+		// small spirals and far-anchor ones swing through larger arcs.
+		p.style.setProperty("--radius",  `${(14 + Math.random() * 38).toFixed(0)}px`);
+		// Halo bigger than the particle so each one "catches the
+		// light" — that's most of the read in motion.
+		p.style.setProperty("--glow",    `${(4 + Math.random() * 7).toFixed(1)}px`);
+		// Random starting angle decouples particles from each other
+		// so they don't all leave their anchors in the same direction.
+		p.style.setProperty("--start",   `${(Math.random() * 360).toFixed(0)}deg`);
+		frag.appendChild(p);
+	}
+	$atmosphereLayer.appendChild(frag);
+}
+
 function setAtmosphere(name) {
 	if (!$atmosphereLayer) return;
 	name = (name || "").trim();
@@ -1803,6 +1838,15 @@ function setAtmosphere(name) {
 		// "small motes of light drifted upward from the ground,
 		// slow and without urgency."
 		spawnLightMotes(40);
+	} else if (name === "shimmer") {
+		// Shimmer presence — distinct from the # fx: shimmer
+		// one-shot flash. Sparkly gold particles spiraling outward
+		// from random anchors. Lots of variation in size, speed,
+		// orbit-radius so it reads as a moving cloud, not a clock.
+		// Manuscript moments: Ch1 "a shimmer waited at the furthest
+		// limit of the flat light", Ch2 "had stopped feeling like a
+		// direction and started feeling like company."
+		spawnShimmerParticles(60);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

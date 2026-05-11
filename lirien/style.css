@@ -150,6 +150,44 @@ html, body {
 	100% { transform: translate(var(--drift, 0), -120vh);       opacity: 0; }
 }
 
+/* Shimmer presence — atmospheric, NOT the one-shot fx-shimmer.
+ * Fired by # atmosphere: shimmer ink tag. Manuscript moments where
+ * "the shimmer" is described as a perceptible thing-in-the-air
+ * (Ch1: "a shimmer waited at the furthest limit of the flat light",
+ * Ch2: "had stopped feeling like a direction and started feeling
+ * like company"). Each particle spirals outward from its random
+ * anchor over a few seconds — 2 revolutions, growing radius,
+ * pulsing opacity. Many particles at varied anchors + radii + speeds
+ * read as a swirling sparkly cloud catching the light, not as a
+ * regular orbit. The spiral motif intentional — Lirien's whole
+ * tonal magic system is spiral-shaped. */
+.shimmer-particle {
+	position: absolute;
+	top: var(--y, 50%);
+	left: var(--x, 50%);
+	width: var(--size, 3px);
+	height: var(--size, 3px);
+	/* Center on the anchor point so the spiral grows from a real centre. */
+	margin-left: calc(var(--size, 3px) * -0.5);
+	margin-top:  calc(var(--size, 3px) * -0.5);
+	border-radius: 50%;
+	background: rgba(248, 224, 158, var(--opacity, 0.7));
+	box-shadow: 0 0 var(--glow, 6px) rgba(244, 212, 130, 0.7);
+	animation: shimmer-swirl var(--dur, 7s) linear var(--delay, 0s) infinite;
+	will-change: transform, opacity;
+}
+@keyframes shimmer-swirl {
+	/* rotate() then translateX() = orbit around the anchor at the
+	 * current radius. Radius grows from 0 → --radius over the cycle,
+	 * rotation does two full turns → outward spiral. Opacity pulses
+	 * in at 20%, peaks mid-cycle, fades out by 100%. */
+	0%   { transform: rotate(var(--start, 0deg))                            translateX(0)                                scale(0.3); opacity: 0; }
+	20%  { transform: rotate(calc(var(--start, 0deg) + 144deg))             translateX(calc(var(--radius, 25px) * 0.25)) scale(0.7); opacity: var(--opacity, 0.7); }
+	50%  { transform: rotate(calc(var(--start, 0deg) + 360deg))             translateX(calc(var(--radius, 25px) * 0.6))  scale(1.0); opacity: var(--opacity, 0.7); }
+	80%  { transform: rotate(calc(var(--start, 0deg) + 576deg))             translateX(calc(var(--radius, 25px) * 0.88)) scale(0.8); opacity: var(--opacity, 0.5); }
+	100% { transform: rotate(calc(var(--start, 0deg) + 720deg))             translateX(var(--radius, 25px))              scale(0.4); opacity: 0; }
+}
+
 /* ----- shimmer one-shot -----
  *
  * Fired by # fx: shimmer ink tags. Manuscript: "a distortion
@@ -511,14 +549,35 @@ body.story-started .game { opacity: 1; }
 	 * cleanly with the start of the visible text region. */
 	scroll-snap-type: y mandatory;
 	scroll-padding-top: 8px;
-	/* Vertical padding is split with .prose's 14px buffer above —
-	 * total visual offset from the panel's outer top to where text
-	 * starts is still ~22px, matching the previous design. */
-	padding: 4px 36px 12px 36px;
+	/* Vertical padding split with .prose's 14px buffer above. Extra
+	 * bottom padding (was 12, now 18) gives descenders (g/p/y) room
+	 * to render below the last visible line without overflow:auto
+	 * clipping them — Steve's report 2026-05-11. */
+	padding: 4px 36px 18px 36px;
 	font-size: var(--prose-font-size, 36px);
 	line-height: 1.4;
 	color: #f5ebd2;
 	box-sizing: border-box;
+	/* CSS mask: fade the top ~28px and bottom ~22px of the scroll
+	 * viewport to transparent. Operates on the painted result so it
+	 * works whether chars are .ch spans (mid-reveal) or plain text
+	 * (post-onChunkRevealed simplification). Replaces the JS
+	 * updateCharFade per-char approach which broke after we started
+	 * stripping spans on chunk completion. */
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		black 28px,
+		black calc(100% - 22px),
+		transparent 100%
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		black 28px,
+		black calc(100% - 22px),
+		transparent 100%
+	);
 }
 
 /* The sticky fade-top overlay was removed — it kept reading as

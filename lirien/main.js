@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511q";
+const ASSET_VERSION = "20260511r";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1810,6 +1810,13 @@ function shimmerAnchorFor(bgName) {
 
 let $shimmerCluster = null;  // current cluster element (or null)
 
+// Glyph pool for shimmer particles — each particle picks one at
+// spawn, so the cluster reads as a mix of sparkle shapes rather
+// than uniform pips. All Unicode dingbats / common symbols, no
+// asset download. Ordered roughly small → bold so a random pick
+// gives a believable mix of subtle and prominent sparkles.
+const SHIMMER_GLYPHS = ["✦", "✧", "✶", "✷", "·", "✺", "❋"];
+
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing
 // + respawning. CSS transition on .shimmer-cluster's left/top makes
@@ -1851,13 +1858,20 @@ function spawnShimmerParticles(count) {
 		// Peak opacity varies — some particles are dim ghosts, some
 		// catch the light fully. Stack of opacities = visual depth.
 		p.style.setProperty("--opacity",     (0.55 + Math.random() * 0.40).toFixed(2));
-		const d = document.createElement("div");
+		// Each particle is a span carrying a randomly-picked glyph
+		// (Steve 2026-05-11 wanted cute sparkle shapes, not round
+		// dots). The CSS handles the warm halo + dark contrast ring
+		// via text-shadow, which shapes the glow to the glyph's
+		// outline. Span rather than div because the text rendering
+		// path is what we want.
+		const d = document.createElement("span");
 		d.className = "shimmer-dot";
-		// 1.5-2.5px particles + bigger halo (7-14px) so the warm
-		// amber twinkle registers against bright bg images. Steve
-		// 2026-05-11: the prior 1-2px range was too subtle.
-		d.style.setProperty("--size",          (1.5 + Math.random() * 1).toFixed(1) + "px");
-		d.style.setProperty("--glow",          (7 + Math.random() * 7).toFixed(1) + "px");
+		d.textContent = SHIMMER_GLYPHS[Math.floor(Math.random() * SHIMMER_GLYPHS.length)];
+		// Glyph font-size 6-14px — much bigger than the previous
+		// round-dot range (1.5-2.5px) because a 2px glyph is
+		// illegible. Halo (text-shadow blur) 6-13px sized to match.
+		d.style.setProperty("--size",          (6 + Math.random() * 8).toFixed(1) + "px");
+		d.style.setProperty("--glow",          (6 + Math.random() * 7).toFixed(1) + "px");
 		// Orbit radius gives the cluster its width. 18-70px ~
 		// 130px-wide swarm.
 		d.style.setProperty("--radius",        (18 + Math.random() * 52).toFixed(0) + "px");

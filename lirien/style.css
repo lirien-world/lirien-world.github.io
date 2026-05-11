@@ -189,36 +189,37 @@ html, body {
 }
 .shimmer-dot {
 	position: absolute;
-	width: var(--size, 1.5px);
-	height: var(--size, 1.5px);
-	border-radius: 50%;
-	/* Base color (the menu's --gold). The core's color shifts
-	 * gold→amber→gold inside shimmer-twinkle. Three-layer
-	 * box-shadow gives each particle definition against ANY
-	 * background — Steve 2026-05-11 noticed the warm halo
-	 * disappeared against bright sky horizons:
-	 *   1. tight warm halo (the visible glow)
-	 *   2. outer soft warm halo (atmospheric reach)
-	 *   3. tight dark ring for contrast (pops the particle
-	 *      against pale/bright bgs without darkening dark ones
-	 *      noticeably) */
-	background: rgba(196, 147, 90, 1);
-	box-shadow:
+	/* Glyph rendered via text — color is the glyph fill, text-shadow
+	 * gives it a warm halo + dark contrast ring. Cheaper than SVG
+	 * (no asset request), more interesting than a plain dot. Each
+	 * particle picks a random glyph from a small pool in JS so the
+	 * cluster reads as varied sparkles rather than uniform pips. */
+	font-size: var(--size, 10px);
+	line-height: 1;
+	color: rgba(196, 147, 90, 1);
+	/* Three-layer text-shadow: tight warm halo, wider soft warm
+	 * halo, tight dark ring for contrast against bright bgs.
+	 * Mirrors the previous box-shadow approach but shapes the
+	 * glow to the glyph's outline rather than a perfect circle. */
+	text-shadow:
 		0 0 var(--glow, 8px)              rgba(255, 200, 130, 0.95),
 		0 0 calc(var(--glow, 8px) * 1.8)  rgba(255, 180, 100, 0.4),
-		0 0 3px 0.5px                     rgba(20, 12, 8, 0.55);
-	/* Center the dot on the orbit point. */
-	margin-left: calc(var(--size, 1.5px) * -0.5);
-	margin-top:  calc(var(--size, 1.5px) * -0.5);
-	/* Two parallel animations: one for the orbit (transform), one
-	 * for the twinkle (opacity + background-color). Independent
-	 * durations + delays so neighbours twinkle on different
-	 * rhythms — random schedule across the cluster, not a
-	 * metronome. */
+		0 0 2px                            rgba(20, 12, 8, 0.65);
+	/* Center the glyph on the orbit point. Margins shift it by
+	 * half its rendered size in each axis. */
+	margin-left: calc(var(--size, 10px) * -0.5);
+	margin-top:  calc(var(--size, 10px) * -0.5);
+	/* Suppress text-related quirks that'd nudge layout. */
+	user-select: none;
+	pointer-events: none;
+	font-family: "Apple Color Emoji", "Segoe UI Symbol", "Symbola", sans-serif;
+	/* Two parallel animations: orbit (transform), twinkle
+	 * (opacity + color). Per-particle durations + negative delays
+	 * so neighbours twinkle on different rhythms. */
 	animation:
 		shimmer-orbit   var(--orbit-dur,   10s)  linear        var(--orbit-delay,   0s) infinite,
 		shimmer-twinkle var(--twinkle-dur, 2.5s) ease-in-out   var(--twinkle-delay, 0s) infinite;
-	will-change: transform, opacity, background-color;
+	will-change: transform, opacity, color;
 }
 @keyframes shimmer-rise {
 	0%   { transform: translateY(70px);  opacity: 0; }
@@ -243,14 +244,14 @@ html, body {
 @keyframes shimmer-twinkle {
 	0%, 100% {
 		opacity: 0.55;
-		background-color: rgba(196, 147, 90, 1);   /* --gold (menu base) */
+		color: rgba(196, 147, 90, 1);   /* --gold (menu base) */
 	}
 	50%      {
 		opacity: 1.0;
-		/* Hot amber-white peak — the particle's tiny core flashes
-		 * almost-white against the warm halo, so it reads even
-		 * over a bright sky horizon. */
-		background-color: rgba(255, 230, 175, 1);
+		/* Hot amber-white peak — at the bright moment the glyph
+		 * fills with near-white amber, popping against the warm
+		 * halo even on bright sky horizons. */
+		color: rgba(255, 230, 175, 1);
 	}
 }
 

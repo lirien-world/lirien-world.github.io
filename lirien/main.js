@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511s";
+const ASSET_VERSION = "20260511t";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1817,14 +1817,23 @@ const SHIMMER_GLYPH = "✦";
 
 // Synchronized motion params — all particles share the SAME rise
 // and orbit durations and are distributed in even phase offsets
-// around both cycles. Result: instead of N independent spirals,
-// the cluster reads as one continuous spiral stream where each
-// star is on the same path, just at a different point along it.
-// Steve 2026-05-11: "glyphs kinda following each other so they
-// create a spiral 'flow' vs. all independently moving in a spiral."
+// around both cycles. The cluster reads as one continuous spiral
+// where each star is on the same helical path, just at a different
+// point along it.
+//
+// Key for the helix to LOOK like a spiral rather than a vertical
+// line with wiggle: ratio of orbit-radius to rise-span, AND the
+// number of revolutions per rise.
+//   • rise span 110px (CSS keyframe translateY ±55)
+//   • orbit radius ~28px  → spiral ~56px wide, ~110px tall
+//   • orbit-dur 3s vs rise-dur 9s → 3 full revolutions per rise
+// Three revs over a 110px-tall helix is a tight visible spiral,
+// not a sparse line. Steve 2026-05-11: "either an upward spiral
+// of motes or a head-on spiral with motes flowing along it" —
+// this is the upward-spiral option.
 const SHIMMER_RISE_DUR  = 9;   // seconds — full bottom→top life
-const SHIMMER_ORBIT_DUR = 7;   // seconds — full revolution
-const SHIMMER_RADIUS    = 14;  // base orbit radius (px), compact
+const SHIMMER_ORBIT_DUR = 3;   // seconds — full revolution (3 revs/rise)
+const SHIMMER_RADIUS    = 28;  // base orbit radius (px) — half helix width
 
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing
@@ -1940,13 +1949,12 @@ function setAtmosphere(name) {
 	} else if (name === "shimmer") {
 		// Shimmer presence — distinct from the # fx: shimmer
 		// one-shot flash. Single star glyph, synchronized helical
-		// stream — 25 particles is enough to make the spiral flow
-		// read continuously without packing the cluster tight
-		// (Steve: "slightly more compact"). Manuscript moments:
-		// Ch1 "a shimmer waited at the furthest limit of the flat
-		// light", Ch2 "had stopped feeling like a direction and
-		// started feeling like company."
-		spawnShimmerParticles(25);
+		// stream — 36 particles across 3 revolutions of the helix
+		// (~12 per turn) reads as a visible continuous spiral.
+		// Manuscript moments: Ch1 "a shimmer waited at the furthest
+		// limit of the flat light", Ch2 "had stopped feeling like
+		// a direction and started feeling like company."
+		spawnShimmerParticles(36);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

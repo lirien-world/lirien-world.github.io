@@ -222,11 +222,14 @@ html, body {
 	will-change: transform, opacity, color;
 }
 @keyframes shimmer-rise {
-	0%   { transform: translateY(70px);  opacity: 0; }
+	/* Rise span tightened from ±80 to ±55 so the helix is closer to
+	 * "tall as it is wide" — at the previous 1:11 width:height ratio
+	 * the spiral collapsed visually into a vertical line. */
+	0%   { transform: translateY(55px);  opacity: 0; }
 	18%  { opacity: var(--opacity, 0.85); }
 	50%  { opacity: var(--opacity, 0.95); }
 	82%  { opacity: var(--opacity, 0.55); }
-	100% { transform: translateY(-90px); opacity: 0; }
+	100% { transform: translateY(-55px); opacity: 0; }
 }
 @keyframes shimmer-orbit {
 	from { transform: rotate(var(--start, 0deg))                              translateX(var(--radius, 30px)); }

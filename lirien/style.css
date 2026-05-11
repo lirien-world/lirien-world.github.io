@@ -192,12 +192,13 @@ html, body {
 	width: var(--size, 1.5px);
 	height: var(--size, 1.5px);
 	border-radius: 50%;
-	/* Base color (gold halo); the core's color shifts cream↔gold
-	 * inside shimmer-twinkle. The halo uses the app's warmer
-	 * antique gold (rgba 220, 178, 110) — same hue family as the
-	 * chapter-title accent. */
-	background: rgba(220, 178, 110, 1);
-	box-shadow: 0 0 var(--glow, 5px) rgba(220, 178, 110, 0.9);
+	/* Base color (the menu's --gold). The core's color shifts
+	 * gold→amber→gold inside shimmer-twinkle. Halo uses the
+	 * --gold-bright tone (rgba 224, 176, 112) so it stays warm
+	 * across the whole twinkle cycle rather than cooling at the
+	 * dim end. */
+	background: rgba(196, 147, 90, 1);
+	box-shadow: 0 0 var(--glow, 5px) rgba(224, 176, 112, 0.95);
 	/* Center the dot on the orbit point. */
 	margin-left: calc(var(--size, 1.5px) * -0.5);
 	margin-top:  calc(var(--size, 1.5px) * -0.5);
@@ -222,21 +223,23 @@ html, body {
 	from { transform: rotate(var(--start, 0deg))                              translateX(var(--radius, 30px)); }
 	to   { transform: rotate(calc(var(--start, 0deg) + 360deg))               translateX(var(--radius, 30px)); }
 }
-/* Twinkle — particle oscillates between dim warm gold and bright
- * cream, on its own schedule, multiplied with the parent's
- * rise-fade. The color shift gives a fairy-dust feel: cream when
- * "lit", gold when "resting". Floor at opacity 0.55 (not 0) so
- * the particle stays at least faintly visible at the dim end;
- * the parent's rise fade is what blanks it entirely at the
- * edges of its life. */
+/* Twinkle — particle oscillates between the app's base gold and
+ * a brighter amber/orange peak, on its own schedule, multiplied
+ * with the parent's rise-fade. Steve 2026-05-11: the previous
+ * cream peak washed out against bright bg images; pushing the
+ * peak toward the menu-icon's warm amber gold makes the
+ * particles obvious without losing the "fairy dust" feel. Floor
+ * at opacity 0.55 (not 0) so the particle stays at least faintly
+ * visible at the dim end; the parent's rise fade is what blanks
+ * it entirely at the edges of its life. */
 @keyframes shimmer-twinkle {
 	0%, 100% {
 		opacity: 0.55;
-		background-color: rgba(220, 178, 110, 1);  /* warm app gold */
+		background-color: rgba(196, 147, 90, 1);   /* --gold (menu base) */
 	}
 	50%      {
 		opacity: 1.0;
-		background-color: rgba(255, 246, 220, 1);  /* cream peak */
+		background-color: rgba(255, 195, 115, 1);  /* warm amber peak */
 	}
 }
 

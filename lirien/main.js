@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511o";
+const ASSET_VERSION = "20260511p";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1853,11 +1853,11 @@ function spawnShimmerParticles(count) {
 		p.style.setProperty("--opacity",     (0.55 + Math.random() * 0.40).toFixed(2));
 		const d = document.createElement("div");
 		d.className = "shimmer-dot";
-		// 1-2px particles — Steve 2026-05-11 wanted smaller still.
-		// The halo carries the entire visual presence; the core is
-		// just a sharp pinpoint to anchor the twinkle.
-		d.style.setProperty("--size",          (1 + Math.random() * 1).toFixed(1) + "px");
-		d.style.setProperty("--glow",          (5 + Math.random() * 6).toFixed(1) + "px");
+		// 1.5-2.5px particles + bigger halo (7-14px) so the warm
+		// amber twinkle registers against bright bg images. Steve
+		// 2026-05-11: the prior 1-2px range was too subtle.
+		d.style.setProperty("--size",          (1.5 + Math.random() * 1).toFixed(1) + "px");
+		d.style.setProperty("--glow",          (7 + Math.random() * 7).toFixed(1) + "px");
 		// Orbit radius gives the cluster its width. 18-70px ~
 		// 130px-wide swarm.
 		d.style.setProperty("--radius",        (18 + Math.random() * 52).toFixed(0) + "px");

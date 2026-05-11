@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511x";
+const ASSET_VERSION = "20260511y";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1876,10 +1876,14 @@ function spawnShimmerParticles(count) {
 		const d = document.createElement("span");
 		d.className = "shimmer-dot";
 		d.textContent = SHIMMER_GLYPH;
-		// Glyph font-size 7-13px — slight per-particle variation
-		// for depth.
-		d.style.setProperty("--size",           (7 + Math.random() * 6).toFixed(1) + "px");
-		d.style.setProperty("--glow",           (6 + Math.random() * 6).toFixed(1) + "px");
+		// Glyph font-size 13-22px — much bigger than before. With
+		// mix-blend-mode: screen on the dot, the particle ADDS
+		// light to the bg, so bigger glyphs translate to bigger
+		// visible bright spots regardless of bg color. Steve
+		// 2026-05-11: previous 7-13px was "just not really visible"
+		// even with a brightness pass.
+		d.style.setProperty("--size",           (13 + Math.random() * 9).toFixed(1) + "px");
+		d.style.setProperty("--glow",           (10 + Math.random() * 8).toFixed(1) + "px");
 		// Per-particle max-r 65-95px (tighter than the previous
 		// 60-100 range) so all particles trace closely-matching
 		// spiral arms — the eye reads them as one continuous

@@ -186,26 +186,34 @@ html, body {
  * 2026-05-11 with a head-on spiral. */
 .shimmer-dot {
 	position: absolute;
-	/* Glyph rendered via text — color is the glyph fill, text-shadow
-	 * gives it a warm halo + dark contrast ring. Cheaper than SVG
-	 * (no asset request), more interesting than a plain dot.
+	/* Glyph rendered via text. mix-blend-mode: screen makes the
+	 * particle's light ADD to the background rather than alpha-
+	 * blend — so a gold star on a bright-gold sky stays visibly
+	 * brighter (light + light = lighter light), and a gold star
+	 * on a dark forest pops without needing a dark contrast ring.
+	 * Steve's report 2026-05-11: previous warm-on-warm rendering
+	 * disappeared against bright sky horizons; this is the
+	 * fundamental fix.
 	 *
-	 * Brightness pass per Steve 2026-05-11 ("compare to the hamburger
-	 * menu or the chevron at the bottom — they should be slightly
-	 * brighter. They are magic after all"): bumped base color from
-	 * --gold to --gold-bright; inner halo from warm-orange to a
-	 * brighter warm-amber; outer halo punched up; dark contrast ring
-	 * softened from 0.65 → 0.4 so it isn't muting the magic. */
+	 * Screen blend can't be darkened, so the previous "dark
+	 * contrast ring" trick (which only helped against light
+	 * bgs anyway) is dropped — the blend handles both light
+	 * and dark backgrounds uniformly. */
 	top: 0;
 	left: 0;
-	font-size: var(--size, 10px);
+	font-size: var(--size, 16px);
 	line-height: 1;
-	color: rgba(224, 176, 112, 1);                       /* --gold-bright */
+	mix-blend-mode: screen;
+	color: rgba(245, 223, 166, 1);                       /* cream-gold core */
+	/* Three-layer warm halo. With screen blend, halos add light
+	 * to whatever's behind them; we want a tight bright inner
+	 * core (sharp pinpoint) plus wider soft reach (atmospheric
+	 * presence). All warm-amber, no darkening layer. */
 	text-shadow:
-		0 0 var(--glow, 8px)              rgba(255, 225, 165, 1.0),
-		0 0 calc(var(--glow, 8px) * 1.8)  rgba(255, 205, 130, 0.55),
-		0 0 calc(var(--glow, 8px) * 3.0)  rgba(255, 190, 120, 0.2),
-		0 0 2px                            rgba(20, 12, 8, 0.4);
+		0 0 calc(var(--glow, 12px) * 0.5) rgba(255, 240, 195, 1.0),
+		0 0 var(--glow, 12px)              rgba(255, 215, 145, 0.9),
+		0 0 calc(var(--glow, 12px) * 2.0)  rgba(255, 195, 120, 0.5),
+		0 0 calc(var(--glow, 12px) * 3.5)  rgba(255, 180, 100, 0.25);
 	/* Center the glyph on the cluster origin. */
 	margin-left: calc(var(--size, 10px) * -0.5);
 	margin-top:  calc(var(--size, 10px) * -0.5);
@@ -252,12 +260,11 @@ html, body {
  * it entirely at the edges of its life. */
 @keyframes shimmer-twinkle {
 	/* Twinkle is COLOR-ONLY — the spiral animation owns opacity
-	 * (lifecycle fade). Shifts between the menu's gold-bright and
-	 * the cream highlight the menu's shimmer-sweep peaks at, so
-	 * the particles read in the same palette as the gold ornament
-	 * elsewhere in the app. */
-	0%, 100% { color: rgba(224, 176, 112, 1); }   /* --gold-bright */
-	50%      { color: rgba(245, 223, 166, 1); }   /* menu shimmer peak (#f5dfa6) */
+	 * (lifecycle fade). With mix-blend-mode: screen on the dot,
+	 * brighter colors add more light to the bg, so even the dim
+	 * end is warm-amber rather than nearly-invisible gold. */
+	0%, 100% { color: rgba(245, 220, 160, 1); }   /* warm amber base */
+	50%      { color: rgba(255, 245, 220, 1); }   /* near-white peak */
 }
 
 /* ----- shimmer one-shot -----

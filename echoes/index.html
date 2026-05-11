@@ -137,16 +137,70 @@ body{
 	text-align:right;line-height:1.5;
 	display:flex;flex-direction:column;align-items:flex-end;gap:0.05rem;
 }
-.brand-meta .mode-toggle{
+/* Floating mode-meta — bottom-right on landscape, hidden on portrait.
+ * The drawer is the discoverable path for first-time visitors; this
+ * block is a power-user shortcut for repeat users who want quick
+ * toggle without opening the drawer. Steve's mom (the canary) didn't
+ * find the inline-in-header version, so it stays subordinate now. */
+.mode-meta{
+	position:fixed;
+	bottom:clamp(72px, 14vh, 96px);
+	right:clamp(1rem, 3vw, 1.5rem);
+	z-index:18;
+	display:flex;flex-direction:column;align-items:flex-end;gap:0.1rem;
+	font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);
+	letter-spacing:0.18em;text-transform:none;color:var(--ash);font-style:italic;
+	line-height:1.5;pointer-events:none;
+}
+.mode-meta .mode-toggle{
 	all:unset;cursor:pointer;color:var(--ash);
 	font-style:italic;letter-spacing:inherit;font-size:inherit;font-family:inherit;
 	transition:color 0.3s ease;
 	-webkit-tap-highlight-color:transparent;
+	pointer-events:auto;
 }
-.brand-meta .mode-toggle:hover,.brand-meta .mode-toggle:focus-visible{color:var(--mist);outline:none}
-.brand-meta .mode-toggle[hidden]{display:none}
-.brand-meta .mode-toggle:hover .mode-value,.brand-meta .mode-toggle:focus-visible .mode-value{color:var(--gold-bright)}
-.brand-meta .mode-value{color:var(--gold);transition:color 0.3s ease}
+.mode-meta .mode-toggle:hover,.mode-meta .mode-toggle:focus-visible{color:var(--mist);outline:none}
+.mode-meta .mode-toggle[hidden]{display:none}
+.mode-meta .mode-toggle:hover .mode-value,.mode-meta .mode-toggle:focus-visible .mode-value{color:var(--gold-bright)}
+.mode-meta .mode-value{color:var(--gold);transition:color 0.3s ease}
+/* Portrait: drawer is the only discoverable path; floating text would
+ * compete with seekbar + transport + "N tracks ◆" button. */
+@media (orientation: portrait), (max-width: 720px){
+	.mode-meta{display:none}
+}
+
+/* Hamburger menu button — top-left, always visible. Three-bar icon
+ * built from spans (no SVG dependency). Same chrome-btn footprint
+ * as the drawer-toggle bottom-right so the two affordances feel
+ * like a pair: hamburger opens the drawer, drawer-toggle opens the
+ * drawer. Either works; the hamburger is the discoverable one. */
+.menu-btn{
+	position:fixed;
+	top:clamp(0.9rem, 2.4vw, 1.4rem);
+	left:clamp(0.9rem, 2.4vw, 1.4rem);
+	z-index:30;
+	all:unset;
+	cursor:pointer;
+	width:44px;height:44px;
+	display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+	background:rgba(8,6,15,0.55);
+	border:1px solid rgba(196,147,90,0.22);
+	border-radius:3px;
+	transition:background 0.3s ease, border-color 0.3s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.menu-btn:hover,.menu-btn:focus-visible{
+	background:rgba(12,9,22,0.7);
+	border-color:rgba(196,147,90,0.6);
+	outline:none;
+}
+.menu-btn .menu-btn-bar{
+	display:block;
+	width:22px;height:1.5px;
+	background:var(--gold);
+	transition:background 0.3s ease;
+}
+.menu-btn:hover .menu-btn-bar,.menu-btn:focus-visible .menu-btn-bar{background:var(--gold-bright)}
 
 /* ───── PLAYER STAGE (the spiral) ───── */
 .player{
@@ -521,6 +575,72 @@ body.is-playing .progress{
 }
 .drawer-close:hover{color:var(--gold-bright)}
 
+/* Settings section at the top of the drawer — labeled buttons for
+ * play order + content scope. The active value gets a gold rim +
+ * brighter text so the current state is visible at a glance, same
+ * pattern as the Lirien reader's drawer rows. */
+.drawer-settings{
+	display:flex;flex-direction:column;gap:1.2rem;
+	padding:0.4rem 0 1.4rem 0;
+	margin-bottom:1.2rem;
+	border-bottom:1px solid rgba(196,147,90,0.18);
+	flex-shrink:0;
+}
+.drawer-settings-group{
+	display:flex;flex-direction:column;gap:0.4rem;
+}
+.drawer-settings-label{
+	font-family:'Cormorant Garamond',serif;
+	font-size:var(--text-xs);
+	letter-spacing:0.22em;
+	text-transform:uppercase;
+	color:var(--ash);
+	margin-bottom:0.15rem;
+}
+.drawer-settings-rows{
+	display:flex;flex-direction:column;gap:0.25rem;
+}
+.drawer-row{
+	all:unset;cursor:pointer;
+	font-family:'Cormorant Garamond',serif;
+	font-style:italic;
+	font-size:var(--text-sm);
+	color:var(--cream);
+	padding:0.55rem 0.8rem;
+	border:1px solid rgba(196,147,90,0.18);
+	border-radius:3px;
+	background:rgba(8,6,15,0.45);
+	transition:color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.drawer-row:hover,.drawer-row:focus-visible{
+	color:var(--parchment);
+	background:rgba(12,9,22,0.7);
+	border-color:rgba(196,147,90,0.45);
+	outline:none;
+}
+.drawer-row.is-active{
+	color:var(--gold-bright);
+	border-color:rgba(196,147,90,0.7);
+	background:rgba(196,147,90,0.08);
+}
+.drawer-row.is-active::before{
+	content:"◆ ";
+	color:var(--gold);
+	margin-right:0.4rem;
+	font-style:normal;
+	letter-spacing:0;
+}
+.drawer-tracklist-header{
+	font-family:'Cormorant Garamond',serif;
+	font-size:var(--text-xs);
+	letter-spacing:0.22em;
+	text-transform:uppercase;
+	color:var(--ash);
+	padding:0 0 0.6rem 0;
+	flex-shrink:0;
+}
+
 .tracklist{
 	list-style:none;padding:0;margin:0;
 	display:flex;flex-direction:column;gap:0.15rem;
@@ -701,12 +821,34 @@ body.is-playing .progress{
 		</div>
 		<div class="brand-meta">
 			<span id="trackCountLabel">sixteen pieces</span>
-			<button class="mode-toggle" id="modeToggle" type="button"
-			        aria-label="Toggle play order"><span data-i18n="echoes.label.mode">mode</span>: <span class="mode-value" id="modeValue">shuffled</span></button>
-			<button class="mode-toggle" id="contentToggle" type="button"
-			        aria-label="Toggle content scope"><span data-i18n="echoes.label.content">content</span>: <span class="mode-value" id="contentValue">played</span></button>
 		</div>
 	</header>
+
+	<!--
+		Hamburger menu. Top-left, always visible, opens the unified
+		drawer (settings + track list). The drawer was previously
+		only reachable via the "N tracks ◆" button bottom-right;
+		that's not discoverable for first-time visitors. The
+		hamburger is the universal "menu lives here" affordance.
+	-->
+	<button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+		<span class="menu-btn-bar"></span>
+		<span class="menu-btn-bar"></span>
+		<span class="menu-btn-bar"></span>
+	</button>
+
+	<!--
+		Inline mode-meta — moved out of the header to a bottom-right
+		floating spot. Kept clickable as a quick-toggle for repeat
+		users. Hidden on portrait via media query so the drawer is
+		the only path on narrow viewports (fewer competing surfaces).
+	-->
+	<div class="mode-meta" id="modeMeta">
+		<button class="mode-toggle" id="modeToggle" type="button"
+		        aria-label="Toggle play order"><span data-i18n="echoes.label.mode">mode</span>: <span class="mode-value" id="modeValue">shuffled</span></button>
+		<button class="mode-toggle" id="contentToggle" type="button"
+		        aria-label="Toggle content scope"><span data-i18n="echoes.label.content">content</span>: <span class="mode-value" id="contentValue">played</span></button>
+	</div>
 
 	<main class="player">
 		<div class="spiral-wrap" id="spiralWrap">
@@ -785,10 +927,40 @@ body.is-playing .progress{
 </div>
 
 <div class="drawer-scrim" id="drawerScrim" aria-hidden="true"></div>
-<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Track list" aria-hidden="true">
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true">
 	<div class="drawer-head">
 		<h2 class="drawer-title" data-i18n="echoes.drawer.title">The Music</h2>
 		<button class="drawer-close" id="drawerClose" type="button" data-i18n="echoes.drawer.close">Close</button>
+	</div>
+
+	<!--
+		Settings section — discoverable controls for play order +
+		content scope. Same state as the inline #modeToggle /
+		#contentToggle buttons; clicking a row OR the inline text
+		updates both surfaces. Steve's mom didn't realize the inline
+		text was clickable; the drawer's labeled rows make it obvious.
+	-->
+	<section class="drawer-settings">
+		<div class="drawer-settings-group">
+			<div class="drawer-settings-label" data-i18n="echoes.settings.play-order">Play order</div>
+			<div class="drawer-settings-rows">
+				<button class="drawer-row" type="button" data-mode="shuffled"   data-i18n="echoes.settings.mode.shuffled">Shuffled</button>
+				<button class="drawer-row" type="button" data-mode="sequential" data-i18n="echoes.settings.mode.sequential">In order</button>
+				<button class="drawer-row" type="button" data-mode="repeat"     data-i18n="echoes.settings.mode.repeat">Repeat one</button>
+			</div>
+		</div>
+		<div class="drawer-settings-group">
+			<div class="drawer-settings-label" data-i18n="echoes.settings.content">What to play</div>
+			<div class="drawer-settings-rows">
+				<button class="drawer-row" type="button" data-content="played"  data-i18n="echoes.settings.content.played">Tracks you've played</button>
+				<button class="drawer-row" type="button" data-content="all"     data-i18n="echoes.settings.content.all">Everything</button>
+				<button class="drawer-row" type="button" data-content="minimal" data-i18n="echoes.settings.content.minimal">Just the theme</button>
+			</div>
+		</div>
+	</section>
+
+	<div class="drawer-tracklist-header">
+		<span data-i18n="echoes.drawer.tracks">Tracks</span>
 	</div>
 	<ol class="tracklist" id="tracklist"></ol>
 	<div class="drawer-foot">
@@ -837,7 +1009,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-113403";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-231549";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -925,8 +1097,18 @@ body.is-playing .progress{
 		"echoes.count.pieces":  { en: "pieces",                                           es: "piezas" },
 		"echoes.count.track":   { en: "track",                                            es: "pista" },
 		"echoes.count.tracks":  { en: "tracks",                                           es: "pistas" },
-		"echoes.drawer.title":  { en: "The Music",                                        es: "La Música" },
+		"echoes.drawer.title":  { en: "Menu",                                             es: "Menú" },
 		"echoes.drawer.close":  { en: "Close",                                            es: "Cerrar" },
+		"echoes.drawer.tracks": { en: "Tracks",                                           es: "Pistas" },
+
+		"echoes.settings.play-order":     { en: "Play order",            es: "Orden de reproducción" },
+		"echoes.settings.content":        { en: "What to play",          es: "Qué reproducir" },
+		"echoes.settings.mode.shuffled":     { en: "Shuffled",           es: "Aleatorio" },
+		"echoes.settings.mode.sequential":   { en: "In order",           es: "En orden" },
+		"echoes.settings.mode.repeat":       { en: "Repeat one",         es: "Repetir una" },
+		"echoes.settings.content.played":    { en: "Tracks you've played",  es: "Pistas escuchadas" },
+		"echoes.settings.content.all":       { en: "Everything",         es: "Todo" },
+		"echoes.settings.content.minimal":   { en: "Just the theme",     es: "Solo el tema" },
 		"echoes.drawer.foot":   { en: " pieces written for <em>The Spiral That Remembers</em>. They play in shuffled order, never repeating until each has been heard. Touch any title to step there directly.",
 		                          es: " piezas escritas para <em>La Espiral Que Recuerda</em>. Suenan en orden aleatorio, sin repetirse hasta que cada una se haya escuchado. Toca cualquier título para ir allí directamente." },
 	};
@@ -1511,6 +1693,7 @@ function toggleMode(){
 	updateModeLabel();
 	buildTracklist();
 	updateActiveRow();
+	if (typeof refreshDrawerSettingsState === "function") refreshDrawerSettingsState();
 }
 
 function applyRepeatLoop(){
@@ -1564,6 +1747,7 @@ function toggleContent(){
 		"";
 	setBg(imageSource);
 	applyCaptionForCurrent();
+	if (typeof refreshDrawerSettingsState === "function") refreshDrawerSettingsState();
 }
 
 function updateContentLabel(){
@@ -2082,6 +2266,10 @@ function openDrawer(){
 	// list is taller than the screen and the active row is often
 	// off-screen by default. Runs after open so layout is settled.
 	requestAnimationFrame(scrollActiveTrackIntoView);
+	// Make sure the settings rows reflect the current state every
+	// time the drawer opens — guards against external state changes
+	// (e.g. URL ?mode=repeat handling) between opens.
+	if (typeof refreshDrawerSettingsState === "function") refreshDrawerSettingsState();
 }
 function scrollActiveTrackIntoView(){
 	const row = $tracklist.querySelector(".track-row.is-active");
@@ -2094,10 +2282,72 @@ function closeDrawer(){
 	$drawer.setAttribute("aria-hidden","true");
 	$drawerScrim.setAttribute("aria-hidden","true");
 	$listBtn.focus();
+	const mb = document.getElementById("menuBtn");
+	if (mb) mb.setAttribute("aria-expanded", "false");
 }
 $listBtn.addEventListener("click", ()=>{ ackTap($listBtn); openDrawer(); });
 $drawerClose.addEventListener("click", closeDrawer);
 $drawerScrim.addEventListener("click", closeDrawer);
+
+// Hamburger menu — same target as the bottom-right "N tracks ◆"
+// button but discoverable for first-time visitors. Sets aria-expanded
+// so screen readers / keyboard users know what they're activating.
+const $menuBtn = document.getElementById("menuBtn");
+if ($menuBtn) {
+	$menuBtn.addEventListener("click", () => {
+		const isOpen = $drawer.classList.contains("is-open");
+		if (isOpen) {
+			closeDrawer();
+			$menuBtn.setAttribute("aria-expanded", "false");
+		} else {
+			openDrawer();
+			$menuBtn.setAttribute("aria-expanded", "true");
+		}
+	});
+}
+
+// Drawer settings rows — clicking a row sets the corresponding mode
+// directly (not a toggle-cycle like the inline shortcut). State stays
+// in sync with the floating mode-meta buttons; both surfaces reflect
+// the same `mode` / `content` variables.
+function setMode(target) {
+	if (mode === target) return;
+	mode = target;
+	reshuffle(activeIdx);
+	applyRepeatLoop();
+	updateModeLabel();
+	buildTracklist();
+	updateActiveRow();
+	refreshDrawerSettingsState();
+}
+function setContent(target) {
+	if (content === target) return;
+	content = target;
+	updateContentLabel();
+	updateCounts();
+	reshuffle(activeIdx);
+	buildTracklist();
+	updateActiveRow();
+	refreshDrawerSettingsState();
+	// Re-apply bg via the same fallthrough that toggleContent uses.
+	if (typeof setBg === "function" && activeIdx >= 0 && TRACKS[activeIdx]) {
+		setBg(TRACKS[activeIdx].image || "");
+	}
+}
+function refreshDrawerSettingsState() {
+	document.querySelectorAll(".drawer-row[data-mode]").forEach((btn) => {
+		btn.classList.toggle("is-active", btn.dataset.mode === mode);
+	});
+	document.querySelectorAll(".drawer-row[data-content]").forEach((btn) => {
+		btn.classList.toggle("is-active", btn.dataset.content === content);
+	});
+}
+document.querySelectorAll(".drawer-row[data-mode]").forEach((btn) => {
+	btn.addEventListener("click", () => setMode(btn.dataset.mode));
+});
+document.querySelectorAll(".drawer-row[data-content]").forEach((btn) => {
+	btn.addEventListener("click", () => setContent(btn.dataset.content));
+});
 
 // ─────────────────────────────────────────────────────────────────
 // Drifting motes

@@ -197,7 +197,9 @@
 			const res = await fetch(url, { cache: "no-store" });
 			if (!res.ok) return null;
 			const data = await res.json();
-			const row = (data && data.rows && data.rows[0]) || null;
+			// Worker returns { q, results, filters } — not { rows }.
+			// Matches admin.js's fetchQuery contract.
+			const row = (data && data.results && data.results[0]) || null;
 			if (!row) return null;
 			return {
 				total: Number(row.total_active) || 0,

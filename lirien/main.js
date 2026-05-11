@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511k";
+const ASSET_VERSION = "20260511l";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1783,31 +1783,57 @@ function spawnLightMotes(count) {
 // flash, which is fireFx("shimmer") / $shimmerFx).
 function spawnShimmerParticles(count) {
 	if (!$atmosphereLayer) return;
-	const frag = document.createDocumentFragment();
+	// Single localized cluster — Steve's "dust devil" mental model.
+	// All particles share a single anchor; the swarm is a clump
+	// not a screen-wide ambient. Composition gives the spiral
+	// motion: the wrapper "rises" (translateY + opacity in/out)
+	// while the inner dot orbits the wrapper's origin.
+	const cluster = document.createElement("div");
+	cluster.className = "shimmer-cluster";
+	// Position the cluster off-center, lower half — feels like a
+	// wisp visible in the scene rather than a sky effect. Light
+	// randomization so consecutive shimmer atmospheres don't always
+	// anchor in the exact same spot.
+	const cx = 28 + Math.random() * 40;  // 28-68% from left
+	const cy = 50 + Math.random() * 20;  // 50-70% from top
+	cluster.style.setProperty("--cluster-x", cx.toFixed(1) + "%");
+	cluster.style.setProperty("--cluster-y", cy.toFixed(1) + "%");
 	for (let i = 0; i < count; i++) {
 		const p = document.createElement("div");
 		p.className = "shimmer-particle";
-		// Duration ~5-10s per spiral cycle. Negative delay so each
-		// particle is already partway through on first paint.
-		const dur = 5 + Math.random() * 5;
-		p.style.setProperty("--x",       `${Math.random() * 100}%`);
-		p.style.setProperty("--y",       `${Math.random() * 100}%`);
-		p.style.setProperty("--size",    `${(2 + Math.random() * 2.5).toFixed(1)}px`);
-		p.style.setProperty("--opacity", (0.55 + Math.random() * 0.40).toFixed(2));
-		p.style.setProperty("--dur",     `${dur.toFixed(1)}s`);
-		p.style.setProperty("--delay",   `-${(Math.random() * dur).toFixed(1)}s`);
-		// Orbit radius varies widely so close-anchor particles tickle
-		// small spirals and far-anchor ones swing through larger arcs.
-		p.style.setProperty("--radius",  `${(14 + Math.random() * 38).toFixed(0)}px`);
-		// Halo bigger than the particle so each one "catches the
-		// light" — that's most of the read in motion.
-		p.style.setProperty("--glow",    `${(4 + Math.random() * 7).toFixed(1)}px`);
-		// Random starting angle decouples particles from each other
-		// so they don't all leave their anchors in the same direction.
-		p.style.setProperty("--start",   `${(Math.random() * 360).toFixed(0)}deg`);
-		frag.appendChild(p);
+		// Each particle "lives" 5-9s of vertical rise. Negative
+		// delay staggers them so the cluster is always populated
+		// (no startup ramp where everyone fades in at once).
+		const riseDur = 5 + Math.random() * 4;
+		p.style.setProperty("--rise-dur",    riseDur.toFixed(1) + "s");
+		p.style.setProperty("--rise-delay",  "-" + (Math.random() * riseDur).toFixed(1) + "s");
+		// Peak opacity varies — some particles are dim ghosts, some
+		// catch the light fully. Stack of opacities = visual depth.
+		p.style.setProperty("--opacity",     (0.55 + Math.random() * 0.40).toFixed(2));
+		const d = document.createElement("div");
+		d.className = "shimmer-dot";
+		// 3-5px particles, halo ~2-3x the particle so each catches
+		// the light. Glow does most of the read in motion — at
+		// desktop scale tiny particles disappear, so we lean on
+		// the halo for presence.
+		d.style.setProperty("--size",        (3 + Math.random() * 2).toFixed(1) + "px");
+		d.style.setProperty("--glow",        (7 + Math.random() * 6).toFixed(1) + "px");
+		// Orbit radius gives the cluster its width. 18-70px ~
+		// 130px-wide swarm — small enough to read as localized,
+		// wide enough to register at viewport scale.
+		d.style.setProperty("--radius",      (18 + Math.random() * 52).toFixed(0) + "px");
+		// Orbit speed varies (2-5s / revolution) so the cluster
+		// doesn't tick in unison. One-way direction — mixing CW/CCW
+		// reads as noise rather than swirl.
+		const orbitDur = 2 + Math.random() * 3;
+		d.style.setProperty("--orbit-dur",   orbitDur.toFixed(1) + "s");
+		d.style.setProperty("--orbit-delay", "-" + (Math.random() * orbitDur).toFixed(1) + "s");
+		// Random start angle decouples particles from each other.
+		d.style.setProperty("--start",       (Math.random() * 360).toFixed(0) + "deg");
+		p.appendChild(d);
+		cluster.appendChild(p);
 	}
-	$atmosphereLayer.appendChild(frag);
+	$atmosphereLayer.appendChild(cluster);
 }
 
 function setAtmosphere(name) {
@@ -1846,7 +1872,7 @@ function setAtmosphere(name) {
 		// Manuscript moments: Ch1 "a shimmer waited at the furthest
 		// limit of the flat light", Ch2 "had stopped feeling like a
 		// direction and started feeling like company."
-		spawnShimmerParticles(60);
+		spawnShimmerParticles(50);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

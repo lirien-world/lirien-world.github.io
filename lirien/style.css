@@ -150,42 +150,66 @@ html, body {
 	100% { transform: translate(var(--drift, 0), -120vh);       opacity: 0; }
 }
 
-/* Shimmer presence — atmospheric, NOT the one-shot fx-shimmer.
- * Fired by # atmosphere: shimmer ink tag. Manuscript moments where
- * "the shimmer" is described as a perceptible thing-in-the-air
- * (Ch1: "a shimmer waited at the furthest limit of the flat light",
- * Ch2: "had stopped feeling like a direction and started feeling
- * like company"). Each particle spirals outward from its random
- * anchor over a few seconds — 2 revolutions, growing radius,
- * pulsing opacity. Many particles at varied anchors + radii + speeds
- * read as a swirling sparkly cloud catching the light, not as a
- * regular orbit. The spiral motif intentional — Lirien's whole
- * tonal magic system is spiral-shaped. */
+/* Shimmer presence — a localized "dust devil" of swirling gold
+ * particles, NOT the one-shot fx-shimmer flash. Fired by
+ * # atmosphere: shimmer ink tag at manuscript moments where the
+ * shimmer is described as a perceptible thing-in-the-air
+ * (Ch1: "a shimmer waited at the furthest limit of the flat
+ * light", Ch2: "had stopped feeling like a direction and started
+ * feeling like company"). Steve's mental model 2026-05-11: a
+ * clump of particles in a spiral flow, fading in and out of view,
+ * like a tiny sparkly tornado — not a screen-wide ambient.
+ *
+ * Structure: cluster container → particle "rise" wrapper → dot.
+ * The rise wrapper handles vertical lift + opacity in/out. The
+ * dot orbits its parent at a per-particle radius. Composition
+ * gives spiral motion without needing trig in keyframes. */
+.shimmer-cluster {
+	position: absolute;
+	/* Cluster anchored at the JS-supplied position. width/height 0
+	 * so it's purely a positioning origin — particles position
+	 * themselves relative to it. */
+	left: var(--cluster-x, 50%);
+	top: var(--cluster-y, 60%);
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
 .shimmer-particle {
 	position: absolute;
-	top: var(--y, 50%);
-	left: var(--x, 50%);
-	width: var(--size, 3px);
-	height: var(--size, 3px);
-	/* Center on the anchor point so the spiral grows from a real centre. */
-	margin-left: calc(var(--size, 3px) * -0.5);
-	margin-top:  calc(var(--size, 3px) * -0.5);
-	border-radius: 50%;
-	background: rgba(248, 224, 158, var(--opacity, 0.7));
-	box-shadow: 0 0 var(--glow, 6px) rgba(244, 212, 130, 0.7);
-	animation: shimmer-swirl var(--dur, 7s) linear var(--delay, 0s) infinite;
+	top: 0;
+	left: 0;
+	/* Rises through the cluster: starts ~70px below center with
+	 * opacity 0, peaks mid-cycle, fades out at ~90px above. */
+	animation: shimmer-rise var(--rise-dur, 6s) linear var(--rise-delay, 0s) infinite;
 	will-change: transform, opacity;
 }
-@keyframes shimmer-swirl {
-	/* rotate() then translateX() = orbit around the anchor at the
-	 * current radius. Radius grows from 0 → --radius over the cycle,
-	 * rotation does two full turns → outward spiral. Opacity pulses
-	 * in at 20%, peaks mid-cycle, fades out by 100%. */
-	0%   { transform: rotate(var(--start, 0deg))                            translateX(0)                                scale(0.3); opacity: 0; }
-	20%  { transform: rotate(calc(var(--start, 0deg) + 144deg))             translateX(calc(var(--radius, 25px) * 0.25)) scale(0.7); opacity: var(--opacity, 0.7); }
-	50%  { transform: rotate(calc(var(--start, 0deg) + 360deg))             translateX(calc(var(--radius, 25px) * 0.6))  scale(1.0); opacity: var(--opacity, 0.7); }
-	80%  { transform: rotate(calc(var(--start, 0deg) + 576deg))             translateX(calc(var(--radius, 25px) * 0.88)) scale(0.8); opacity: var(--opacity, 0.5); }
-	100% { transform: rotate(calc(var(--start, 0deg) + 720deg))             translateX(var(--radius, 25px))              scale(0.4); opacity: 0; }
+.shimmer-dot {
+	position: absolute;
+	width: var(--size, 3px);
+	height: var(--size, 3px);
+	border-radius: 50%;
+	background: rgba(248, 224, 158, 0.9);
+	box-shadow: 0 0 var(--glow, 6px) rgba(244, 212, 130, 0.75);
+	/* Center the dot on the orbit point. */
+	margin-left: calc(var(--size, 3px) * -0.5);
+	margin-top:  calc(var(--size, 3px) * -0.5);
+	/* Orbits its parent at a constant radius. Speed + direction
+	 * + start-angle vary per particle so the cluster doesn't
+	 * pulse in unison. */
+	animation: shimmer-orbit var(--orbit-dur, 3s) linear var(--orbit-delay, 0s) infinite;
+	will-change: transform;
+}
+@keyframes shimmer-rise {
+	0%   { transform: translateY(70px);  opacity: 0; }
+	18%  { opacity: var(--opacity, 0.85); }
+	50%  { opacity: var(--opacity, 0.95); }
+	82%  { opacity: var(--opacity, 0.55); }
+	100% { transform: translateY(-90px); opacity: 0; }
+}
+@keyframes shimmer-orbit {
+	from { transform: rotate(var(--start, 0deg))                              translateX(var(--radius, 30px)); }
+	to   { transform: rotate(calc(var(--start, 0deg) + 360deg))               translateX(var(--radius, 30px)); }
 }
 
 /* ----- shimmer one-shot -----

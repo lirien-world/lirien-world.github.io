@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-105410";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-111252";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -1700,21 +1700,44 @@ function play(){
 		loadTrack(nextIndex(), {play:true});
 		return;
 	}
-	// iOS releases the audio element's decoded buffer when another
-	// app takes audio focus (mic, phone, etc), and the play action
-	// from the lock screen lands here with $audio.src empty. Re-set
-	// the src from activeIdx before play() — otherwise .play()
-	// rejects silently and the lock-screen controls appear broken
-	// (Steve: "pressing play doesn't restart the music"). loadTrack
-	// also resets BG / labels / loop flag, so this is the same path
-	// the user gets when they tap a track in the drawer.
+	// Signal intent BEFORE attempting play — iOS uses this to
+	// render the right lock-screen icon and to schedule the
+	// action delivery reliably.
+	if ("mediaSession" in navigator){
+		try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}
+	}
 	const track = TRACKS[activeIdx];
+	// Fast path: no src or audio errored — full reload from scratch.
 	if (track && (!$audio.src || $audio.src === "" || $audio.error)){
 		loadTrack(activeIdx, {play:true});
 		return;
 	}
 	const p = $audio.play();
-	if (p && p.catch) p.catch(()=>{});
+	if (p && p.catch){
+		p.catch(()=>{
+			// $audio.play() rejected. The most common cause on iOS
+			// is audio-focus loss while another app (mic, phone, etc.)
+			// had the foreground — the audio element still has a src
+			// but iOS released our session, and a fresh .play()
+			// can't regrab it without a re-load. Re-assign src to
+			// the same URL (forces iOS to re-acquire the audio
+			// session), then restore currentTime so the user resumes
+			// mid-track instead of starting over.
+			try {
+				const wasTime = $audio.currentTime;
+				const wasSrc = $audio.src;
+				const onReady = () => {
+					$audio.removeEventListener("loadedmetadata", onReady);
+					try { $audio.currentTime = wasTime; } catch (e) {}
+					const p2 = $audio.play();
+					if (p2 && p2.catch) p2.catch(()=>{ /* gave up */ });
+				};
+				$audio.addEventListener("loadedmetadata", onReady, { once: true });
+				$audio.src = wasSrc;
+				$audio.load();
+			} catch (e) { /* gave up */ }
+		});
+	}
 }
 
 function pause(){ $audio.pause(); }
@@ -1960,6 +1983,22 @@ $progress.addEventListener("keydown", (ev)=>{
 // title + caption + spiral artwork and can play/pause/skip from
 // hardware controls.
 // ─────────────────────────────────────────────────────────────────
+// Register MediaSession action handlers once at module load. iOS
+// is more reliable about delivering lock-screen taps when the
+// handlers are bound BEFORE the first play event — registering
+// inside updateMediaSessionMeta (which only fires on play) left a
+// window where the OS didn't trust our session yet. Idempotent;
+// re-calling setActionHandler with the same fn just replaces it.
+(function registerMediaSessionHandlers(){
+	if (!("mediaSession" in navigator)) return;
+	try {
+		navigator.mediaSession.setActionHandler("play",         () => play());
+		navigator.mediaSession.setActionHandler("pause",        () => pause());
+		navigator.mediaSession.setActionHandler("nexttrack",    () => next());
+		navigator.mediaSession.setActionHandler("previoustrack",() => previous());
+	} catch (e) { /* not all browsers support every action */ }
+})();
+
 function updateMediaSessionMeta(){
 	if (!("mediaSession" in navigator)) return;
 	if (activeIdx < 0) return;
@@ -1974,11 +2013,7 @@ function updateMediaSessionMeta(){
 				{ src: "icon-512.png",  sizes: "512x512", type: "image/png" }
 			]
 		});
-		navigator.mediaSession.setActionHandler("play",         () => play());
-		navigator.mediaSession.setActionHandler("pause",        () => pause());
-		navigator.mediaSession.setActionHandler("nexttrack",    () => next());
-		navigator.mediaSession.setActionHandler("previoustrack",() => previous());
-	} catch (e) { /* not all browsers support every action — silent */ }
+	} catch (e) { /* silent */ }
 }
 
 // keyboard (global). Arrow keys on the focused progress bar mean

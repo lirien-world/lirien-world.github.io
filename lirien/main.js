@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511y";
+const ASSET_VERSION = "20260511z";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1830,18 +1830,27 @@ const SHIMMER_GLYPH = "✦";
 //   • CSS keyframe: -1080deg → 3 full revolutions per life
 //   • per-particle max-r     → 65-95px (tighter than 60-100)
 //   • count 36               → ~12 particles per revolution
-const SHIMMER_SPIRAL_DUR = 22;  // seconds — center→edge lifetime
+// Steve 2026-05-11: "slow the rotation down + smaller, less
+// distracting." Pushed lifetime 22s → 32s (each revolution
+// ~10.7s, was 7.3s).
+const SHIMMER_SPIRAL_DUR = 32;  // seconds — center→edge lifetime
 
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing
-// + respawning. CSS transition on .shimmer-cluster's left/top makes
-// the move smooth (2.4s ease-in-out).
+// + respawning. CSS transition on .shimmer-cluster's left/top
+// (5s ease-in-out) handles the smooth drift.
+//
+// Set left/top DIRECTLY (not via CSS custom-property indirection).
+// CSS transitions on `left`/`top` only reliably trigger from direct
+// value changes; custom-property changes that flow through var()
+// don't always animate across engines. Steve 2026-05-11: previous
+// via-var setup was reading as a jerky snap.
 function rePositionShimmerCluster(bgName) {
 	if (!$shimmerCluster) return;
 	if (currentAtmosphere !== "shimmer") return;
 	const a = shimmerAnchorFor(bgName);
-	$shimmerCluster.style.setProperty("--cluster-x", a.x.toFixed(1) + "%");
-	$shimmerCluster.style.setProperty("--cluster-y", a.y.toFixed(1) + "%");
+	$shimmerCluster.style.left = a.x.toFixed(1) + "%";
+	$shimmerCluster.style.top  = a.y.toFixed(1) + "%";
 }
 
 function spawnShimmerParticles(count) {
@@ -1858,8 +1867,8 @@ function spawnShimmerParticles(count) {
 	// where the scene's light naturally pools. Falls back to a
 	// reasonable centered-upper position if no manifest entry.
 	const anchor = shimmerAnchorFor(currentBgName);
-	cluster.style.setProperty("--cluster-x", anchor.x.toFixed(1) + "%");
-	cluster.style.setProperty("--cluster-y", anchor.y.toFixed(1) + "%");
+	cluster.style.left = anchor.x.toFixed(1) + "%";
+	cluster.style.top  = anchor.y.toFixed(1) + "%";
 	$shimmerCluster = cluster;
 	// Phase-slot size for jitter: ~1/3 of the spacing between
 	// consecutive particles. Breaks exact lockstep while keeping
@@ -1876,14 +1885,12 @@ function spawnShimmerParticles(count) {
 		const d = document.createElement("span");
 		d.className = "shimmer-dot";
 		d.textContent = SHIMMER_GLYPH;
-		// Glyph font-size 13-22px — much bigger than before. With
-		// mix-blend-mode: screen on the dot, the particle ADDS
-		// light to the bg, so bigger glyphs translate to bigger
-		// visible bright spots regardless of bg color. Steve
-		// 2026-05-11: previous 7-13px was "just not really visible"
-		// even with a brightness pass.
-		d.style.setProperty("--size",           (13 + Math.random() * 9).toFixed(1) + "px");
-		d.style.setProperty("--glow",           (10 + Math.random() * 8).toFixed(1) + "px");
+		// Glyph font-size 10-17px — slightly smaller than the
+		// previous 13-22 range. Steve 2026-05-11: "slightly
+		// smaller will make it less distracting." Screen blend
+		// keeps them visible at this reduced size.
+		d.style.setProperty("--size",           (10 + Math.random() * 7).toFixed(1) + "px");
+		d.style.setProperty("--glow",           (8 + Math.random() * 7).toFixed(1) + "px");
 		// Per-particle max-r 65-95px (tighter than the previous
 		// 60-100 range) so all particles trace closely-matching
 		// spiral arms — the eye reads them as one continuous

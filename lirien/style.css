@@ -167,16 +167,16 @@ html, body {
 .shimmer-cluster {
 	position: absolute;
 	/* Cluster anchored at the JS-supplied position. width/height 0
-	 * so it's purely a positioning origin — particles position
-	 * themselves relative to it. Smooth transition on the anchor
-	 * lets the cluster glide between bg-change moments rather than
-	 * snap, so the shimmer feels like it's following the scene. */
-	left: var(--cluster-x, 50%);
-	top: var(--cluster-y, 60%);
+	 * so it's purely a positioning origin. Slow (5s) ease-in-out
+	 * transition on left/top so when the bg changes the cluster
+	 * drifts smoothly to the new scene's anchor rather than
+	 * snapping. Steve 2026-05-11: previous 2.4s was still jerky. */
+	left: 50%;
+	top: 60%;
 	width: 0;
 	height: 0;
 	pointer-events: none;
-	transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
+	transition: left 5s ease-in-out, top 5s ease-in-out;
 }
 /* No more particle wrapper — each .shimmer-dot now owns both the
  * spiral motion (rotate + translate + scale + opacity lifecycle)

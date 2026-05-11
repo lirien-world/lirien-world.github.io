@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512f";
+const ASSET_VERSION = "20260512g";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -466,6 +466,14 @@ let allBgNames = [];
 		// because the latter renders the saved lastChunk into the panel.
 		clearTranscript();
 		applyAutosaveVisuals(saved);
+		// If we restored to story-end (no more content to Continue),
+		// no further atmosphere tags will ever fire. Any stale
+		// atmosphere value from older save formats would linger
+		// forever — Steve 2026-05-11 saw shimmer persist on the
+		// last image of Ch4 from a save made before the atmosphere
+		// clears landed. Force-clear here so the world quiets at
+		// the end regardless of save vintage.
+		if (story && !story.canContinue) setAtmosphere("");
 		isExploring = false;
 		state = "idle";
 		if (window.lirienAnalytics) {
@@ -632,6 +640,11 @@ function advance() {
 	state = "ended";
 	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("ended");
 	hideContinueHint();
+	// Story over — atmosphere quiets too. Without this, an autosave
+	// captured at story-end keeps whatever atmosphere was last set
+	// (potentially shimmer), and the user re-loading at the end
+	// sees it forever since no further tags can fire.
+	setAtmosphere("");
 	if (!isExploring) saveAutosave();
 }
 

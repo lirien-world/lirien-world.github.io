@@ -19,7 +19,10 @@
 		return;
 	}
 
-	const ENDPOINT = "/api/data";
+	// Worker is on api.lirien.world while the main site is gray-cloud
+	// (Spanish CF-IP block workaround). Absolute URL is required — a
+	// relative /api/data would hit lirien.world (GH Pages) and 404.
+	const ENDPOINT = "https://api.lirien.world/api/data";
 
 	// ---- filters --------------------------------------------------
 	//

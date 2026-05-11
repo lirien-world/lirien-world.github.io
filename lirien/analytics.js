@@ -50,9 +50,14 @@
 
 	const BACKEND = "beacon";        // "console" | "beacon"
 	// Same-origin route on lirien.world; the Worker is served behind
-	// the /api/* path now that lirien.world is on Cloudflare. No CORS
-	// dance needed — the request is same-origin from the reader app.
-	const ENDPOINT = "https://lirien.world/api/track";
+	// Cross-origin from the reader app (lirien.world) to the Worker
+	// custom domain api.lirien.world — the Worker's CORS handler
+	// echoes the Origin back when it's on the allowlist (lirien.world
+	// is), so the cross-origin call works without preflight pain.
+	// Why the subdomain: lirien.world apex is DNS-only / gray-cloud
+	// so the main site bypasses Cloudflare's edges (Spanish-government
+	// CF-IP blocks). Only analytics POSTs hit the CF edge.
+	const ENDPOINT = "https://api.lirien.world/api/track";
 
 	// Dev-mode escape: ?show-splash forces the install splash to render
 	// for testing on platforms where it wouldn't normally appear. We

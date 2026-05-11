@@ -558,12 +558,31 @@ body.story-started .game { opacity: 1; }
 	line-height: 1.4;
 	color: #f5ebd2;
 	box-sizing: border-box;
-	/* CSS mask: fade the top ~28px and bottom ~22px of the scroll
-	 * viewport to transparent. Operates on the painted result so it
-	 * works whether chars are .ch spans (mid-reveal) or plain text
-	 * (post-onChunkRevealed simplification). Replaces the JS
-	 * updateCharFade per-char approach which broke after we started
-	 * stripping spans on chunk completion. */
+	/* CSS mask: default state — bottom fade only. Top edge is
+	 * sharp so the first line of a freshly-cleared scene reads
+	 * at full opacity. Without this guard, scene transitions hid
+	 * the opening sentence behind the fade (Steve's report
+	 * 2026-05-11). The top fade kicks in only once there's
+	 * something to fade past — see .prose.is-scrolled rule below. */
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		black 0,
+		black calc(100% - 22px),
+		transparent 100%
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		black 0,
+		black calc(100% - 22px),
+		transparent 100%
+	);
+}
+
+/* Once the reader has scrolled past the first few pixels (main.js
+ * toggles .is-scrolled on .prose when $proseContent.scrollTop > 4),
+ * fade the top of the viewport too — that's when there's prior
+ * content above the visible edge worth softening into nothing. */
+.prose.is-scrolled .prose-content {
 	-webkit-mask-image: linear-gradient(
 		to bottom,
 		transparent 0,

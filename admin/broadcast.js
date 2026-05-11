@@ -71,7 +71,11 @@
 			if (d.intro)         $intro.value        = d.intro;
 			if (d.chapter_title) $chapterTitle.value = d.chapter_title;
 			if (d.chapter_url)   $chapterUrl.value   = d.chapter_url;
-			if (d.banner_url)    $bannerUrl.value    = d.banner_url;
+			// banner_url uses explicit !== undefined so a deliberately
+			// cleared draft (empty string) overrides the HTML default
+			// pre-fill. Without this, you couldn't ever ship an email
+			// without the default Thistle banner once you'd saved a draft.
+			if (d.banner_url !== undefined) $bannerUrl.value = d.banner_url;
 			if (d.to)            $to.value           = d.to;
 		} catch (e) { /* ignore */ }
 	}

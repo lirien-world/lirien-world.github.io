@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512d";
+const ASSET_VERSION = "20260512e";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1067,6 +1067,11 @@ function showChoices(choices) {
 	hideContinueHint();
 	$choices.innerHTML = "";
 	$choices.classList.add("visible");
+	// Choice-moment hold: the world quiets while the reader weighs a
+	// choice. CSS rules keyed on body.is-choosing brighten the prose
+	// rim and dim the bg slightly so the choice itself becomes the
+	// focal point. Released in pickChoice() after the click.
+	document.body.classList.add("is-choosing");
 	choices.forEach((choice, i) => {
 		const btn = document.createElement("button");
 		btn.className = "choice";
@@ -1092,6 +1097,7 @@ function pickChoice(index) {
 	story.ChooseChoiceIndex(index);
 	$choices.classList.remove("visible");
 	$choices.innerHTML = "";
+	document.body.classList.remove("is-choosing");
 	state = "idle";
 	advance();
 }
@@ -1230,6 +1236,27 @@ function clearTranscript() {
 // the caller's responsibility. Used both by the natural in-flow tag
 // handler and by autosave resume (Continue / Return-to-recent), where
 // recording a bookmark would land on a stale stateBeforeContinue.
+// Per-chapter inner-glow tint. Soft RGBA values picked to match
+// each chapter's mood without being explicit. Keyed by the chapter
+// NUMBER prefix (in either language); falls back to transparent
+// for unknown chapters so the rule no-ops. Steve 2026-05-11: very
+// subtle — chapter identity at the perceptual edge.
+const CHAPTER_TINTS = {
+	// Ch1 — ash and arrival. Cool gray-violet, like the sky's
+	// indecision between dawn and dusk.
+	"One":   "rgba(160, 162, 178, 0.18)",
+	"Uno":   "rgba(160, 162, 178, 0.18)",
+	// Ch2 — Solrien's light. Warm violet-gold; the city's glow.
+	"Two":   "rgba(196, 162, 220, 0.20)",
+	"Dos":   "rgba(196, 162, 220, 0.20)",
+	// Ch3 — the day the city breathed. Warmer amber.
+	"Three": "rgba(220, 178, 110, 0.22)",
+	"Tres":  "rgba(220, 178, 110, 0.22)",
+	// Ch4 — the one who waits. Cooler steel-blue; patience.
+	"Four":   "rgba(150, 172, 200, 0.20)",
+	"Cuatro": "rgba(150, 172, 200, 0.20)",
+};
+
 function showChapterTitleOverlay(spec) {
 	// spec is "<num> — <title>", e.g. "One — Ash and Arrival" (en)
 	// or "Uno — Ceniza y Llegada" (es).
@@ -1237,10 +1264,12 @@ function showChapterTitleOverlay(spec) {
 	const prefix = t("lirien.chapter.prefix");
 	let numText = "";
 	let titleText = spec;
+	let numKey = "";  // un-uppercased, for tint lookup
 	for (const sep of [" — ", " – ", " - "]) {
 		if (spec.indexOf(sep) >= 0) {
 			const idx = spec.indexOf(sep);
-			numText = prefix + " " + spec.substring(0, idx).trim().toUpperCase();
+			numKey = spec.substring(0, idx).trim();
+			numText = prefix + " " + numKey.toUpperCase();
 			titleText = spec.substring(idx + sep.length).trim();
 			break;
 		}
@@ -1249,6 +1278,14 @@ function showChapterTitleOverlay(spec) {
 
 	$chapterTitle.querySelector(".chapter-number").textContent = numText;
 	$chapterTitle.querySelector(".chapter-name").textContent = titleText;
+
+	// Apply this chapter's tint to .prose's inner glow via the
+	// --chapter-tint custom property. The CSS rule on .prose
+	// reads it; default is transparent so unknown chapters do
+	// nothing. transition: box-shadow on .prose makes the shift
+	// glide rather than snap.
+	const tint = CHAPTER_TINTS[numKey] || "transparent";
+	document.documentElement.style.setProperty("--chapter-tint", tint);
 
 	if (chapterTimer) clearTimeout(chapterTimer);
 	$chapterTitle.classList.add("visible");
@@ -1990,12 +2027,39 @@ function setAtmosphere(name) {
 	}
 }
 
+const $resonanceFx = document.getElementById("resonance-fx");
+const $proseEl     = document.getElementById("prose");
+
 function fireFx(name) {
 	name = (name || "").trim();
 	if (name === "shimmer" && $shimmerFx) {
+		// One-shot gold ripple (existing). Manuscript: # fx: shimmer
+		// at moments where the world literally shimmers (Ch1
+		// displacement, horizon recognition, glyph awakening).
 		$shimmerFx.classList.remove("is-firing");
 		void $shimmerFx.offsetWidth;
 		$shimmerFx.classList.add("is-firing");
+	} else if (name === "resonance" && $resonanceFx) {
+		// One-shot warm halo expanding outward, anchored at the
+		// current shimmer cluster (if active) or screen center.
+		// Manuscript: # fx: resonance for the glyph-recognition
+		// beats — palm warming when the stump's spiral answers,
+		// the pool absorbing the name, etc.
+		const cx = $shimmerCluster ? $shimmerCluster.style.left || "50%" : "50%";
+		const cy = $shimmerCluster ? $shimmerCluster.style.top  || "50%" : "50%";
+		$resonanceFx.style.left = cx;
+		$resonanceFx.style.top  = cy;
+		$resonanceFx.classList.remove("is-firing");
+		void $resonanceFx.offsetWidth;
+		$resonanceFx.classList.add("is-firing");
+	} else if (name === "hollow" && $proseEl) {
+		// One-shot heartbeat thump on the prose panel — Aerin's
+		// hollow under the ribs, briefly literalized. Used very
+		// sparingly: 3-4 manuscript moments where the hollow is
+		// named directly.
+		$proseEl.classList.remove("is-hollow-pulsing");
+		void $proseEl.offsetWidth;
+		$proseEl.classList.add("is-hollow-pulsing");
 	}
 }
 
@@ -2003,6 +2067,20 @@ if ($shimmerFx) {
 	$shimmerFx.addEventListener("animationend", (ev) => {
 		if (ev.animationName === "shimmer-pulse") {
 			$shimmerFx.classList.remove("is-firing");
+		}
+	});
+}
+if ($resonanceFx) {
+	$resonanceFx.addEventListener("animationend", (ev) => {
+		if (ev.animationName === "resonance-pulse") {
+			$resonanceFx.classList.remove("is-firing");
+		}
+	});
+}
+if ($proseEl) {
+	$proseEl.addEventListener("animationend", (ev) => {
+		if (ev.animationName === "hollow-pulse") {
+			$proseEl.classList.remove("is-hollow-pulsing");
 		}
 	});
 }

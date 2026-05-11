@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512d">
+	<link rel="stylesheet" href="style.css?v=20260512e">
 </head>
 <body>
 	<script>
@@ -50,6 +50,15 @@
 		so it reads as the world breathing rather than a UI overlay.
 	-->
 	<div id="shimmer-fx" class="shimmer-fx" aria-hidden="true"></div>
+	<!--
+		Resonance one-shot. Ink tag # fx: resonance fires a warm
+		radial halo expanding outward from the active shimmer
+		cluster's anchor (or screen center). Used at manuscript
+		moments where Aerin's glyph responds — palm warming, the
+		spiral on the stump recognizing his hand, the pool absorbing
+		his name. Sibling to # fx: shimmer, different timbre.
+	-->
+	<div id="resonance-fx" class="resonance-fx" aria-hidden="true"></div>
 	<div id="title-screen" class="title-screen">
 		<div class="title-content">
 			<div class="title-eyebrow" data-i18n="lirien.title.eyebrow">Book One &mdash; Chronicles of Lirien</div>
@@ -238,7 +247,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260511-151456";
+		const BUILD_VERSION = "20260511-154741";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -508,8 +517,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512d"></script>
-	<script src="ink.js?v=20260512d"></script>
-	<script src="main.js?v=20260512d"></script>
+	<script src="analytics.js?v=20260512e"></script>
+	<script src="ink.js?v=20260512e"></script>
+	<script src="main.js?v=20260512e"></script>
 </body>
 </html>

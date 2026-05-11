@@ -178,62 +178,62 @@ html, body {
 	pointer-events: none;
 	transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
 }
-.shimmer-particle {
-	position: absolute;
-	top: 0;
-	left: 0;
-	/* Rises through the cluster: starts ~70px below center with
-	 * opacity 0, peaks mid-cycle, fades out at ~90px above. */
-	animation: shimmer-rise var(--rise-dur, 6s) linear var(--rise-delay, 0s) infinite;
-	will-change: transform, opacity;
-}
+/* No more particle wrapper — each .shimmer-dot now owns both the
+ * spiral motion (rotate + translate + scale + opacity lifecycle)
+ * and the twinkle color shift, both running as parallel CSS
+ * animations on the same element. The previous parent-child
+ * structure was for the upward-helix design Steve replaced
+ * 2026-05-11 with a head-on spiral. */
 .shimmer-dot {
 	position: absolute;
 	/* Glyph rendered via text — color is the glyph fill, text-shadow
 	 * gives it a warm halo + dark contrast ring. Cheaper than SVG
-	 * (no asset request), more interesting than a plain dot. Each
-	 * particle picks a random glyph from a small pool in JS so the
-	 * cluster reads as varied sparkles rather than uniform pips. */
+	 * (no asset request), more interesting than a plain dot. */
+	top: 0;
+	left: 0;
 	font-size: var(--size, 10px);
 	line-height: 1;
 	color: rgba(196, 147, 90, 1);
 	/* Three-layer text-shadow: tight warm halo, wider soft warm
-	 * halo, tight dark ring for contrast against bright bgs.
-	 * Mirrors the previous box-shadow approach but shapes the
-	 * glow to the glyph's outline rather than a perfect circle. */
+	 * halo, tight dark ring for contrast against bright bgs. */
 	text-shadow:
 		0 0 var(--glow, 8px)              rgba(255, 200, 130, 0.95),
 		0 0 calc(var(--glow, 8px) * 1.8)  rgba(255, 180, 100, 0.4),
 		0 0 2px                            rgba(20, 12, 8, 0.65);
-	/* Center the glyph on the orbit point. Margins shift it by
-	 * half its rendered size in each axis. */
+	/* Center the glyph on the cluster origin. */
 	margin-left: calc(var(--size, 10px) * -0.5);
 	margin-top:  calc(var(--size, 10px) * -0.5);
 	/* Suppress text-related quirks that'd nudge layout. */
 	user-select: none;
 	pointer-events: none;
 	font-family: "Apple Color Emoji", "Segoe UI Symbol", "Symbola", sans-serif;
-	/* Two parallel animations: orbit (transform), twinkle
-	 * (opacity + color). Per-particle durations + negative delays
-	 * so neighbours twinkle on different rhythms. */
+	/* Two parallel animations:
+	 *   1. shimmer-spiral-ccw — rotate + translate + scale + opacity
+	 *      lifecycle. Owns the visual path (CCW spiral from center
+	 *      to edge over var(--spiral-dur)).
+	 *   2. shimmer-twinkle — color shift only (no opacity, so the
+	 *      lifecycle's opacity ramp isn't fought).
+	 * Per-particle durations + negative delays so neighbours don't
+	 * lock-step on either dimension. */
 	animation:
-		shimmer-orbit   var(--orbit-dur,   10s)  linear        var(--orbit-delay,   0s) infinite,
-		shimmer-twinkle var(--twinkle-dur, 2.5s) ease-in-out   var(--twinkle-delay, 0s) infinite;
+		shimmer-spiral-ccw var(--spiral-dur, 12s)  linear      var(--spiral-delay,  0s) infinite,
+		shimmer-twinkle    var(--twinkle-dur, 2.5s) ease-in-out var(--twinkle-delay, 0s) infinite;
 	will-change: transform, opacity, color;
 }
-@keyframes shimmer-rise {
-	/* Rise span tightened from ±80 to ±55 so the helix is closer to
-	 * "tall as it is wide" — at the previous 1:11 width:height ratio
-	 * the spiral collapsed visually into a vertical line. */
-	0%   { transform: translateY(55px);  opacity: 0; }
-	18%  { opacity: var(--opacity, 0.85); }
-	50%  { opacity: var(--opacity, 0.95); }
-	82%  { opacity: var(--opacity, 0.55); }
-	100% { transform: translateY(-55px); opacity: 0; }
-}
-@keyframes shimmer-orbit {
-	from { transform: rotate(var(--start, 0deg))                              translateX(var(--radius, 30px)); }
-	to   { transform: rotate(calc(var(--start, 0deg) + 360deg))               translateX(var(--radius, 30px)); }
+
+/* Head-on spiral (Steve 2026-05-11). Each particle is born at the
+ * cluster origin (radius 0), spirals OUTWARD while rotating CCW
+ * (negative rotation in CSS = counter-clockwise visually), and
+ * dies at the outer edge. Three revolutions over the spiral's
+ * life produces a clearly-visible arm shape. With ~20 particles
+ * spread evenly along the spiral's life, at any moment they
+ * occupy points all along the arm — the cluster reads as a
+ * complete spiral curve flowing outward. */
+@keyframes shimmer-spiral-ccw {
+	0%   { transform: rotate(0deg)     translateX(0)                       scale(0.4); opacity: 0; }
+	15%  {                                                                             opacity: var(--peak-opacity, 0.9); }
+	60%  {                                                                             opacity: var(--peak-opacity, 0.9); }
+	100% { transform: rotate(-1080deg) translateX(var(--max-r, 80px))     scale(0.5); opacity: 0; }
 }
 /* Twinkle — particle oscillates between the app's base gold and
  * a brighter amber/orange peak, on its own schedule, multiplied
@@ -245,17 +245,12 @@ html, body {
  * visible at the dim end; the parent's rise fade is what blanks
  * it entirely at the edges of its life. */
 @keyframes shimmer-twinkle {
-	0%, 100% {
-		opacity: 0.55;
-		color: rgba(196, 147, 90, 1);   /* --gold (menu base) */
-	}
-	50%      {
-		opacity: 1.0;
-		/* Hot amber-white peak — at the bright moment the glyph
-		 * fills with near-white amber, popping against the warm
-		 * halo even on bright sky horizons. */
-		color: rgba(255, 230, 175, 1);
-	}
+	/* Twinkle is COLOR-ONLY now — the spiral animation owns
+	 * opacity (lifecycle fade in/out), so this animation can't
+	 * also animate opacity or they fight. Color shifts between
+	 * the menu's base gold and a hot amber-white peak. */
+	0%, 100% { color: rgba(196, 147, 90, 1); }    /* --gold (menu base) */
+	50%      { color: rgba(255, 230, 175, 1); }   /* amber-white peak */
 }
 
 /* ----- shimmer one-shot -----

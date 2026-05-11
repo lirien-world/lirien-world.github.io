@@ -342,7 +342,11 @@ body.is-dream::before { opacity: 0.32; }
 /* Vignette overlay — sits above the tint, below atmosphere-layer +
  * prose. Pointer-events: none so it never eats taps. Opacity fades
  * when the body class flips. Inverted radial-gradient (transparent
- * center, dark edges) creates the "looking from inside" feel. */
+ * center, dark edges) creates the "looking from inside" feel. Steve
+ * 2026-05-11 v2: pulled the dark closer to center (28% → 18%) and
+ * pushed peak edge darkness from 50% → 78% so the dream framing is
+ * unmistakable; the original was too gentle to read as 'this is a
+ * dream' on the first viewing. */
 body::after {
 	content: "";
 	position: fixed;
@@ -352,9 +356,10 @@ body::after {
 	opacity: 0;
 	background: radial-gradient(
 		ellipse at center,
-		rgba(0, 0, 0, 0) 38%,
-		rgba(20, 12, 36, 0.28) 78%,
-		rgba(20, 12, 36, 0.50) 100%
+		rgba(0, 0, 0, 0) 18%,
+		rgba(12, 8, 26, 0.18) 42%,
+		rgba(12, 8, 26, 0.50) 70%,
+		rgba(8, 6, 22, 0.78) 100%
 	);
 	transition: opacity 2.5s ease-in-out;
 }

@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260511-191744",
-  "generated_at": "2026-05-11T18:17:44Z",
+  "manifest_version": "20260511-193238",
+  "generated_at": "2026-05-11T18:32:39Z",
   "asset_count": 297,
-  "total_size": 533483588,
+  "total_size": 533483576,
   "assets": {
     "atmosphere/aerin_hand_with_glyph_v1.png": {
       "hash": "7e301e6062",
@@ -1185,12 +1185,12 @@
       "size": 8214
     },
     "story.json": {
-      "hash": "4f35cb107d",
-      "size": 110671
+      "hash": "2eea0ffe68",
+      "size": 110665
     },
     "story_es.json": {
-      "hash": "81e87a4915",
-      "size": 116907
+      "hash": "0c51c663be",
+      "size": 116901
     }
   }
 }

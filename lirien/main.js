@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512g";
+const ASSET_VERSION = "20260512h";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1640,12 +1640,21 @@ function swapMusic(name) {
 		return;
 	}
 
-	// Different track. Debounce so rapid scene changes don't trigger
-	// back-to-back .src changes on the audio elements — that's what
-	// produced the audible record-scratch and ballooned the media
-	// decoder. The latest pending track wins after MUSIC_SWAP_DEBOUNCE_MS
-	// of no further requests.
+	// Different track. Normally debounce so rapid scene changes
+	// don't trigger back-to-back .src changes on the audio elements
+	// (that's what produced the audible record-scratch and ballooned
+	// the media decoder). But on the FIRST swap after a fresh load
+	// (currentMusicName === "" because nothing has actually played
+	// yet), the debounce pushes audio.play() past iOS's user-gesture
+	// autoplay window and the play silently rejects → silence on
+	// reload at chapter end. Skip the debounce when there's nothing
+	// to coalesce against. Steve 2026-05-11.
 	if (musicSwapTimer) clearTimeout(musicSwapTimer);
+	if (!currentMusicName) {
+		musicSwapTimer = null;
+		applyMusicTrackChange(name);
+		return;
+	}
 	musicSwapTimer = setTimeout(() => {
 		musicSwapTimer = null;
 		// Use pendingMusicName in case it changed during the debounce

@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-112204";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-113403";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -1978,6 +1978,17 @@ $progress.addEventListener("keydown", (ev)=>{
 // window where the OS didn't trust our session yet. Idempotent;
 // re-calling setActionHandler with the same fn just replaces it.
 (function registerMediaSessionHandlers(){
+	// Audio Session API (W3C draft, Safari iOS 17+). Setting
+	// type="playback" explicitly requests iOS's
+	// AVAudioSessionCategoryPlayback — the same category native
+	// music apps use. This is what should let the audio session
+	// survive long pauses and continue to honor lock-screen action
+	// handlers without the well-known ~30-second-pause window
+	// (Apple Developer Forum thread 762582 / WebKit bug 261858).
+	// Limited availability across browsers; safe no-op elsewhere.
+	if ("audioSession" in navigator){
+		try { navigator.audioSession.type = "playback"; } catch (e) {}
+	}
 	if (!("mediaSession" in navigator)) return;
 	try {
 		navigator.mediaSession.setActionHandler("play",         () => play());

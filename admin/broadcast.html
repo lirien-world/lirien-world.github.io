@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Broadcast composer — Chronicles of Lirien</title>
-<link rel="stylesheet" href="admin.css?v=20260512s">
+<link rel="stylesheet" href="admin.css?v=20260512t">
 <style>
 /*
  * Broadcast composer styles. Keeps the same Reading-Room visual
@@ -48,17 +48,31 @@
 .composer-form input[type="text"],
 .composer-form input[type="email"],
 .composer-form input[type="url"],
+.composer-form input[type="number"],
 .composer-form textarea {
 	font-family: 'Cormorant Garamond', Georgia, serif;
 	font-size: 16px;
 	font-style: italic;
-	color: #f5ebd2;
+	color: #f5eed8;
 	background: rgba(8, 6, 15, 0.55);
 	border: 1px solid rgba(196, 147, 90, 0.28);
 	border-radius: 3px;
 	padding: 9px 12px;
 	outline: none;
 	transition: border-color 0.3s ease, background 0.3s ease;
+	/* Safari's native number-input default font-style overrides the
+	 * inherited italic on some versions. Force it. */
+	-webkit-appearance: none;
+	appearance: none;
+}
+/* Hide the native up/down spinner — we only need the field input. */
+.composer-form input[type="number"]::-webkit-inner-spin-button,
+.composer-form input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+.composer-form input[type="number"] {
+	-moz-appearance: textfield;
 }
 .composer-form input:hover,
 .composer-form input:focus,
@@ -223,6 +237,6 @@
 	</section>
 </main>
 
-<script src="broadcast.js?v=20260512s"></script>
+<script src="broadcast.js?v=20260512t"></script>
 </body>
 </html>

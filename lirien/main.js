@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511z";
+const ASSET_VERSION = "20260512a";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1419,7 +1419,18 @@ function onFirstUserGesture() {
 		const p = audioCtx.resume();
 		if (p && p.catch) p.catch(() => {});
 	}
-	if (userGestured) return;
+	if (userGestured) {
+		// Already gestured — but iOS may have rejected the original
+		// audio.play() if the gesture was synthetic (e.g. the
+		// programmatic Continue click that fires after a freshness-
+		// driven auto-reload). Each REAL tap is another chance to
+		// regain audio focus. ensureMusicPlayingForScene is idempotent
+		// (does nothing if audio is already flowing) so this is
+		// cheap belt-and-braces. Steve 2026-05-11: music didn't
+		// resume after a fresh JS reload-in-place.
+		ensureMusicPlayingForScene();
+		return;
+	}
 	userGestured = true;
 	ensureAudioRig();
 	if (audioCtx.state === "suspended") audioCtx.resume();
@@ -1916,53 +1927,64 @@ function spawnShimmerParticles(count) {
 	$atmosphereLayer.appendChild(cluster);
 }
 
+// Monotonically-increasing token used to guard async atmosphere
+// transitions. If another setAtmosphere() runs before the previous
+// fade completes, the pending callback bails.
+let atmosphereGen = 0;
+// Fade-out duration in ms — matches .atmosphere-layer's 3.5s CSS
+// transition plus a 100ms grace before swapping the DOM.
+const ATMOSPHERE_FADE_MS = 3600;
+
+function spawnAtmosphereFor(name) {
+	if (name === "ash-falling")   spawnAshParticles(70);
+	else if (name === "light-motes") spawnLightMotes(40);
+	else if (name === "shimmer")     spawnShimmerParticles(36);
+}
+
 function setAtmosphere(name) {
 	if (!$atmosphereLayer) return;
 	name = (name || "").trim();
 	const shouldClear = !name || name === "clear" || name === "off" || name === "none";
-	if (shouldClear) {
-		if (!currentAtmosphere) return;
-		// Fade the layer out smoothly, then drop the particles. The
-		// 1700ms timeout matches the .atmosphere-layer opacity
-		// transition (1.6s ease-in-out) plus a small grace.
+	const targetName = shouldClear ? null : name;
+	if (targetName === currentAtmosphere) return;
+
+	atmosphereGen++;
+	const myGen = atmosphereGen;
+	const wasAt = currentAtmosphere;
+	currentAtmosphere = targetName;
+
+	const swap = () => {
+		if (myGen !== atmosphereGen) return;  // superseded
+		$atmosphereLayer.innerHTML = "";
+		if (targetName) {
+			spawnAtmosphereFor(targetName);
+			// rAF gives the freshly-appended particles a frame to
+			// start their per-element animations before we trigger
+			// the layer-level fade-in.
+			requestAnimationFrame(() => {
+				if (myGen !== atmosphereGen) return;
+				$atmosphereLayer.classList.add("is-active");
+			});
+		}
+	};
+
+	if (wasAt) {
+		// There was an atmosphere — fade it OUT first, then swap.
+		// The CSS opacity transition (3.5s) handles the fade; the
+		// timeout matches plus a 100ms grace. Steve 2026-05-11:
+		// "It's never really gone in the worldlore, just sometimes
+		// makes itself visible" — transitions should fade, not snap.
 		$atmosphereLayer.classList.remove("is-active");
-		const wasAt = currentAtmosphere;
-		currentAtmosphere = null;
 		$shimmerCluster = null;
-		setTimeout(() => {
-			if (currentAtmosphere === null) $atmosphereLayer.innerHTML = "";
-		}, 1700);
-		return;
+		setTimeout(swap, ATMOSPHERE_FADE_MS);
+	} else {
+		// First atmosphere of the session — no out-phase needed.
+		// Spawn immediately so the user sees the effect right away
+		// (the CSS opacity transition handles the fade-IN to full
+		// visibility).
+		$shimmerCluster = null;
+		swap();
 	}
-	if (name === currentAtmosphere) return;
-	$atmosphereLayer.innerHTML = "";
-	$shimmerCluster = null;
-	if (name === "ash-falling") {
-		// 70 particles is "polite" — manuscript: "as though it had
-		// been asked very politely to keep the noise down."
-		spawnAshParticles(70);
-	} else if (name === "light-motes") {
-		// Fewer than ash, more substantial each — manuscript:
-		// "small motes of light drifted upward from the ground,
-		// slow and without urgency."
-		spawnLightMotes(40);
-	} else if (name === "shimmer") {
-		// Shimmer presence — distinct from the # fx: shimmer
-		// one-shot flash. Head-on spiral view: single star glyph,
-		// 36 particles distributed along a 3-revolution CCW spiral
-		// (22s lifetime per particle, ~7s per revolution = slow).
-		// Higher count keeps the arm visually continuous. Manuscript:
-		// Ch1 "a shimmer waited at the furthest limit of the flat
-		// light", Ch2 "had stopped feeling like a direction and
-		// started feeling like company."
-		spawnShimmerParticles(36);
-	}
-	currentAtmosphere = name;
-	// rAF gives the freshly-appended particles a frame to start
-	// their per-element animations before we trigger the layer-
-	// level fade-in, so the user doesn't see a half-cycle of
-	// movement appearing all at once at full opacity.
-	requestAnimationFrame(() => $atmosphereLayer.classList.add("is-active"));
 }
 
 function fireFx(name) {

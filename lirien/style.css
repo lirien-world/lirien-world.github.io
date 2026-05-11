@@ -103,7 +103,12 @@ html, body {
 	overflow: hidden;
 	contain: layout paint style;
 	opacity: 0;
-	transition: opacity 1.6s ease-in-out;
+	/* Slow fade 3.5s ease-in-out. Steve 2026-05-11: "when the
+	 * shimmer 'disappears' from the screen have it fade. It's
+	 * never really gone in the worldlore, just sometimes makes
+	 * itself visible." Slower transition reads as the shimmer
+	 * becoming-invisible rather than vanishing. */
+	transition: opacity 3.5s ease-in-out;
 }
 .atmosphere-layer.is-active { opacity: 1; }
 

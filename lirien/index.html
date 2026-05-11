@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512p">
+	<link rel="stylesheet" href="style.css?v=20260512q">
 </head>
 <body>
 	<script>
@@ -287,7 +287,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260511-195011";
+		const BUILD_VERSION = "20260511-200927";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -445,6 +445,14 @@
 			"lirien.offline.estimating":     { en: "Checking available storage…",                           es: "Comprobando almacenamiento disponible…" },
 			"lirien.offline.cached":         { en: "On device",                                             es: "En el dispositivo" },
 
+			"lirien.notify.intro":           { en: "You've reached the end of what's been written. If you'd like to be told when the next chapter arrives —",
+			                                   es: "Has llegado al final de lo escrito hasta ahora. Si quieres que te avisemos cuando llegue el próximo capítulo —" },
+			"lirien.notify.placeholder":     { en: "your email",                                            es: "tu correo" },
+			"lirien.notify.cta":             { en: "Notify me",                                             es: "Avísame" },
+			"lirien.notify.thanks":          { en: "Thank you. We'll write when there's more.",             es: "Gracias. Escribiremos cuando haya más." },
+			"lirien.notify.error":           { en: "Something went wrong. Try again later.",                es: "Algo salió mal. Inténtalo de nuevo más tarde." },
+			"lirien.notify.bad-email":       { en: "Please enter an email.",                                es: "Por favor introduce un correo." },
+
 			"lirien.action.return-recent": { en: "Return to most recent point",  es: "Volver al punto más reciente" },
 			"lirien.action.restart":       { en: "Restart from beginning",       es: "Reiniciar desde el principio" },
 
@@ -582,8 +590,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512p"></script>
-	<script src="ink.js?v=20260512p"></script>
-	<script src="main.js?v=20260512p"></script>
+	<script src="analytics.js?v=20260512q"></script>
+	<script src="ink.js?v=20260512q"></script>
+	<script src="main.js?v=20260512q"></script>
 </body>
 </html>

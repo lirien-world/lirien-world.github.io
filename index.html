@@ -206,6 +206,19 @@
     .cta-portal:hover .cta-mote{animation-duration:4.5s}
     @media(prefers-reduced-motion:reduce){.cta-button::before,.cta-spiral path,.cta-mote{animation:none}.cta-mote{opacity:0}}
     .cta-note{font-family:'Cormorant Garamond',serif;font-size:var(--text-xs);letter-spacing:.25em;text-transform:uppercase;color:var(--ash);margin-top:1.5rem;display:block}
+    /* Notify-me form in the closing section. Same tonal register as
+     * the surrounding email link — gentle gold accents, generous
+     * negative space. Input is single-line, button sits beside on
+     * wide screens and below on narrow. */
+    .notify-form{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;align-items:stretch;max-width:30rem;margin:0 auto 1rem auto}
+    .notify-input{flex:1 1 14rem;min-width:0;font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--parchment);background:rgba(8,6,15,.55);border:1px solid rgba(196,147,90,.25);border-radius:3px;padding:.7rem 1rem;letter-spacing:.04em;outline:none;transition:border-color .3s ease,background .3s ease}
+    .notify-input::placeholder{color:rgba(245,235,210,.4)}
+    .notify-input:hover,.notify-input:focus{border-color:rgba(196,147,90,.55);background:rgba(12,9,22,.7)}
+    .notify-submit{all:unset;cursor:pointer;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:var(--text-sm);letter-spacing:.05em;color:var(--gold-bright);padding:.7rem 1.2rem;border:1px solid rgba(196,147,90,.45);border-radius:3px;transition:color .3s ease,background .3s ease,border-color .3s ease}
+    .notify-submit:hover,.notify-submit:focus-visible{background:rgba(196,147,90,.10);border-color:rgba(196,147,90,.85);outline:none}
+    .notify-submit[disabled]{opacity:.55;cursor:wait}
+    .notify-thanks{font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--gold-bright);margin:0 auto 1rem auto;letter-spacing:.04em}
+    .notify-error{font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:#e89a6e;margin:0 auto 1rem auto;letter-spacing:.04em;max-width:30rem}
     footer{padding:clamp(2rem,5vw,4rem) clamp(1.5rem,5vw,4rem);border-top:1px solid rgba(58,53,72,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;text-align:center}
     .footer-quote{font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--ash);line-height:1.65;text-align:center;max-width:32rem}
     @keyframes fade-up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
@@ -524,7 +537,7 @@
       <span class="cta-mote" style="--x:30%;--d:4.8s"></span>
       <span class="cta-mote" style="--x:0%;--d:6.4s"></span>
     </span>
-    <span class="cta-note" data-i18n="begin.cta_note">First three chapters — Free to read</span>
+    <span class="cta-note" data-i18n="begin.cta_note">Four chapters, freely given</span>
   </div>
   <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);font-style:italic;color:var(--mist);margin-top:3rem;letter-spacing:.04em;" data-i18n-html="begin.music">or sit with the <a href="jukebox/index.html" style="color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;">small room of music</a></p>
 </section>
@@ -544,7 +557,28 @@
     <div class="glyph-line r"></div>
   </div>
   <p class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-md);font-weight:300;color:var(--lavender);font-style:italic;margin-bottom:1.5rem;" data-i18n-html="closing.message">If the world found you —<br>we'd like to know.</p>
-  <a href="mailto:hello@lirien.world" class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);letter-spacing:.2em;color:var(--gold);text-decoration:none;text-shadow:0 0 12px rgba(196,147,90,.5);transition:text-shadow .4s,color .4s;display:inline-block;">
+  <!--
+    Notify-me form. Tasteful, restrained — same visual register as
+    the closing email link. Posts to the existing CF Worker (api.lirien.world)
+    /subscribe endpoint. The "thanks" message replaces the form on
+    success. See bindNotifyForm() at the bottom of this file.
+  -->
+  <form id="notify-form" class="notify-form reveal" novalidate aria-label="Be notified when new chapters arrive">
+    <input
+      type="email"
+      id="notify-email"
+      class="notify-input"
+      autocomplete="email"
+      spellcheck="false"
+      required
+      data-i18n-placeholder="notify.placeholder"
+      placeholder="your email"
+    >
+    <button type="submit" class="notify-submit" data-i18n="notify.cta">Be told when there's more</button>
+  </form>
+  <p id="notify-thanks" class="notify-thanks reveal" hidden data-i18n="notify.thanks">Thank you. We'll write when there's more.</p>
+  <p id="notify-error" class="notify-error reveal" hidden data-i18n="notify.error">Something went wrong. Try again later, or just say hello below.</p>
+  <a href="mailto:hello@lirien.world" class="reveal" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-sm);letter-spacing:.2em;color:var(--gold);text-decoration:none;text-shadow:0 0 12px rgba(196,147,90,.5);transition:text-shadow .4s,color .4s;display:inline-block;margin-top:1.5rem;">
     hello@lirien.world
   </a>
 </section>
@@ -739,13 +773,19 @@
                            es: "Un hombre destruye el mundo al intentar salvarlo solo.<br>Debe aprender a dejar que otros carguen lo que él no puede." },
     "begin.p3":          { en: "It begins in ash.",               es: "Comienza en la ceniza." },
     "begin.cta":         { en: "Walk the Spiral",                 es: "Camina la Espiral" },
-    "begin.cta_note":    { en: "First three chapters — Free to read",
-                           es: "Tres primeros capítulos — Gratis" },
+    "begin.cta_note":    { en: "Four chapters, freely given",
+                           es: "Cuatro capítulos, libremente dados" },
     "begin.music":       { en: "or sit with the <a href=\"jukebox/index.html\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;\">small room of music</a>",
                            es: "o siéntate con la <a href=\"jukebox/index.html\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(196,147,90,.3);transition:color .4s,border-color .4s;\">pequeña sala de música</a>" },
 
     "closing.message":   { en: "If the world found you —<br>we'd like to know.",
                            es: "Si el mundo te encontró —<br>nos gustaría saberlo." },
+
+    "notify.placeholder": { en: "your email",                                 es: "tu correo" },
+    "notify.cta":         { en: "Be told when there's more",                  es: "Avísame cuando haya más" },
+    "notify.thanks":      { en: "Thank you. We'll write when there's more.",  es: "Gracias. Escribiremos cuando haya más." },
+    "notify.error":       { en: "Something went wrong. Try again later, or just say hello below.",
+                           es: "Algo salió mal. Inténtalo de nuevo más tarde, o saluda abajo." },
 
     "music.label":       { en: "Music",                          es: "Música" },
     "music.mute":        { en: "Mute",                           es: "Silenciar" },
@@ -774,6 +814,10 @@
     document.querySelectorAll("[data-i18n-html]").forEach(el => {
       const tr = TR[el.getAttribute("data-i18n-html")];
       if (tr && tr[lang] != null) el.innerHTML = tr[lang];
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+      const tr = TR[el.getAttribute("data-i18n-placeholder")];
+      if (tr && tr[lang] != null) el.setAttribute("placeholder", tr[lang]);
     });
     document.querySelectorAll("[data-lang-current]").forEach(el => {
       el.textContent = lang.toUpperCase();
@@ -837,5 +881,67 @@
   });
 })();
 </script>
+
+<script>
+// ----- notify-me form handler -----
+//
+// Posts {email, locale, source} to api.lirien.world/subscribe (the
+// existing analytics CF Worker, extended with a /subscribe endpoint
+// and a subscribers D1 table). On success the form is replaced with
+// the "thanks" message. On error the message line shows; the form
+// remains so the user can try again or fall back to the email link.
+//
+// Privacy posture matches the analytics layer: email stored, no
+// other tracking, no third-party SaaS dependency. See worker.js.
+(function bindNotifyForm() {
+  const form = document.getElementById("notify-form");
+  if (!form) return;
+  const input = document.getElementById("notify-email");
+  const submit = form.querySelector(".notify-submit");
+  const thanks = document.getElementById("notify-thanks");
+  const error = document.getElementById("notify-error");
+
+  // Hosting the worker on a custom domain (api.lirien.world) — same
+  // origin family as the page, same posture as analytics.js. Local
+  // dev hits the same prod endpoint; flip this to a localhost URL
+  // when iterating on worker code.
+  const ENDPOINT = "https://api.lirien.world/subscribe";
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const email = (input.value || "").trim();
+    // Minimal client-side validation — server is authoritative. Bare
+    // shape check catches the obvious "I clicked submit on empty".
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      input.focus();
+      input.setCustomValidity("Please enter an email.");
+      input.reportValidity();
+      setTimeout(() => input.setCustomValidity(""), 2000);
+      return;
+    }
+    submit.setAttribute("disabled", "");
+    error.hidden = true;
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          locale: document.documentElement.lang || "en",
+          source: "landing",
+        }),
+      });
+      if (!res.ok) throw new Error("subscribe " + res.status);
+      // Success: replace form with the thanks message.
+      form.hidden = true;
+      thanks.hidden = false;
+    } catch (e) {
+      error.hidden = false;
+      submit.removeAttribute("disabled");
+    }
+  });
+})();
+</script>
+
 </body>
 </html>

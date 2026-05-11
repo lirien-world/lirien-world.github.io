@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512p";
+const ASSET_VERSION = "20260512q";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1134,7 +1134,107 @@ function advance() {
 	// (potentially shimmer), and the user re-loading at the end
 	// sees it forever since no further tags can fire.
 	setAtmosphere("");
+	// Append the notify-me prompt inline in the prose panel — the
+	// highest-conversion moment in the funnel: someone just finished
+	// everything written and is sitting with it. Skipped silently if
+	// they've already subscribed (flag in localStorage) or if we're
+	// in dev exploration mode (would clutter dev jumps).
+	if (!isExploring) renderEndOfStoryPrompt();
 	if (!isExploring) saveAutosave();
+}
+
+// Notify-me form rendered into the prose panel at end-of-story. POSTs
+// to the same /subscribe endpoint as the landing-page form, tagged
+// source:"reader-end" so we can see which surface is converting.
+// One-shot: stored localStorage flag suppresses it on future end-
+// state arrivals.
+const NOTIFY_FLAG_KEY = "lirien.notifiedSubscribed";
+function renderEndOfStoryPrompt() {
+	if (!$proseContent) return;
+	// Already subscribed (or already shown + dismissed) — don't ask again.
+	try {
+		if (localStorage.getItem(NOTIFY_FLAG_KEY) === "1") return;
+	} catch (e) { /* localStorage blocked — show the form */ }
+	// Defensive: if the form is already in the DOM (e.g., user
+	// reached end-of-story, navigated away via dev, came back), don't
+	// re-append.
+	if ($proseContent.querySelector(".reader-notify-form")) return;
+	const t = (window.lirienT || ((k) => k));
+	const wrap = document.createElement("div");
+	wrap.className = "reader-notify";
+	wrap.innerHTML = `
+		<p class="reader-notify-intro">${escapeHtml(t("lirien.notify.intro"))}</p>
+		<form class="reader-notify-form" novalidate>
+			<input
+				type="email"
+				class="reader-notify-input"
+				autocomplete="email"
+				spellcheck="false"
+				required
+				placeholder="${escapeHtml(t("lirien.notify.placeholder"))}"
+			>
+			<button type="submit" class="reader-notify-submit">${escapeHtml(t("lirien.notify.cta"))}</button>
+		</form>
+		<p class="reader-notify-thanks" hidden>${escapeHtml(t("lirien.notify.thanks"))}</p>
+		<p class="reader-notify-error" hidden>${escapeHtml(t("lirien.notify.error"))}</p>
+	`;
+	$proseContent.appendChild(wrap);
+	bindReaderNotifyForm(wrap);
+}
+
+function escapeHtml(s) {
+	return String(s).replace(/[&<>"']/g, (c) => ({
+		"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+	}[c]));
+}
+
+function bindReaderNotifyForm(wrap) {
+	const form    = wrap.querySelector(".reader-notify-form");
+	const input   = wrap.querySelector(".reader-notify-input");
+	const submit  = wrap.querySelector(".reader-notify-submit");
+	const thanks  = wrap.querySelector(".reader-notify-thanks");
+	const error   = wrap.querySelector(".reader-notify-error");
+	// Same endpoint as the landing page form (api.lirien.world is the
+	// CF Worker — see analytics.js for the source-of-truth URL).
+	const ENDPOINT = "https://api.lirien.world/subscribe";
+
+	form.addEventListener("submit", async (ev) => {
+		ev.preventDefault();
+		// Story input is global — stop the submit from bubbling up to
+		// the prose-advance handler.
+		ev.stopPropagation();
+		const email = (input.value || "").trim();
+		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+			input.focus();
+			input.setCustomValidity((window.lirienT || ((k)=>k))("lirien.notify.bad-email"));
+			input.reportValidity();
+			setTimeout(() => input.setCustomValidity(""), 2000);
+			return;
+		}
+		submit.setAttribute("disabled", "");
+		error.hidden = true;
+		try {
+			const res = await fetch(ENDPOINT, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email,
+					locale: (document.documentElement && document.documentElement.lang) || "en",
+					source: "reader-end",
+				}),
+			});
+			if (!res.ok) throw new Error("subscribe " + res.status);
+			form.hidden = true;
+			thanks.hidden = false;
+			try { localStorage.setItem(NOTIFY_FLAG_KEY, "1"); } catch (e) { /* ignore */ }
+			if (window.lirienAnalytics) {
+				window.lirienAnalytics.track("notify_subscribed", { source: "reader-end" });
+			}
+		} catch (e) {
+			error.hidden = false;
+			submit.removeAttribute("disabled");
+		}
+	});
 }
 
 // ----- chunk reveal (typewriter) -----
@@ -2709,6 +2809,9 @@ function bindAdvanceInput() {
 		if (ev.target.closest(".title-continue")) return;
 		if (ev.target.closest(".confirm-dialog")) return;
 		if (ev.target.closest(".install-splash")) return;
+		// End-of-story notify-me prompt is rendered inside .prose-content
+		// but its inputs/buttons should not trigger advance().
+		if (ev.target.closest(".reader-notify")) return;
 		// Dev menu open OR a 3-finger tap just fired → don't advance.
 		// Without this, opening the dev panel via 3-finger tap also
 		// advanced the story (touchstart → toggleDevPanel, then the

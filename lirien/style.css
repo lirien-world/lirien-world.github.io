@@ -755,6 +755,90 @@ body.is-choosing .prose {
 		inset 0 22px 24px -10px rgba(11, 11, 18, 0.58);
 }
 
+/* Reader end-of-story notify-me prompt. Rendered into .prose-content
+ * when state goes to "ended" (last knot of the story has played).
+ * Visual register: parchment + gold like the rest of the prose, with
+ * the form quietly italicized so it reads as an intimate ask rather
+ * than a marketing input. */
+.reader-notify {
+	margin: 2.4rem 0 1rem 0;
+	padding: 1.6rem 0 0 0;
+	border-top: 1px solid rgba(196, 147, 90, 0.22);
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.reader-notify-intro {
+	margin: 0;
+	font-style: italic;
+	color: rgba(245, 235, 210, 0.78);
+	line-height: 1.55;
+}
+.reader-notify-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0;
+}
+.reader-notify-input {
+	flex: 1 1 14rem;
+	min-width: 0;
+	font-family: inherit;
+	font-style: italic;
+	font-size: inherit;
+	color: var(--parchment, #f5ebd2);
+	background: rgba(8, 6, 15, 0.45);
+	border: 1px solid rgba(196, 147, 90, 0.28);
+	border-radius: 3px;
+	padding: 0.6rem 0.9rem;
+	letter-spacing: 0.03em;
+	outline: none;
+	transition: border-color 0.3s ease, background 0.3s ease;
+}
+.reader-notify-input::placeholder { color: rgba(245, 235, 210, 0.4); }
+.reader-notify-input:hover,
+.reader-notify-input:focus {
+	border-color: rgba(196, 147, 90, 0.6);
+	background: rgba(12, 9, 22, 0.6);
+}
+.reader-notify-submit {
+	all: unset;
+	cursor: pointer;
+	font-family: inherit;
+	font-style: italic;
+	font-size: inherit;
+	letter-spacing: 0.04em;
+	color: rgba(220, 178, 110, 1);
+	padding: 0.6rem 1.1rem;
+	border: 1px solid rgba(196, 147, 90, 0.45);
+	border-radius: 3px;
+	transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+	.reader-notify-submit:hover {
+		background: rgba(196, 147, 90, 0.10);
+		border-color: rgba(196, 147, 90, 0.85);
+	}
+}
+.reader-notify-submit:focus-visible {
+	outline: none;
+	background: rgba(196, 147, 90, 0.10);
+	border-color: rgba(196, 147, 90, 0.85);
+}
+.reader-notify-submit[disabled] { cursor: wait; opacity: 0.55; }
+.reader-notify-thanks {
+	margin: 0;
+	font-style: italic;
+	color: rgba(220, 178, 110, 1);
+	letter-spacing: 0.03em;
+}
+.reader-notify-error {
+	margin: 0;
+	font-style: italic;
+	color: #e89a6e;
+	letter-spacing: 0.03em;
+}
+
 /* fx: hollow — a heartbeat thump on the prose panel. Used sparingly
  * at manuscript moments naming the hollow under Aerin's ribs. Steve
  * 2026-05-11 v2: the first pass was too subtle to feel; deepen the

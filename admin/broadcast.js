@@ -204,19 +204,34 @@
 	// the manifest's chapters[] list (parsed from test.ink, so it
 	// matches whatever's currently shipped). intro is intentionally
 	// NOT auto-filled — that's where Steve's voice goes.
-	// A starter intro paragraph in Steve's voice. Three brief blocks
-	// with the established Lirien cadence (observational, comma-heavy,
-	// the invitation phrased as "if you'd like to keep going"). Steve
-	// edits this every time before sending — it's a starting position,
-	// not a final draft. Only inserted when intro is empty so a draft
-	// in progress isn't blown away.
+	// Intro template — chapter-aware. Same cadence every time so the
+	// email reads as "from Steve" rather than auto-generated. The
+	// chapter title is interpolated so each send is naturally unique
+	// without Steve having to write fresh copy. Steve edits freely
+	// after auto-fill if a particular ship deserves a different note.
+	function buildIntro(chapter_title) {
+		return (
+			`A new chapter is live — ${chapter_title}.\n\n` +
+			`You don't have to hurry through it. Lirien tends to land when you let it.\n\n` +
+			`If you'd like to keep going —`
+		);
+	}
+	// Used to seed the intro on first visit before any chapter has
+	// been auto-filled. Generic version (no chapter title).
 	const DEFAULT_INTRO =
-		"It's been a stretch. There's a new chapter live.\n\n" +
-		"You don't have to hurry through it — Lirien tends to land when you let it.\n\n" +
+		"A new chapter is live.\n\n" +
+		"You don't have to hurry through it. Lirien tends to land when you let it.\n\n" +
 		"If you'd like to keep going —";
+	// Banner URL default — used by auto-fill if the field has been
+	// cleared. Kept in sync with the value="" attribute on
+	// #f-banner-url so the composer is always self-recovering.
+	const DEFAULT_BANNER_URL = "https://lirien.world/atmosphere/email_banner_thistle.jpg";
+	const DEFAULT_CHAPTER_URL = "https://lirien.world/lirien/";
 
 	function autofillFromChapter() {
-		const n = parseInt($chapterNum.value, 10);
+		// Accept both "5" (text) and 5 (number). parseInt tolerates
+		// surrounding whitespace + bails to NaN on empty/bad input.
+		const n = parseInt(($chapterNum.value || "").trim(), 10);
 		if (!Number.isFinite(n) || n < 1) {
 			showStatus("Enter a chapter number first.", "error");
 			return;
@@ -226,22 +241,20 @@
 			showStatus(`No chapter ${n} in the manifest (have ${CHAPTERS.length}). Did you bump the version after writing it?`, "error");
 			return;
 		}
-		// Template the templatable fields. Steve can edit any of them
-		// after — auto-fill never locks values.
+		// Produce a send-ready email. Every field gets a value so
+		// Steve can hit "Send test" immediately. Recipient (the "to"
+		// field) is the only thing not templated — it's user-specific,
+		// but it persists in localStorage so after the first send it
+		// stays filled across visits.
 		$chapterTitle.value = ch.title;
 		$subject.value      = "A new chapter — " + ch.title;
 		$preheader.value    = ch.title + " is live.";
-		// chapter_url stays as whatever's there; default lirien.world/lirien/
-		// is fine, and a future deep-linking feature can populate per-chapter URLs.
-		if (!$chapterUrl.value.trim()) {
-			$chapterUrl.value = "https://lirien.world/lirien/";
+		$chapterUrl.value   = DEFAULT_CHAPTER_URL;
+		$intro.value        = buildIntro(ch.title);
+		if (!$bannerUrl.value.trim()) {
+			$bannerUrl.value = DEFAULT_BANNER_URL;
 		}
-		// Intro: only fill when empty. Don't overwrite a draft that's
-		// already been edited (auto-fill is a starter, not a reset).
-		if (!$intro.value.trim()) {
-			$intro.value = DEFAULT_INTRO;
-		}
-		showStatus(`Filled from chapter ${n}: ${ch.title}.`, "ok");
+		showStatus(`Filled from chapter ${n}: ${ch.title}. Send-ready.`, "ok");
 		saveDraft();
 		refreshPreview();
 	}

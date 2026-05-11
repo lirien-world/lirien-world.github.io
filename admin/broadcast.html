@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Broadcast composer — Chronicles of Lirien</title>
-<link rel="stylesheet" href="admin.css?v=20260512t">
+<link rel="stylesheet" href="admin.css?v=20260512u">
 <style>
 /*
  * Broadcast composer styles. Keeps the same Reading-Room visual
@@ -168,9 +168,17 @@
 			<form id="composer-form" class="composer-form" autocomplete="off">
 				<label>
 					Chapter number
-					<span class="label-aside">Type the chapter number (e.g. "5") and the fields below auto-fill from the manifest. Editable after — auto-fill never locks anything.</span>
+					<span class="label-aside">Type the chapter number (e.g. "5") and the fields below all populate. Hit Auto-fill — you should get a send-ready email; tweak from there.</span>
 					<div style="display:flex; gap:10px; align-items:stretch;">
-						<input type="number" id="f-chapter-num" min="1" max="99" step="1" style="flex: 0 0 100px;" placeholder="e.g. 5">
+						<!--
+							Plain text input + inputmode="numeric" instead of
+							type="number" because Safari ignores appearance:none
+							for number inputs and renders them with a white
+							background regardless of authored CSS. The text
+							field with a numeric pattern gives the numeric
+							keypad on mobile and clean styling everywhere.
+						-->
+						<input type="text" id="f-chapter-num" inputmode="numeric" pattern="[0-9]*" maxlength="3" style="flex: 0 0 100px; text-align: center;" placeholder="e.g. 5">
 						<button type="button" id="btn-autofill" class="composer-btn" style="margin: 0;">Auto-fill</button>
 					</div>
 				</label>
@@ -237,6 +245,6 @@
 	</section>
 </main>
 
-<script src="broadcast.js?v=20260512t"></script>
+<script src="broadcast.js?v=20260512u"></script>
 </body>
 </html>

@@ -191,24 +191,38 @@
 
 	// ---- broadcast flow ------------------------------------------
 
+	// Returns { ok: true, total, ... } on success, or
+	// { ok: false, error: <reason> } so the modal can surface what
+	// actually failed. Generic "couldn't fetch" was hiding real
+	// errors during the B2 iteration; explicit reason is worth the
+	// extra few lines.
 	async function fetchSubscriberCount() {
+		const url = ENDPOINT_BASE + "/api/data?key=" + encodeURIComponent(KEY) + "&q=subscribers";
+		let res;
 		try {
-			const url = ENDPOINT_BASE + "/api/data?key=" + encodeURIComponent(KEY) + "&q=subscribers";
-			const res = await fetch(url, { cache: "no-store" });
-			if (!res.ok) return null;
-			const data = await res.json();
-			// Worker returns { q, results, filters } — not { rows }.
-			// Matches admin.js's fetchQuery contract.
-			const row = (data && data.results && data.results[0]) || null;
-			if (!row) return null;
-			return {
-				total: Number(row.total_active) || 0,
-				viaLanding: Number(row.via_landing) || 0,
-				viaReaderEnd: Number(row.via_reader_end) || 0,
-			};
+			res = await fetch(url, { cache: "no-store" });
 		} catch (e) {
-			return null;
+			return { ok: false, error: "Network error (" + (e && e.message || e) + ")" };
 		}
+		if (res.status === 401) {
+			return { ok: false, error: "Worker rejected the key. Did the URL's ?key= survive the link forward from the dashboard?" };
+		}
+		if (!res.ok) {
+			return { ok: false, error: "Worker returned HTTP " + res.status };
+		}
+		let data;
+		try { data = await res.json(); }
+		catch (e) { return { ok: false, error: "Worker reply wasn't JSON" }; }
+		const row = (data && data.results && data.results[0]) || null;
+		if (!row) {
+			return { ok: false, error: "No row in /api/data?q=subscribers response (got keys: " + Object.keys(data || {}).join(",") + ")" };
+		}
+		return {
+			ok: true,
+			total: Number(row.total_active) || 0,
+			viaLanding: Number(row.via_landing) || 0,
+			viaReaderEnd: Number(row.via_reader_end) || 0,
+		};
 	}
 
 	async function openBroadcastModal() {
@@ -222,8 +236,8 @@
 		$modalSummary.textContent = "Loading subscriber count…";
 		$modalGo.setAttribute("disabled", "");
 		const counts = await fetchSubscriberCount();
-		if (counts == null) {
-			$modalSummary.textContent = "Couldn't fetch subscriber count. Check the worker is deployed.";
+		if (!counts.ok) {
+			$modalSummary.textContent = "Couldn't read subscriber count: " + counts.error;
 			return;
 		}
 		if (counts.total === 0) {

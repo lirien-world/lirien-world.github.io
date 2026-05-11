@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broadcast composer — Chronicles of Lirien</title>
+<link rel="stylesheet" href="admin.css?v=20260512r">
+<style>
+/*
+ * Broadcast composer styles. Keeps the same Reading-Room visual
+ * register as admin.css (parchment + gold on void), but with a
+ * two-column form-left / preview-right layout. On narrow screens
+ * the preview moves below the form. Phase B1 is test-send only —
+ * the "Send to all" button is deliberately absent; B2 adds it
+ * behind a confirmation modal.
+ */
+.composer-wrap {
+	display: grid;
+	grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+	gap: 28px;
+	margin-top: 18px;
+}
+@media (max-width: 980px) {
+	.composer-wrap { grid-template-columns: 1fr; }
+}
+.composer-form {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+.composer-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 13px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: rgba(245, 235, 210, 0.55);
+}
+.composer-form .label-aside {
+	text-transform: none;
+	letter-spacing: 0.02em;
+	font-style: italic;
+	color: rgba(245, 235, 210, 0.4);
+	font-size: 12px;
+}
+.composer-form input[type="text"],
+.composer-form input[type="email"],
+.composer-form input[type="url"],
+.composer-form textarea {
+	font-family: 'Cormorant Garamond', Georgia, serif;
+	font-size: 16px;
+	font-style: italic;
+	color: #f5ebd2;
+	background: rgba(8, 6, 15, 0.55);
+	border: 1px solid rgba(196, 147, 90, 0.28);
+	border-radius: 3px;
+	padding: 9px 12px;
+	outline: none;
+	transition: border-color 0.3s ease, background 0.3s ease;
+}
+.composer-form input:hover,
+.composer-form input:focus,
+.composer-form textarea:hover,
+.composer-form textarea:focus {
+	border-color: rgba(196, 147, 90, 0.6);
+	background: rgba(12, 9, 22, 0.7);
+}
+.composer-form textarea {
+	min-height: 180px;
+	resize: vertical;
+	line-height: 1.6;
+}
+.composer-actions {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin-top: 6px;
+}
+.composer-btn {
+	all: unset;
+	cursor: pointer;
+	font-family: 'Cormorant Garamond', serif;
+	font-style: italic;
+	font-size: 15px;
+	letter-spacing: 0.05em;
+	color: #dcb26e;
+	padding: 9px 16px;
+	border: 1px solid rgba(196, 147, 90, 0.5);
+	border-radius: 3px;
+	transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+.composer-btn:hover, .composer-btn:focus-visible {
+	background: rgba(196, 147, 90, 0.10);
+	border-color: rgba(196, 147, 90, 0.85);
+	outline: none;
+}
+.composer-btn[disabled] { cursor: wait; opacity: 0.55; }
+.composer-status {
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 14px;
+	font-style: italic;
+	color: rgba(245, 235, 210, 0.6);
+}
+.composer-status.ok    { color: #dcb26e; }
+.composer-status.error { color: #e89a6e; }
+
+.preview-wrap {
+	position: sticky;
+	top: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.preview-label {
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 13px;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: rgba(245, 235, 210, 0.55);
+}
+.preview-frame {
+	width: 100%;
+	min-height: 720px;
+	border: 1px solid rgba(196, 147, 90, 0.22);
+	border-radius: 4px;
+	background: #0d0e10;
+}
+.phase-banner {
+	font-family: 'Cormorant Garamond', serif;
+	font-style: italic;
+	font-size: 14px;
+	color: rgba(245, 235, 210, 0.5);
+	margin-top: 24px;
+	padding: 10px 16px;
+	border: 1px dashed rgba(196, 147, 90, 0.25);
+	border-radius: 3px;
+}
+</style>
+</head>
+<body>
+
+<main class="reading-room">
+	<header class="title">
+		<div class="eyebrow">Chronicles of Lirien</div>
+		<h1>Broadcast <em>Composer</em></h1>
+		<p class="subtitle">Phase B1 — test-sends only. Iterate here until the look feels right, then we'll wire the real broadcast path.</p>
+	</header>
+
+	<section style="margin-top: 18px;">
+		<div class="composer-wrap">
+			<form id="composer-form" class="composer-form" autocomplete="off">
+				<label>
+					Subject
+					<span class="label-aside">What lands in the inbox subject line.</span>
+					<input type="text" id="f-subject" required maxlength="200" placeholder="A new chapter — Five — The Spiral Stays">
+				</label>
+
+				<label>
+					Preheader
+					<span class="label-aside">The grey line that previews under the subject in most inboxes. Two short sentences max.</span>
+					<input type="text" id="f-preheader" maxlength="200" placeholder="A small note. The fifth chapter is live.">
+				</label>
+
+				<label>
+					Intro paragraph(s)
+					<span class="label-aside">In your voice. Blank lines split into separate paragraphs.</span>
+					<textarea id="f-intro" required maxlength="2000" placeholder="It's been a quiet stretch. Chapter Five took the long route. Thistle has opinions about that.&#10;&#10;If you'd like to keep going —"></textarea>
+				</label>
+
+				<label>
+					Chapter title
+					<span class="label-aside">Optional. Shown above the intro in big serif. Leave blank if not relevant.</span>
+					<input type="text" id="f-chapter-title" maxlength="200" placeholder="Five — The Spiral Stays">
+				</label>
+
+				<label>
+					Chapter URL
+					<span class="label-aside">Where the "Walk the Spiral" button leads. Usually lirien.world/lirien/ — or a deep link if you have one.</span>
+					<input type="url" id="f-chapter-url" required maxlength="500" placeholder="https://lirien.world/lirien/">
+				</label>
+
+				<label>
+					Banner image URL (optional)
+					<span class="label-aside">A wide image (1200×600) at the top of the email. Leave blank to skip.</span>
+					<input type="url" id="f-banner-url" maxlength="500" placeholder="https://lirien.world/atmosphere/thistle_with_letter.jpg">
+				</label>
+
+				<label>
+					Send test to
+					<span class="label-aside">Just the recipient. Real broadcast path comes in Phase B2.</span>
+					<input type="email" id="f-to" required maxlength="254" placeholder="you@example.com">
+				</label>
+
+				<div class="composer-actions">
+					<button type="button" id="btn-preview" class="composer-btn">Refresh preview</button>
+					<button type="submit" id="btn-test" class="composer-btn">Send test</button>
+					<span id="status" class="composer-status">Auto-saving as you type…</span>
+				</div>
+			</form>
+
+			<aside class="preview-wrap">
+				<div class="preview-label">Preview</div>
+				<iframe id="preview-frame" class="preview-frame" title="Email preview" sandbox="allow-same-origin"></iframe>
+			</aside>
+		</div>
+
+		<p class="phase-banner">
+			Phase B1: this surface only sends to the single address you specify. The actual "send to N subscribers" path
+			ships separately in Phase B2, behind a confirmation modal and an unsubscribe flow.
+		</p>
+	</section>
+</main>
+
+<script src="broadcast.js?v=20260512r"></script>
+</body>
+</html>

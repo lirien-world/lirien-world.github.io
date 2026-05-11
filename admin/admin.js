@@ -19,6 +19,14 @@
 		return;
 	}
 
+	// Forward the dashboard key onto the broadcast composer link so
+	// you don't have to paste it twice. The composer requires the
+	// same DASHBOARD_KEY for its /broadcast/* calls.
+	const composerLink = document.getElementById("composer-link");
+	if (composerLink) {
+		composerLink.href = "broadcast.html?key=" + encodeURIComponent(KEY);
+	}
+
 	// Worker is on api.lirien.world while the main site is gray-cloud
 	// (Spanish CF-IP block workaround). Absolute URL is required — a
 	// relative /api/data would hit lirien.world (GH Pages) and 404.

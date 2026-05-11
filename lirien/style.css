@@ -188,18 +188,24 @@ html, body {
 	position: absolute;
 	/* Glyph rendered via text — color is the glyph fill, text-shadow
 	 * gives it a warm halo + dark contrast ring. Cheaper than SVG
-	 * (no asset request), more interesting than a plain dot. */
+	 * (no asset request), more interesting than a plain dot.
+	 *
+	 * Brightness pass per Steve 2026-05-11 ("compare to the hamburger
+	 * menu or the chevron at the bottom — they should be slightly
+	 * brighter. They are magic after all"): bumped base color from
+	 * --gold to --gold-bright; inner halo from warm-orange to a
+	 * brighter warm-amber; outer halo punched up; dark contrast ring
+	 * softened from 0.65 → 0.4 so it isn't muting the magic. */
 	top: 0;
 	left: 0;
 	font-size: var(--size, 10px);
 	line-height: 1;
-	color: rgba(196, 147, 90, 1);
-	/* Three-layer text-shadow: tight warm halo, wider soft warm
-	 * halo, tight dark ring for contrast against bright bgs. */
+	color: rgba(224, 176, 112, 1);                       /* --gold-bright */
 	text-shadow:
-		0 0 var(--glow, 8px)              rgba(255, 200, 130, 0.95),
-		0 0 calc(var(--glow, 8px) * 1.8)  rgba(255, 180, 100, 0.4),
-		0 0 2px                            rgba(20, 12, 8, 0.65);
+		0 0 var(--glow, 8px)              rgba(255, 225, 165, 1.0),
+		0 0 calc(var(--glow, 8px) * 1.8)  rgba(255, 205, 130, 0.55),
+		0 0 calc(var(--glow, 8px) * 3.0)  rgba(255, 190, 120, 0.2),
+		0 0 2px                            rgba(20, 12, 8, 0.4);
 	/* Center the glyph on the cluster origin. */
 	margin-left: calc(var(--size, 10px) * -0.5);
 	margin-top:  calc(var(--size, 10px) * -0.5);
@@ -245,12 +251,13 @@ html, body {
  * visible at the dim end; the parent's rise fade is what blanks
  * it entirely at the edges of its life. */
 @keyframes shimmer-twinkle {
-	/* Twinkle is COLOR-ONLY now — the spiral animation owns
-	 * opacity (lifecycle fade in/out), so this animation can't
-	 * also animate opacity or they fight. Color shifts between
-	 * the menu's base gold and a hot amber-white peak. */
-	0%, 100% { color: rgba(196, 147, 90, 1); }    /* --gold (menu base) */
-	50%      { color: rgba(255, 230, 175, 1); }   /* amber-white peak */
+	/* Twinkle is COLOR-ONLY — the spiral animation owns opacity
+	 * (lifecycle fade). Shifts between the menu's gold-bright and
+	 * the cream highlight the menu's shimmer-sweep peaks at, so
+	 * the particles read in the same palette as the gold ornament
+	 * elsewhere in the app. */
+	0%, 100% { color: rgba(224, 176, 112, 1); }   /* --gold-bright */
+	50%      { color: rgba(245, 223, 166, 1); }   /* menu shimmer peak (#f5dfa6) */
 }
 
 /* ----- shimmer one-shot -----

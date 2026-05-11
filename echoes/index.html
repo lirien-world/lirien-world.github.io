@@ -1080,7 +1080,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-233412";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-233841";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -2459,7 +2459,11 @@ function updateCounts(){
 	if ($trackCountLabel) $trackCountLabel.textContent = `${word} ${piece}`;
 	$listBtnCount.textContent = word;
 	$listBtnUnit.textContent = track;
-	$drawerCountLabel.textContent = capFirst(word);
+	// drawerCountLabel lived in the now-removed drawer-foot block.
+	// Nullsafe guard — without it, the throw on null was breaking
+	// the entire boot path before buildTracklist() could populate
+	// the drawer, leaving it empty.
+	if ($drawerCountLabel) $drawerCountLabel.textContent = capFirst(word);
 }
 
 // Exposed so the i18n module can re-run the dynamic-text path

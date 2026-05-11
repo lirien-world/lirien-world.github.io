@@ -175,11 +175,21 @@ body{
  * like a pair: hamburger opens the drawer, drawer-toggle opens the
  * drawer. Either works; the hamburger is the discoverable one. */
 .menu-btn{
+	/* Button reset (explicit — `all: unset` here would wipe the
+	 * position/top/right declarations below since the cascade reads
+	 * top-to-bottom). Steve 2026-05-12: that's exactly the bug that
+	 * kept the hamburger stuck wherever document flow put it. */
+	appearance:none;
+	-webkit-appearance:none;
+	font:inherit;color:inherit;
+	margin:0;padding:0;
+	box-shadow:none;
+	/* Position. */
 	position:fixed;
 	top:clamp(0.9rem, 2.4vw, 1.4rem);
 	right:clamp(0.9rem, 2.4vw, 1.4rem);
 	z-index:30;
-	all:unset;
+	/* Box. */
 	cursor:pointer;
 	width:44px;height:44px;
 	display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
@@ -1070,7 +1080,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-233059";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-233412";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;

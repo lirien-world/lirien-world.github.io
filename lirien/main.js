@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511g";
+const ASSET_VERSION = "20260511h";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -707,6 +707,7 @@ function typeChunk(text) {
 	const completionTimer = setTimeout(onChunkRevealed, totalMs);
 
 	currentReveal = {
+		paragraph,  // ← exposed so updateCharFade can skip in-flight chars
 		skipFn() {
 			// Skip-to-end: clear all per-char animation delays so each
 			// span snaps to fully-revealed immediately. Cancel pending
@@ -815,8 +816,19 @@ function updateCharFade() {
 	const proseRect = $proseContent.getBoundingClientRect();
 	const fadeTopPx = proseRect.top;
 	const fadeBottomPx = fadeTopPx + CHAR_FADE_PX;
+	// Don't touch chars in the currently-typing paragraph — their
+	// per-character CSS fade-in animation owns their opacity until
+	// reveal completes. Steve hit a regression where a fresh chunk
+	// (post-clearTranscript scene change) landed in the fade band
+	// at the top of an empty .prose-content, and inline style.opacity
+	// set by this function overrode the CSS animation's `from: 0`
+	// during the per-char animation-delay window — the whole line
+	// flashed in at dim grey, then animated left-to-right to white,
+	// instead of typing char-by-char from invisible.
+	const inFlightParagraph = currentReveal && currentReveal.paragraph;
 	const ps = $proseContent.querySelectorAll("p");
 	for (const p of ps) {
+		if (p === inFlightParagraph) continue;
 		const pRect = p.getBoundingClientRect();
 		// Paragraph entirely above fade zone — clear any opacity.
 		if (pRect.bottom < fadeTopPx) {

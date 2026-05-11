@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512a";
+const ASSET_VERSION = "20260512b";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1841,10 +1841,13 @@ const SHIMMER_GLYPH = "✦";
 //   • CSS keyframe: -1080deg → 3 full revolutions per life
 //   • per-particle max-r     → 65-95px (tighter than 60-100)
 //   • count 36               → ~12 particles per revolution
-// Steve 2026-05-11: "slow the rotation down + smaller, less
-// distracting." Pushed lifetime 22s → 32s (each revolution
-// ~10.7s, was 7.3s).
-const SHIMMER_SPIRAL_DUR = 32;  // seconds — center→edge lifetime
+// Lifetime / rotation speed dialed in over several passes — final
+// per Steve 2026-05-11: 64s lifetime = ~21s per revolution
+// (3 revs per life). Reads as a true lazy drift rather than a
+// deliberate spin; the eye registers the spiral shape from the
+// distribution of particles along the arm, not from any single
+// particle's motion across a frame.
+const SHIMMER_SPIRAL_DUR = 64;  // seconds — center→edge lifetime
 
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing

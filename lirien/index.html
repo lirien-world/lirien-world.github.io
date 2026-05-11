@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512h">
+	<link rel="stylesheet" href="style.css?v=20260512j">
 </head>
 <body>
 	<script>
@@ -34,7 +34,19 @@
 		} catch (e) { /* sessionStorage blocked — title shows briefly, no big deal */ }
 	})();
 	</script>
-	<div id="bg" class="bg"><img id="bg-image" class="bg-image" alt=""></div>
+	<!--
+		Dual-img bg for crossfade. One element is "active" (.is-active,
+		opacity 1); the other is the loading buffer (.bg-image without
+		.is-active, opacity 0). On a soft bg change we set incoming.src
+		on the inactive img, wait for its load to complete, then flip
+		.is-active so the bitmap is fully decoded before it fades in.
+		On a hard `# bg-cut:` we skip the transition entirely.
+		See swapBackground() in main.js.
+	-->
+	<div id="bg" class="bg">
+		<img id="bg-image-a" class="bg-image" alt="">
+		<img id="bg-image-b" class="bg-image" alt="">
+	</div>
 	<!--
 		Atmospheric layer (ash, shimmer, etc) — sits between the bg and
 		the prose so particles drift through the world image and behind
@@ -247,7 +259,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260511-173527";
+		const BUILD_VERSION = "20260511-181233";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -517,8 +529,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512h"></script>
-	<script src="ink.js?v=20260512h"></script>
-	<script src="main.js?v=20260512h"></script>
+	<script src="analytics.js?v=20260512j"></script>
+	<script src="ink.js?v=20260512j"></script>
+	<script src="main.js?v=20260512j"></script>
 </body>
 </html>

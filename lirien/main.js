@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512h";
+const ASSET_VERSION = "20260512j";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -40,7 +40,19 @@ function musicUrl(name) { return MUSIC_DIR      + name + ".m4a?v=" + ASSET_VERSI
 // ----- DOM refs -----
 
 const $bg = document.getElementById("bg");
-const $bgImage = document.getElementById("bg-image");
+// Dual-img bg setup for crossfade. activeBg always points at the
+// element currently showing (.is-active). On a soft swap, we load
+// the next scene on the OTHER element, wait for its bitmap to
+// decode, then flip .is-active. On a hard `# bg-cut:` we set src
+// on the active element directly with the transition disabled.
+const $bgA = document.getElementById("bg-image-a");
+const $bgB = document.getElementById("bg-image-b");
+let activeBg = $bgA;
+// Monotonic id for in-flight crossfades. If a new swap arrives
+// while the previous one's incoming img is still decoding, the
+// older onload handler bails on its gen-check and the newer one
+// wins. Prevents a fast skip pile-up from doing the wrong flip.
+let bgCrossfadeGen = 0;
 const $proseContent = document.getElementById("prose-content");
 const $prose = document.getElementById("prose");
 const $continueHint = document.getElementById("continue-hint");
@@ -1163,7 +1175,8 @@ function peekNextChunkTags() {
 		story.Continue();
 		for (const raw of story.currentTags || []) {
 			const tag = String(raw).trim();
-			if (tag.startsWith("bg:"))         bg = tag.slice(3).trim();
+			if (tag.startsWith("bg-cut:"))     bg = tag.slice(7).trim();
+			else if (tag.startsWith("bg:"))    bg = tag.slice(3).trim();
 			else if (tag.startsWith("music:")) music = tag.slice(6).trim();
 		}
 	} finally {
@@ -1356,19 +1369,33 @@ function bgLoadWasFresh(url) {
 	}
 }
 
-function swapBackground(name) {
+function swapBackground(name, opts) {
 	// Skip identical reassignment — defensive against rapid advance()
 	// calls re-applying the same bg, which would otherwise trigger a
 	// fresh decode+composite even though the visible bitmap is unchanged.
 	if (name === currentBgName) return;
+	const instant = !!(opts && opts.instant);
 	const url = bgUrl(name);
 	// Reset the soft-wait observer for this bg. Old observation drops
 	// silently if the prior bg never finished loading or never had a
 	// chunk reveal — both are edge-case shapes (rapid skip, end-of-story).
 	bgLateState = { name, chunkRevealedAt: 0, bgLoadedAt: 0 };
+	bgCrossfadeGen += 1;
+	const gen = bgCrossfadeGen;
+
+	// Always load on the OTHER img (whether soft or instant). On
+	// decode-complete we either fade .is-active across (soft) or snap
+	// it across with transitions disabled (instant). Loading on the
+	// inactive img both paths means the active img keeps showing its
+	// bitmap until the new one is fully decoded — no transparent gap.
+	const target = (activeBg === $bgA) ? $bgB : $bgA;
+	const outgoing = activeBg;
+
 	// Hook load/error before assigning src so analytics can report
 	// cache-hit ratio and detect failed fetches (offline, 404, etc).
-	$bgImage.onload = () => {
+	// Closing over `gen` also gates the visual crossfade flip on the
+	// LATEST swap, not whatever stale request fired this onload.
+	target.onload = () => {
 		if (window.lirienAnalytics) window.lirienAnalytics.recordAssetLoad("bg", name, url);
 		if (bgLateState.name === name) {
 			bgLateState.bgLoadedAt = performance.now();
@@ -1391,8 +1418,34 @@ function swapBackground(name) {
 				bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
 			}
 		}
+		// Flip .is-active once the bitmap is decoded so the swap (fade
+		// or snap) never reveals a half-painted frame. Guarded by gen
+		// so a superseded swap's late onload doesn't pull the rug.
+		if (gen !== bgCrossfadeGen) return;
+		if (instant) {
+			// Hard cut: disable the opacity transition for one frame,
+			// then flip is-active. Two rAFs to re-enable so the browser
+			// has committed the no-transition paint before we restore.
+			target.classList.add("no-bg-transition");
+			outgoing.classList.add("no-bg-transition");
+			target.classList.add("is-active");
+			if (outgoing !== target) outgoing.classList.remove("is-active");
+			activeBg = target;
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					target.classList.remove("no-bg-transition");
+					outgoing.classList.remove("no-bg-transition");
+				});
+			});
+		} else {
+			// Soft crossfade: just flip classes; CSS transition handles
+			// the 500ms opacity ramp on both elements simultaneously.
+			target.classList.add("is-active");
+			if (outgoing !== target) outgoing.classList.remove("is-active");
+			activeBg = target;
+		}
 	};
-	$bgImage.onerror = () => {
+	target.onerror = () => {
 		if (window.lirienAnalytics) window.lirienAnalytics.recordAssetError("bg", name, "img onerror");
 		// Failed load — drop the observation so a future swap doesn't
 		// inherit a stale chunkRevealedAt.
@@ -1400,11 +1453,15 @@ function swapBackground(name) {
 			bgLateState = { name: "", chunkRevealedAt: 0, bgLoadedAt: 0 };
 		}
 	};
-	// Setting img.src instead of CSS background-image gives Safari a
-	// clean release-then-decode lifecycle. Browsers also share the
-	// decoded bitmap between this img and any prior `new Image()`
-	// preload of the same URL, so the prefetch actually pays off here.
-	$bgImage.src = url;
+
+	// Set src on the inactive img; .is-active flips inside the onload
+	// handler above once decode completes. Setting img.src instead of
+	// CSS background-image gives Safari a clean release-then-decode
+	// lifecycle. Browsers also share the decoded bitmap between this
+	// img and any prior `new Image()` preload of the same URL, so the
+	// prefetch actually pays off here.
+	target.src = url;
+
 	currentBgName = name;
 	// While shimmer atmosphere is active, glide the cluster to the
 	// new scene's anchor point. The CSS transition on
@@ -1766,7 +1823,8 @@ function releasePlayerSrc(player) {
 function applyTags(tags) {
 	for (const raw of tags) {
 		const tag = String(raw).trim();
-		if (tag.startsWith("bg:"))              swapBackground(tag.slice(3).trim());
+		if (tag.startsWith("bg-cut:"))          swapBackground(tag.slice(7).trim(), { instant: true });
+		else if (tag.startsWith("bg:"))         swapBackground(tag.slice(3).trim());
 		else if (tag.startsWith("music:"))      swapMusic(tag.slice(6).trim());
 		else if (tag.startsWith("chapter:"))    showChapterTitle(tag.slice(8).trim());
 		else if (tag.startsWith("atmosphere:")) setAtmosphere(tag.slice(11).trim());
@@ -2339,7 +2397,11 @@ function renderInstantChunk(text) {
 // lastChunk render below depends on a clean prose panel.
 function applyAutosaveVisuals(saved) {
 	if (!saved) return;
-	if (saved.bg)    swapBackground(saved.bg);
+	// Restore is not a transition — the reader was already here. Use
+	// an instant cut so the scene snaps into place instead of fading
+	// in from blank (which reads as a real bg change). Soft crossfade
+	// is reserved for narrative-time `# bg:` tags.
+	if (saved.bg)    swapBackground(saved.bg, { instant: true });
 	if (saved.music) swapMusic(saved.music);
 	if (saved.chapter) {
 		currentChapterName = saved.chapter;
@@ -2885,8 +2947,8 @@ function prefetchUpcomingBgs(maxBgs) {
 			const tags = story.currentTags || [];
 			for (const raw of tags) {
 				const tag = String(raw).trim();
-				if (tag.startsWith("bg:")) {
-					const name = tag.slice(3).trim();
+				if (tag.startsWith("bg:") || tag.startsWith("bg-cut:")) {
+					const name = tag.startsWith("bg-cut:") ? tag.slice(7).trim() : tag.slice(3).trim();
 					if (name) seen.add(name);
 					if (seen.size >= maxBgs) return;
 				} else if (tag.startsWith("music:") && musicSeen.size < MAX_MUSIC_LOOKAHEAD) {
@@ -3117,19 +3179,38 @@ function jumpToBg(targetName) {
 	// CURRENT state at the destination, not just the visual bg —
 	// otherwise the shimmer atmosphere or the chapter overlay don't
 	// reflect what the narrative would have you in.
-	function walk(latestBg, latestMusic, latestAtmosphere, latestChapter) {
+	//
+	// `latestRealMusic` shadows `latestMusic` but only captures actual
+	// track names — not the modifiers `silence` / `dim` / `fade_out`,
+	// which adjust the volume of whatever is currently playing. Per
+	// Steve 2026-05-11: dev-skip used to land silently when the most
+	// recent music tag along the path was a modifier (e.g. ch3 scenes
+	// after a `# music: silence` in ch2 sleep). Now we always have a
+	// playable track ready, and only apply the modifier on top if the
+	// narrative was in a modifier state at the destination.
+	const MUSIC_MODIFIERS = new Set(["silence", "dim", "fade_out"]);
+	function walk(latestBg, latestMusic, latestRealMusic, latestAtmosphere, latestChapter) {
 		while (safety-- > 0) {
 			if (story.canContinue) {
 				const text = story.Continue();
 				for (const raw of (story.currentTags || [])) {
 					const tag = String(raw).trim();
-					if (tag.startsWith("bg:"))              latestBg         = tag.slice(3).trim();
-					else if (tag.startsWith("music:"))      latestMusic      = tag.slice(6).trim();
-					else if (tag.startsWith("atmosphere:")) latestAtmosphere = tag.slice(11).trim();
-					else if (tag.startsWith("chapter:"))    latestChapter    = tag.slice(8).trim();
+					if (tag.startsWith("bg-cut:")) {
+						latestBg = tag.slice(7).trim();
+					} else if (tag.startsWith("bg:")) {
+						latestBg = tag.slice(3).trim();
+					} else if (tag.startsWith("music:")) {
+						const m = tag.slice(6).trim();
+						latestMusic = m;
+						if (m && !MUSIC_MODIFIERS.has(m)) latestRealMusic = m;
+					} else if (tag.startsWith("atmosphere:")) {
+						latestAtmosphere = tag.slice(11).trim();
+					} else if (tag.startsWith("chapter:")) {
+						latestChapter = tag.slice(8).trim();
+					}
 				}
 				if (latestBg === targetName) {
-					return { text, latestBg, latestMusic, latestAtmosphere, latestChapter };
+					return { text, latestBg, latestMusic, latestRealMusic, latestAtmosphere, latestChapter };
 				}
 			} else if (story.currentChoices && story.currentChoices.length > 0) {
 				let saved;
@@ -3144,7 +3225,7 @@ function jumpToBg(targetName) {
 					// choice point, so it's a clean re-entry.
 					try { story.state.LoadJson(saved); } catch (e) { return null; }
 					try { story.ChooseChoiceIndex(i); } catch (e) { continue; }
-					const result = walk(latestBg, latestMusic, latestAtmosphere, latestChapter);
+					const result = walk(latestBg, latestMusic, latestRealMusic, latestAtmosphere, latestChapter);
 					if (result) return result;
 				}
 				return null;
@@ -3155,7 +3236,7 @@ function jumpToBg(targetName) {
 		return null;
 	}
 
-	const result = walk(null, null, null, null);
+	const result = walk(null, null, null, null, null);
 	if (!result) {
 		console.warn("[dev] no path to bg:", targetName);
 		return false;
@@ -3171,7 +3252,21 @@ function jumpToBg(targetName) {
 		showChapterTitleOverlay(result.latestChapter);
 	}
 	if (result.latestBg)         swapBackground(result.latestBg);
-	if (result.latestMusic)      swapMusic(result.latestMusic);
+	// Music: always play the most recent real track so the destination
+	// has audible scoring, then re-apply the modifier (silence/dim) on
+	// top if the narrative was in that state at the destination. Steve
+	// 2026-05-11: previously a `# music: silence` upstream meant dev-
+	// skip landed in actual silence even if a real track had been
+	// scored a chapter earlier — felt broken.
+	if (result.latestRealMusic) {
+		swapMusic(result.latestRealMusic);
+		if (result.latestMusic && result.latestMusic !== result.latestRealMusic
+			&& (result.latestMusic === "silence" || result.latestMusic === "dim")) {
+			swapMusic(result.latestMusic);
+		}
+	} else if (result.latestMusic) {
+		swapMusic(result.latestMusic);
+	}
 	if (result.latestAtmosphere) setAtmosphere(result.latestAtmosphere);
 	clearTranscript();
 	const trimmed = (result.text || "").trim();

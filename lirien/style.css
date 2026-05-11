@@ -61,17 +61,23 @@ html, body {
 	z-index: 0;
 	overflow: hidden;
 }
-/* The bg is now an actual <img> rather than a CSS background-image on
- * the wrapper div. Two reasons:
- *  1. Memory lifecycle is cleaner — Safari's CSS background-image
- *     cache held decoded bitmaps long after the URL was swapped,
- *     causing "Safari Graphics and Media" to balloon at ~1 GB/sec
- *     during rapid scene changes. Setting img.src triggers a clean
- *     release-then-decode cycle.
- *  2. Same-URL preloads via `new Image()` share the decoded bitmap
- *     with an <img> that gets that src, where CSS background-image
- *     wasn't guaranteed to. */
+/* Two stacked .bg-image elements rather than one, so background
+ * transitions can crossfade. Steve 2026-05-11: a flat src-swap snaps
+ * the world into a new state — wrong tone for a game whose thesis is
+ * remembering. JS picks one img as "active" (.is-active, opacity 1),
+ * loads the next scene on the other, then flips .is-active when the
+ * incoming bitmap is fully decoded so the fade is clean.
+ *
+ * The <img>-vs-CSS-background-image choice still holds for both
+ * elements: Safari's "Graphics and Media" memory ballooned at
+ * ~1 GB/sec during rapid scene changes when bgs were CSS background-
+ * image, because the decoded bitmap stayed cached after the URL
+ * swap. Setting img.src triggers a clean release-then-decode cycle,
+ * and same-URL preloads via `new Image()` share the decoded bitmap
+ * with an <img> getting that src. */
 .bg-image {
+	position: absolute;
+	inset: 0;
 	display: block;
 	width: 100%;
 	height: 100%;
@@ -79,6 +85,21 @@ html, body {
 	object-position: center;
 	user-select: none;
 	-webkit-user-drag: none;
+	opacity: 0;
+	/* Default soft crossfade. Steve 2026-05-11: 500ms is the sweet
+	 * spot — long enough to read as "scene became scene" rather than
+	 * "image replaced," short enough not to drag reading pace. */
+	transition: opacity 500ms ease-out, filter 1.4s ease-out;
+	will-change: opacity;
+}
+.bg-image.is-active {
+	opacity: 1;
+}
+/* Disables the opacity transition for one frame so `# bg-cut:` hard
+ * cuts can snap without a fade. Reapplied immediately so subsequent
+ * soft swaps fade normally. */
+.bg-image.no-bg-transition {
+	transition: filter 1.4s ease-out;
 }
 .bg-image:not([src]),
 .bg-image[src=""] { visibility: hidden; }
@@ -615,11 +636,10 @@ body.story-started .game { opacity: 1; }
  * choice moments should land with the weight of agency. */
 body.is-choosing .bg .bg-image {
 	filter: brightness(0.78);
-	transition: filter 1.4s ease-out;
 }
-.bg .bg-image {
-	transition: filter 1.4s ease-out;
-}
+/* Base transition is declared on .bg-image (opacity for crossfade,
+ * filter for the choice-moment dim) — don't redeclare here, the
+ * descendant selector would override the opacity portion. */
 body.is-choosing .prose {
 	box-shadow:
 		0 40px 96px rgba(0, 0, 0, 0.58),
@@ -632,60 +652,78 @@ body.is-choosing .prose {
 		inset 0 22px 24px -10px rgba(11, 11, 18, 0.58);
 }
 
-/* fx: hollow — a slow heartbeat thump on the prose panel. Used
- * sparingly at manuscript moments referring to the hollow under
- * Aerin's ribs. Per Steve 2026-05-11: literalize the metaphor
- * for half a heartbeat, then it's gone. */
+/* fx: hollow — a heartbeat thump on the prose panel. Used sparingly
+ * at manuscript moments naming the hollow under Aerin's ribs. Steve
+ * 2026-05-11 v2: the first pass was too subtle to feel; deepen the
+ * compression + brightness dip so the panel reads as briefly caving
+ * in, then a quieter aftershock so it has the shape of a heartbeat
+ * rather than a single thud. */
 .prose.is-hollow-pulsing {
-	animation: hollow-pulse 1.6s ease-in-out 1;
+	animation: hollow-pulse 2.0s ease-in-out 1;
 }
 @keyframes hollow-pulse {
 	0%, 100% {
 		transform: scale(1);
-		filter: brightness(1);
+		filter: brightness(1) contrast(1);
 	}
-	45% {
-		transform: scale(0.992);
-		filter: brightness(0.9);
+	30% {
+		transform: scale(0.974);
+		filter: brightness(0.74) contrast(1.05);
 	}
-	60% {
-		transform: scale(1.002);
-		filter: brightness(1.04);
+	48% {
+		transform: scale(1.012);
+		filter: brightness(1.10) contrast(1);
+	}
+	68% {
+		transform: scale(0.99);
+		filter: brightness(0.92) contrast(1.02);
+	}
+	84% {
+		transform: scale(1.004);
+		filter: brightness(1.03);
 	}
 }
 
-/* fx: resonance — a soft warm halo expanding outward, anchored at
- * a JS-supplied position (cluster anchor if shimmer is active,
- * screen center otherwise). Fires when Aerin's glyph responds. */
+/* fx: resonance — a warm halo expanding outward, anchored at a JS-
+ * supplied position (cluster anchor if shimmer is active, screen
+ * center otherwise). Fires when Aerin's glyph responds. Steve
+ * 2026-05-11 v2: the original was barely visible — peak too brief,
+ * starting halo too small to register. Bigger seed (80px instead of
+ * 4px), brighter peak, longer dwell at high opacity, slower total
+ * sweep so the eye actually catches it. */
 .resonance-fx {
 	position: fixed;
 	left: 50%;
 	top: 50%;
-	width: 4px;
-	height: 4px;
-	margin-left: -2px;
-	margin-top: -2px;
+	width: 80px;
+	height: 80px;
+	margin-left: -40px;
+	margin-top: -40px;
 	border-radius: 50%;
 	pointer-events: none;
 	opacity: 0;
 	z-index: 6;
 	background: radial-gradient(
 		circle at center,
-		rgba(255, 230, 175, 0.85) 0%,
-		rgba(255, 200, 130, 0.55) 35%,
-		rgba(255, 180, 100, 0.15) 65%,
-		rgba(255, 170, 100, 0) 80%
+		rgba(255, 244, 200, 0.98) 0%,
+		rgba(255, 220, 150, 0.80) 24%,
+		rgba(255, 195, 115, 0.45) 48%,
+		rgba(255, 175, 95, 0.18) 70%,
+		rgba(255, 170, 100, 0) 88%
 	);
+	filter: blur(0.5px);
 	mix-blend-mode: screen;
 }
 .resonance-fx.is-firing {
-	animation: resonance-pulse 2.6s ease-out 1;
+	animation: resonance-pulse 3.4s ease-out 1;
 }
 @keyframes resonance-pulse {
-	0%   { opacity: 0;    transform: scale(0.4); }
-	18%  { opacity: 0.85; transform: scale(2.5); }
-	45%  { opacity: 0.5;  transform: scale(8); }
-	100% { opacity: 0;    transform: scale(18); }
+	0%   { opacity: 0;    transform: scale(0.3); }
+	8%   { opacity: 0.95; transform: scale(0.9); }
+	22%  { opacity: 0.92; transform: scale(2.0); }
+	42%  { opacity: 0.70; transform: scale(4.2); }
+	68%  { opacity: 0.35; transform: scale(7.2); }
+	100% { opacity: 0;    transform: scale(11); }
 }
 .prose-content p {
 	scroll-snap-align: start;

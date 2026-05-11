@@ -46,8 +46,32 @@
 	const $btnPreview   = document.getElementById("btn-preview");
 	const $btnAutofill  = document.getElementById("btn-autofill");
 	const $btnTest      = document.getElementById("btn-test");
+	const $btnBroadcast = document.getElementById("btn-broadcast");
 	const $status       = document.getElementById("status");
 	const $preview      = document.getElementById("preview-frame");
+	const $modal        = document.getElementById("broadcast-confirm");
+	const $modalSummary = document.getElementById("broadcast-confirm-summary");
+	const $modalCancel  = document.getElementById("broadcast-cancel");
+	const $modalGo      = document.getElementById("broadcast-confirm-go");
+
+	// "Send to all" stays disabled until the user does at least one
+	// successful test send. Gates accidental "first click is a real
+	// broadcast" mishaps. The flag lives in localStorage so it
+	// persists across page reloads but resets between browsers.
+	const TEST_SENT_KEY = "lirien.broadcast.testSentOnce";
+	let hasTestSent = false;
+	try { hasTestSent = localStorage.getItem(TEST_SENT_KEY) === "1"; }
+	catch (e) { /* ignore */ }
+	function refreshBroadcastButtonState() {
+		if (hasTestSent) {
+			$btnBroadcast.removeAttribute("disabled");
+			$btnBroadcast.title = "Send the email to every active subscriber";
+		} else {
+			$btnBroadcast.setAttribute("disabled", "");
+			$btnBroadcast.title = "Send a successful test to yourself first to enable this";
+		}
+	}
+	refreshBroadcastButtonState();
 
 	// Manifest chapters live on the same origin as the dashboard, so
 	// the fetch goes direct to GitHub Pages (no CORS, no auth). Loaded
@@ -152,10 +176,97 @@
 				throw new Error(msg);
 			}
 			showStatus("Test sent to " + s.to + ". Check the inbox.", "ok");
+			// Unlock the gold "Send to all" button — at least one
+			// successful test has happened, so the user has actually
+			// previewed what the broadcast will look like.
+			hasTestSent = true;
+			try { localStorage.setItem(TEST_SENT_KEY, "1"); } catch (e) { /* ignore */ }
+			refreshBroadcastButtonState();
 		} catch (e) {
 			showStatus("Send failed: " + (e && e.message ? e.message : e), "error");
 		} finally {
 			$btnTest.removeAttribute("disabled");
+		}
+	}
+
+	// ---- broadcast flow ------------------------------------------
+
+	async function fetchSubscriberCount() {
+		try {
+			const url = ENDPOINT_BASE + "/api/data?key=" + encodeURIComponent(KEY) + "&q=subscribers";
+			const res = await fetch(url, { cache: "no-store" });
+			if (!res.ok) return null;
+			const data = await res.json();
+			const row = (data && data.rows && data.rows[0]) || null;
+			if (!row) return null;
+			return {
+				total: Number(row.total_active) || 0,
+				viaLanding: Number(row.via_landing) || 0,
+				viaReaderEnd: Number(row.via_reader_end) || 0,
+			};
+		} catch (e) {
+			return null;
+		}
+	}
+
+	async function openBroadcastModal() {
+		// Pre-flight: validate the same fields the server would.
+		const s = snapshot();
+		if (!s.subject || !s.intro || !s.chapter_url) {
+			showStatus("Fill in subject, intro, and chapter URL first.", "error");
+			return;
+		}
+		$modal.removeAttribute("hidden");
+		$modalSummary.textContent = "Loading subscriber count…";
+		$modalGo.setAttribute("disabled", "");
+		const counts = await fetchSubscriberCount();
+		if (counts == null) {
+			$modalSummary.textContent = "Couldn't fetch subscriber count. Check the worker is deployed.";
+			return;
+		}
+		if (counts.total === 0) {
+			$modalSummary.textContent = "No active subscribers yet. Nothing to send.";
+			return;
+		}
+		$modalSummary.innerHTML = `About to send "<strong>${escAttr(s.subject)}</strong>" to <strong>${counts.total}</strong> active reader${counts.total === 1 ? "" : "s"}.`;
+		$modalGo.removeAttribute("disabled");
+	}
+
+	function escAttr(s) {
+		return String(s).replace(/[&<>"']/g, (c) => ({
+			"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+		}[c]));
+	}
+
+	function closeBroadcastModal() {
+		$modal.setAttribute("hidden", "");
+	}
+
+	async function doBroadcast() {
+		$modalGo.setAttribute("disabled", "");
+		$modalSummary.textContent = "Sending… this can take a moment for larger lists.";
+		const s = snapshot();
+		try {
+			const url = ENDPOINT_BASE + "/broadcast?key=" + encodeURIComponent(KEY);
+			const res = await fetch(url, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(s),
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok || !data.ok) {
+				const msg = (data && data.error) ? data.error : ("HTTP " + res.status);
+				throw new Error(msg);
+			}
+			closeBroadcastModal();
+			const okCount = data.total_sent;
+			const failCount = data.total_failed;
+			let msg = `Sent to ${okCount} reader${okCount === 1 ? "" : "s"}.`;
+			if (failCount > 0) msg += ` ${failCount} failed.`;
+			showStatus(msg, "ok");
+		} catch (e) {
+			$modalSummary.textContent = "Send failed: " + (e && e.message ? e.message : e);
+			$modalGo.removeAttribute("disabled");
 		}
 	}
 
@@ -186,6 +297,16 @@
 
 	$btnPreview.addEventListener("click", refreshPreview);
 	$btnAutofill.addEventListener("click", autofillFromChapter);
+	$btnBroadcast.addEventListener("click", openBroadcastModal);
+	$modalCancel.addEventListener("click", closeBroadcastModal);
+	$modalGo.addEventListener("click", doBroadcast);
+	// Click outside the card closes the modal. Escape too.
+	$modal.addEventListener("click", (ev) => {
+		if (ev.target === $modal) closeBroadcastModal();
+	});
+	document.addEventListener("keydown", (ev) => {
+		if (ev.key === "Escape" && !$modal.hidden) closeBroadcastModal();
+	});
 	// Pressing Enter inside the chapter-num field should trigger auto-fill,
 	// not submit the form (which would fire a test send with empty fields).
 	$chapterNum.addEventListener("keydown", (ev) => {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Broadcast composer — Chronicles of Lirien</title>
-<link rel="stylesheet" href="admin.css?v=20260512u">
+<link rel="stylesheet" href="admin.css?v=20260512v">
 <style>
 /*
  * Broadcast composer styles. Keeps the same Reading-Room visual
@@ -111,7 +111,73 @@
 	border-color: rgba(196, 147, 90, 0.85);
 	outline: none;
 }
-.composer-btn[disabled] { cursor: wait; opacity: 0.55; }
+.composer-btn[disabled] { cursor: not-allowed; opacity: 0.4; }
+/* The dangerous one — gold-bright text, brighter rim. Mirrors the
+ * landing-page CTA's visual register, just at composer scale. */
+.composer-btn--danger {
+	color: #e0b070;
+	border-color: rgba(224, 176, 112, 0.6);
+	background: linear-gradient(180deg, rgba(40,28,56,0.6) 0%, rgba(20,14,30,0.5) 100%);
+}
+.composer-btn--danger:hover, .composer-btn--danger:focus-visible {
+	color: #f5eed8;
+	background: rgba(196, 147, 90, 0.18);
+	border-color: rgba(224, 176, 112, 0.9);
+}
+.composer-btn--danger[disabled] {
+	background: transparent;
+	border-color: rgba(196, 147, 90, 0.25);
+	color: rgba(224, 176, 112, 0.4);
+}
+
+/* Broadcast confirmation modal — full-screen scrim + centered card. */
+.broadcast-confirm {
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	background: rgba(8, 6, 15, 0.78);
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+}
+.broadcast-confirm[hidden] { display: none; }
+.broadcast-confirm-card {
+	max-width: 480px;
+	width: 100%;
+	background: #100d1c;
+	border: 1px solid rgba(196, 147, 90, 0.4);
+	padding: 32px 32px 28px 32px;
+	color: #f5eed8;
+	font-family: 'Cormorant Garamond', Georgia, serif;
+}
+.broadcast-confirm-card h2 {
+	margin: 0 0 12px 0;
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 28px;
+	font-weight: 300;
+	color: #f5eed8;
+	letter-spacing: 0.005em;
+}
+.broadcast-confirm-card p {
+	margin: 0 0 14px 0;
+	font-size: 16px;
+	line-height: 1.65;
+	font-style: italic;
+	color: #ede5d4;
+}
+.broadcast-confirm-card .broadcast-confirm-warn {
+	color: #e89a6e;
+	font-size: 14px;
+	margin-bottom: 24px;
+}
+.broadcast-confirm-actions {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+}
 .composer-status {
 	font-family: 'Cormorant Garamond', serif;
 	font-size: 14px;
@@ -228,6 +294,7 @@
 				<div class="composer-actions">
 					<button type="button" id="btn-preview" class="composer-btn">Refresh preview</button>
 					<button type="submit" id="btn-test" class="composer-btn">Send test</button>
+					<button type="button" id="btn-broadcast" class="composer-btn composer-btn--danger" disabled title="Send a successful test to yourself first to enable this">Send to all</button>
 					<span id="status" class="composer-status">Auto-saving as you type…</span>
 				</div>
 			</form>
@@ -239,12 +306,31 @@
 		</div>
 
 		<p class="phase-banner">
-			Phase B1: this surface only sends to the single address you specify. The actual "send to N subscribers" path
-			ships separately in Phase B2, behind a confirmation modal and an unsubscribe flow.
+			<strong>Safety rails:</strong> Send a successful test to yourself first — that unlocks the gold
+			"Send to all" button. Real broadcasts then require an in-modal confirmation showing the recipient count.
+			The same subject can't be broadcast twice in a 24-hour window without an override.
 		</p>
 	</section>
 </main>
 
-<script src="broadcast.js?v=20260512u"></script>
+<!--
+	Confirmation modal for "Send to all". Hidden by default. Shown by
+	broadcast.js when the user clicks the gold "Send to all" button.
+	Re-uses the .confirm-* CSS shapes from admin.css when possible;
+	composer-specific overrides are inline above.
+-->
+<div id="broadcast-confirm" class="broadcast-confirm" hidden>
+	<div class="broadcast-confirm-card">
+		<h2>About to send</h2>
+		<p id="broadcast-confirm-summary">Loading subscriber count…</p>
+		<p class="broadcast-confirm-warn">This can't be undone. Make sure the test send looked right.</p>
+		<div class="broadcast-confirm-actions">
+			<button type="button" id="broadcast-cancel" class="composer-btn">Cancel</button>
+			<button type="button" id="broadcast-confirm-go" class="composer-btn composer-btn--danger">Send to all</button>
+		</div>
+	</div>
+</div>
+
+<script src="broadcast.js?v=20260512v"></script>
 </body>
 </html>

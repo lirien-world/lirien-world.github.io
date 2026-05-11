@@ -217,6 +217,34 @@
 		});
 	}
 
+	// ---- notify-me subscribers -----------------------------------
+
+	async function loadSubscribers() {
+		// The worker query (q=subscribers) returns counts only — never
+		// individual emails through the dashboard API. CSV export of
+		// the actual list is via wrangler d1 execute (CLI), or via the
+		// broadcast composer once that's wired up.
+		const rows = await fetchQuery("subscribers");
+		const r = rows[0] || {};
+		// Map server-side column names to the data-value attributes
+		// used in index.html. Prefixing with "sub_" keeps the dashboard
+		// markup readable + avoids collision with the analytics summary
+		// keys.
+		const map = {
+			sub_total_active:       r.total_active,
+			sub_total_unsubscribed: r.total_unsubscribed,
+			sub_new_today:          r.new_today,
+			sub_new_week:           r.new_this_week,
+			sub_via_landing:        r.via_landing,
+			sub_via_reader_end:     r.via_reader_end,
+		};
+		for (const [key, v] of Object.entries(map)) {
+			const el = document.querySelector(`[data-value="${key}"]`);
+			if (!el) continue;
+			el.textContent = (v === null || v === undefined) ? "—" : fmt(v);
+		}
+	}
+
 	// ---- where readers stop ---------------------------------------
 
 	async function loadDropoff() {
@@ -1120,6 +1148,7 @@
 		// Promise.allSettled so one failed chart doesn't block the others.
 		await Promise.allSettled([
 			loadSummary(),
+			loadSubscribers(),
 			loadDropoff(),
 			loadChoices(),
 			loadCacheOverTime(),

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511h";
+const ASSET_VERSION = "20260511i";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -893,6 +893,17 @@ if ($proseContent) {
 }
 
 function onChunkRevealed() {
+	// Mark the just-finished paragraph as .revealed — the CSS rule
+	// for .prose-content p.revealed .ch removes the per-char fade
+	// animation entirely. Without this, the animation's `forwards`
+	// fill-mode pins opacity at 1 and overrides any inline opacity
+	// updateCharFade() sets, so the scroll-fade band never
+	// visually applies (Steve's report 2026-05-11). With the
+	// animation gone, inline style.opacity from updateCharFade
+	// takes effect normally.
+	if (currentReveal && currentReveal.paragraph) {
+		currentReveal.paragraph.classList.add("revealed");
+	}
 	currentReveal = null;
 	state = "waiting";
 	if (window.lirienAnalytics) window.lirienAnalytics.setLastState("waiting");

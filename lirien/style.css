@@ -388,15 +388,25 @@ html.is-auto-resuming .game { opacity: 1; }
 .chapter-number {
 	font-size: 22px;
 	letter-spacing: 0.18em;
-	color: rgba(240, 230, 200, 0.92);
-	/* Stronger, layered text-shadow so the type stays legible
-	 * even where the backdrop scrim has faded. Two passes: a
-	 * tight near-black shadow for edge contrast, plus a wider
-	 * softer one for a halo of darkness around each letter. */
+	/* Antique gold — same hue family as the prose panel's inner rim.
+	 * Reserved enough not to read as ornamental, distinct enough to
+	 * mark the chapter break as ceremonial. Two text-shadow passes
+	 * (tight near-black for contrast, wider soft black for halo) plus
+	 * a third faint gold glow so the letters lift slightly off the
+	 * backdrop scrim. */
+	color: rgba(220, 178, 110, 0.95);
 	text-shadow:
 		0 1px 2px rgba(0, 0, 0, 0.95),
-		0 0 14px rgba(0, 0, 0, 0.7);
-	margin-bottom: 12px;
+		0 0 14px rgba(0, 0, 0, 0.7),
+		0 0 10px rgba(196, 147, 90, 0.35);
+	/* Thin gold rule below the number — closes the "CHAPTER X"
+	 * panel as a small unit before the chapter name. Inline-block
+	 * + padding-bottom so the rule's width matches the text, not
+	 * the parent. */
+	display: inline-block;
+	padding-bottom: 8px;
+	margin-bottom: 14px;
+	border-bottom: 1px solid rgba(196, 147, 90, 0.5);
 }
 .chapter-name {
 	font-size: 56px;
@@ -449,10 +459,18 @@ body.story-started .game { opacity: 1; }
 	overflow: hidden;
 	padding: 14px 0;
 	box-shadow:
-		0 24px 64px rgba(0, 0, 0, 0.55),
-		0 6px 18px rgba(0, 0, 0, 0.38),
-		inset 0 0 0 1px rgba(196, 147, 90, 0.14),
-		inset 0 1px 0 rgba(245, 238, 216, 0.07),
+		/* Three layered outer shadows produce a "floating" lift —
+		 * a big diffuse ambient halo for depth, a mid-distance
+		 * shadow for body, and a tight close shadow for the edge
+		 * crispness that keeps the panel from reading as a fuzzy
+		 * blob. Bumped per Steve's polish request 2026-05-11. */
+		0 40px 96px rgba(0, 0, 0, 0.58),
+		0 14px 32px rgba(0, 0, 0, 0.4),
+		0 3px 8px rgba(0, 0, 0, 0.28),
+		/* Gold inner rim — slightly stronger than before so the
+		 * panel reads as a held object with material presence. */
+		inset 0 0 0 1px rgba(196, 147, 90, 0.20),
+		inset 0 1px 0 rgba(245, 238, 216, 0.10),
 		/* Inner top fade — gives the eye a soft "page edge" cue and
 		 * adds contrast behind the words that are mid per-character
 		 * fade at the top of the visible reading area, so the
@@ -524,6 +542,18 @@ body.story-started .game { opacity: 1; }
 @keyframes ch-fade-in {
 	from { opacity: 0; }
 	to   { opacity: 1; }
+}
+/* After onChunkRevealed marks the paragraph .revealed, drop the CSS
+ * animation entirely. Without this, the animation's `forwards`
+ * fill-mode pins each char at opacity 1 and overrides any inline
+ * style.opacity that updateCharFade() sets — i.e. the scroll-fade
+ * band at the top of the reading area never visually applies.
+ * Steve confirmed the band was a no-op 2026-05-11. With animation
+ * removed, opacity defaults to 1 (revealed state) and updateCharFade
+ * can dim chars in the top band via inline style as designed. */
+.prose-content p.revealed .ch {
+	opacity: 1;
+	animation: none;
 }
 
 /* Down-chevron that pulses + floats whenever the runtime is waiting

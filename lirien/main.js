@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512o";
+const ASSET_VERSION = "20260512p";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -2693,10 +2693,16 @@ function bindAdvanceInput() {
 		// tapping a choice still satisfies browser autoplay policy.
 		onFirstUserGesture();
 
-		// Ignore taps that originate from a choice button, the settings
-		// menu, or the scrollbar interaction. Buttons handle their own
-		// click events.
+		// Ignore taps that originate from a choice button, the menu
+		// button or its slide-out drawer, the title's Continue, dev
+		// panel, etc. Buttons handle their own click events.
+		// Steve 2026-05-11: legacy `.settings-panel` / `.chapters-panel`
+		// selectors are dead — those got merged into `.drawer` /
+		// `.menu-drawer`. Without `.drawer` in the exclusion list,
+		// every tap inside the slide-out menu (e.g. picking a chapter,
+		// changing image quality) was also firing the prose-advance.
 		if (ev.target.closest(".choice")) return;
+		if (ev.target.closest(".menu-btn") || ev.target.closest(".drawer")) return;
 		if (ev.target.closest(".settings-btn") || ev.target.closest(".settings-panel")) return;
 		if (ev.target.closest(".chapters-btn") || ev.target.closest(".chapters-panel")) return;
 		if (ev.target.closest(".drawer-scrim")) return;

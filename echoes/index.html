@@ -575,11 +575,24 @@ body.is-playing .progress{
 }
 .drawer-close:hover{color:var(--gold-bright)}
 
-/* Settings section at the top of the drawer — collapsible groups
- * for play order + content scope. Both groups collapsed by default
- * so the track list keeps the vertical real estate. The active
- * value's row gets a gold ◆ marker + brighter rim once the user
- * opens its group.
+/* Drawer body — single scroll container holding tracklist + settings.
+ * Tracks at the top, settings collapsed at the bottom (Steve picked
+ * this order so tracks dominate). Whole column scrolls so a long
+ * track list + an expanded settings group both reach the user on
+ * short viewports. */
+.drawer-body{
+	flex:1 1 auto;
+	min-height:0;
+	overflow-y:auto;
+	-webkit-overflow-scrolling:touch;
+	display:flex;flex-direction:column;
+	gap:1rem;
+}
+
+/* Settings section — collapsible groups for play order + content
+ * scope, sitting at the bottom of the drawer body (below the
+ * track list). Both groups collapsed by default so they don't
+ * eat space. Active row gets a gold ◆ marker + brighter rim.
  *
  * Built with native <details>/<summary> for the accordion mechanics
  * (no JS for expand/collapse). The summary marker is hidden via
@@ -587,10 +600,9 @@ body.is-playing .progress{
  * caret that rotates when [open] is set. */
 .drawer-settings{
 	display:flex;flex-direction:column;gap:0.4rem;
-	padding:0.4rem 0 0.6rem 0;
-	margin-bottom:0.8rem;
-	border-bottom:1px solid rgba(196,147,90,0.18);
-	flex-shrink:0;
+	padding-top:0.8rem;
+	border-top:1px solid rgba(196,147,90,0.18);
+	margin-top:0.4rem;
 }
 .drawer-settings-group{
 	border:none;
@@ -681,8 +693,8 @@ body.is-playing .progress{
 .tracklist{
 	list-style:none;padding:0;margin:0;
 	display:flex;flex-direction:column;gap:0.15rem;
-	flex:1 1 auto;min-height:0;
-	overflow-y:auto;-webkit-overflow-scrolling:touch;
+	/* Tracks no longer scroll independently — the whole drawer-body
+	 * scrolls together so settings (now at the bottom) are reachable. */
 }
 .track-row{
 	all:unset;cursor:pointer;display:grid;grid-template-columns:2.2rem 1fr;align-items:baseline;
@@ -980,37 +992,40 @@ body.is-playing .progress{
 		One click opens; another closes. No JS required for the
 		expand/collapse mechanics — browser handles it.
 	-->
-	<section class="drawer-settings">
-		<details class="drawer-settings-group">
-			<summary class="drawer-settings-summary">
-				<span class="drawer-settings-label" data-i18n="echoes.settings.play-order">Play order</span>
-				<span class="drawer-settings-caret" aria-hidden="true"></span>
-			</summary>
-			<div class="drawer-settings-rows">
-				<button class="drawer-row" type="button" data-mode="shuffled"   data-i18n="echoes.settings.mode.shuffled">Shuffled</button>
-				<button class="drawer-row" type="button" data-mode="sequential" data-i18n="echoes.settings.mode.sequential">In order</button>
-				<button class="drawer-row" type="button" data-mode="repeat"     data-i18n="echoes.settings.mode.repeat">Repeat one</button>
-			</div>
-		</details>
-		<details class="drawer-settings-group">
-			<summary class="drawer-settings-summary">
-				<span class="drawer-settings-label" data-i18n="echoes.settings.content">What to play</span>
-				<span class="drawer-settings-caret" aria-hidden="true"></span>
-			</summary>
-			<div class="drawer-settings-rows">
-				<button class="drawer-row" type="button" data-content="played"  data-i18n="echoes.settings.content.played">Tracks you've played</button>
-				<button class="drawer-row" type="button" data-content="all"     data-i18n="echoes.settings.content.all">Everything</button>
-				<button class="drawer-row" type="button" data-content="minimal" data-i18n="echoes.settings.content.minimal">Just the theme</button>
-			</div>
-		</details>
-	</section>
+	<!--
+		Drawer body — a single scroll container. Tracks at the top
+		(the primary thing), settings collapsed at the bottom (Steve
+		2026-05-11: tracks should dominate). Whole column scrolls
+		together so a long track list + an expanded settings group
+		still reach the user on a short viewport.
+	-->
+	<div class="drawer-body">
+		<ol class="tracklist" id="tracklist"></ol>
 
-	<div class="drawer-tracklist-header">
-		<span data-i18n="echoes.drawer.tracks">Tracks</span>
-	</div>
-	<ol class="tracklist" id="tracklist"></ol>
-	<div class="drawer-foot">
-		<span id="drawerCountLabel">Sixteen</span><span data-i18n-html="echoes.drawer.foot"> pieces written for <em>The Spiral That Remembers</em>. They play in shuffled order, never repeating until each has been heard. Touch any title to step there directly.</span>
+		<section class="drawer-settings">
+			<details class="drawer-settings-group">
+				<summary class="drawer-settings-summary">
+					<span class="drawer-settings-label" data-i18n="echoes.settings.play-order">Play order</span>
+					<span class="drawer-settings-caret" aria-hidden="true"></span>
+				</summary>
+				<div class="drawer-settings-rows">
+					<button class="drawer-row" type="button" data-mode="shuffled"   data-i18n="echoes.settings.mode.shuffled">Shuffled</button>
+					<button class="drawer-row" type="button" data-mode="sequential" data-i18n="echoes.settings.mode.sequential">In order</button>
+					<button class="drawer-row" type="button" data-mode="repeat"     data-i18n="echoes.settings.mode.repeat">Repeat one</button>
+				</div>
+			</details>
+			<details class="drawer-settings-group">
+				<summary class="drawer-settings-summary">
+					<span class="drawer-settings-label" data-i18n="echoes.settings.content">What to play</span>
+					<span class="drawer-settings-caret" aria-hidden="true"></span>
+				</summary>
+				<div class="drawer-settings-rows">
+					<button class="drawer-row" type="button" data-content="played"  data-i18n="echoes.settings.content.played">Tracks you've played</button>
+					<button class="drawer-row" type="button" data-content="all"     data-i18n="echoes.settings.content.all">Everything</button>
+					<button class="drawer-row" type="button" data-content="minimal" data-i18n="echoes.settings.content.minimal">Just the theme</button>
+				</div>
+			</details>
+		</section>
 	</div>
 </aside>
 
@@ -1055,7 +1070,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-232439";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-233059";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;

@@ -204,6 +204,17 @@
 	// the manifest's chapters[] list (parsed from test.ink, so it
 	// matches whatever's currently shipped). intro is intentionally
 	// NOT auto-filled — that's where Steve's voice goes.
+	// A starter intro paragraph in Steve's voice. Three brief blocks
+	// with the established Lirien cadence (observational, comma-heavy,
+	// the invitation phrased as "if you'd like to keep going"). Steve
+	// edits this every time before sending — it's a starting position,
+	// not a final draft. Only inserted when intro is empty so a draft
+	// in progress isn't blown away.
+	const DEFAULT_INTRO =
+		"It's been a stretch. There's a new chapter live.\n\n" +
+		"You don't have to hurry through it — Lirien tends to land when you let it.\n\n" +
+		"If you'd like to keep going —";
+
 	function autofillFromChapter() {
 		const n = parseInt($chapterNum.value, 10);
 		if (!Number.isFinite(n) || n < 1) {
@@ -225,11 +236,23 @@
 		if (!$chapterUrl.value.trim()) {
 			$chapterUrl.value = "https://lirien.world/lirien/";
 		}
+		// Intro: only fill when empty. Don't overwrite a draft that's
+		// already been edited (auto-fill is a starter, not a reset).
+		if (!$intro.value.trim()) {
+			$intro.value = DEFAULT_INTRO;
+		}
 		showStatus(`Filled from chapter ${n}: ${ch.title}.`, "ok");
 		saveDraft();
 		refreshPreview();
 	}
 
-	// Boot: load chapters list + draft, then initial preview render.
-	loadChapters().then(loadDraft).then(refreshPreview);
+	// Boot: load chapters list + draft, seed empty intro with the
+	// starter paragraph, then initial preview render. First-time
+	// visitors with no draft see something coherent in the preview
+	// immediately rather than the worker's "(intro paragraph)"
+	// placeholder.
+	loadChapters().then(loadDraft).then(() => {
+		if (!$intro.value.trim()) $intro.value = DEFAULT_INTRO;
+		refreshPreview();
+	});
 })();

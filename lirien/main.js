@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260512c";
+const ASSET_VERSION = "20260512d";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -2583,9 +2583,24 @@ function recordChapterBookmark(spec) {
 	// and music, not just the text.
 	const stateJson = stateBeforeContinue;
 	if (!stateJson) return;
+	// Capture the FULL visual state at bookmark time. Per Steve
+	// 2026-05-11: "the system needs to know the current state of
+	// things — what effect is active at this moment, is the
+	// shimmer there or gone — on reload you don't pass through
+	// the file sequentially." Chapter knots that don't have an
+	// explicit # atmosphere tag at their entry would otherwise
+	// leave the cluster in whatever state it was in pre-jump
+	// (or unset on a cold reload), which would be wrong.
+	const bookmark = {
+		name: spec,
+		state: stateJson,
+		bg: currentBgName || "",
+		music: currentMusicName || "",
+		atmosphere: currentAtmosphere || "",
+	};
 	const idx = chapterBookmarks.findIndex(b => b.name === spec);
-	if (idx >= 0) chapterBookmarks[idx].state = stateJson;
-	else chapterBookmarks.push({ name: spec, state: stateJson });
+	if (idx >= 0) chapterBookmarks[idx] = bookmark;
+	else chapterBookmarks.push(bookmark);
 	currentChapterName = spec;
 	saveChapterBookmarks();
 	renderChapterList();
@@ -2646,16 +2661,29 @@ function jumpToChapter(bookmark) {
 	$choices.classList.remove("visible");
 	hideContinueHint();
 	clearTranscript();
+	// Apply the visual state captured at bookmark time BEFORE
+	// advancing. The bookmark state is pre-Continue, so the next
+	// advance() will re-fire whatever # bg / # music / # atmosphere
+	// tags live at the chapter knot's entry — but if the chapter
+	// knot doesn't carry an explicit # atmosphere tag (true for Ch3
+	// and Ch4), it'd leave the cluster in whatever state it was in
+	// pre-jump. Pre-applying from the bookmark prevents that drift.
+	// Older bookmarks without these fields fall back to no-op
+	// branches (?: "" short-circuits in the setters).
+	if (bookmark.bg)         swapBackground(bookmark.bg);
+	if (bookmark.music)      swapMusic(bookmark.music);
+	if (bookmark.atmosphere) setAtmosphere(bookmark.atmosphere);
 	// Enter exploration mode — autosave is now frozen at the user's
 	// real most-recent point so they can return to it. The chapters
 	// panel will surface a "Return to most recent point" button until
 	// they leave exploration mode (return, restart, or title Continue).
 	isExploring = true;
 	state = "idle";
-	// Don't manually call showChapterTitle here — the bookmark state is
-	// from BEFORE the chapter: tag fires, so advance()'s next Continue()
-	// will naturally re-emit the chapter/bg/music tags and applyTags
-	// will fire showChapterTitle (and re-record the bookmark, idempotent).
+	// Don't manually call showChapterTitle here — the bookmark state
+	// is from BEFORE the chapter: tag fires, so advance()'s next
+	// Continue() will naturally re-emit the chapter/bg/music tags
+	// (which idempotently re-set what we just applied) and fire
+	// showChapterTitle.
 	advance();
 }
 
@@ -2978,22 +3006,30 @@ function jumpToBg(targetName) {
 	// stays bounded.
 	let safety = 50000;
 
-	// On hit, returns the matched chunk's text + the bg/music tags
-	// accumulated up to and including the matched chunk, with story
-	// state left at the matched position so the caller can render it.
-	// On miss, returns null and the caller is responsible for restoring
-	// state (or calling ResetState before another search).
-	function walk(latestBg, latestMusic) {
+	// On hit, returns the matched chunk's text + every state-bearing
+	// tag accumulated up to and including the matched chunk, with
+	// story state left at the matched position so the caller can
+	// render it. On miss, returns null and the caller is responsible
+	// for restoring state (or calling ResetState before another search).
+	//
+	// Tracking bg + music + atmosphere + chapter (not just bg/music)
+	// per Steve 2026-05-11: dev mode skipping needs to know the
+	// CURRENT state at the destination, not just the visual bg —
+	// otherwise the shimmer atmosphere or the chapter overlay don't
+	// reflect what the narrative would have you in.
+	function walk(latestBg, latestMusic, latestAtmosphere, latestChapter) {
 		while (safety-- > 0) {
 			if (story.canContinue) {
 				const text = story.Continue();
 				for (const raw of (story.currentTags || [])) {
 					const tag = String(raw).trim();
-					if (tag.startsWith("bg:"))         latestBg = tag.slice(3).trim();
-					else if (tag.startsWith("music:")) latestMusic = tag.slice(6).trim();
+					if (tag.startsWith("bg:"))              latestBg         = tag.slice(3).trim();
+					else if (tag.startsWith("music:"))      latestMusic      = tag.slice(6).trim();
+					else if (tag.startsWith("atmosphere:")) latestAtmosphere = tag.slice(11).trim();
+					else if (tag.startsWith("chapter:"))    latestChapter    = tag.slice(8).trim();
 				}
 				if (latestBg === targetName) {
-					return { text, latestBg, latestMusic };
+					return { text, latestBg, latestMusic, latestAtmosphere, latestChapter };
 				}
 			} else if (story.currentChoices && story.currentChoices.length > 0) {
 				let saved;
@@ -3008,7 +3044,7 @@ function jumpToBg(targetName) {
 					// choice point, so it's a clean re-entry.
 					try { story.state.LoadJson(saved); } catch (e) { return null; }
 					try { story.ChooseChoiceIndex(i); } catch (e) { continue; }
-					const result = walk(latestBg, latestMusic);
+					const result = walk(latestBg, latestMusic, latestAtmosphere, latestChapter);
 					if (result) return result;
 				}
 				return null;
@@ -3019,15 +3055,24 @@ function jumpToBg(targetName) {
 		return null;
 	}
 
-	const result = walk(null, null);
+	const result = walk(null, null, null, null);
 	if (!result) {
 		console.warn("[dev] no path to bg:", targetName);
 		return false;
 	}
 
-	// Match. Apply latest bg + music (skip chapter title overlay).
-	if (result.latestBg)    swapBackground(result.latestBg);
-	if (result.latestMusic) swapMusic(result.latestMusic);
+	// Match. Apply all four state-bearing fields, in the order they'd
+	// naturally fire on narrative pass-through: chapter title first
+	// (so its overlay is up before prose starts), then bg, music,
+	// atmosphere. Chapter is optional — only applied when a # chapter:
+	// tag fired upstream.
+	if (result.latestChapter) {
+		currentChapterName = result.latestChapter;
+		showChapterTitleOverlay(result.latestChapter);
+	}
+	if (result.latestBg)         swapBackground(result.latestBg);
+	if (result.latestMusic)      swapMusic(result.latestMusic);
+	if (result.latestAtmosphere) setAtmosphere(result.latestAtmosphere);
 	clearTranscript();
 	const trimmed = (result.text || "").trim();
 	if (trimmed.length > 0) {

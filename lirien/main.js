@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511n";
+const ASSET_VERSION = "20260511o";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1356,6 +1356,10 @@ function swapBackground(name) {
 	// preload of the same URL, so the prefetch actually pays off here.
 	$bgImage.src = url;
 	currentBgName = name;
+	// While shimmer atmosphere is active, glide the cluster to the
+	// new scene's anchor point. The CSS transition on
+	// .shimmer-cluster handles the smooth move.
+	rePositionShimmerCluster(name);
 }
 
 // ----- music: HTML5 Audio with Web Audio gain control for crossfade ---
@@ -1781,6 +1785,43 @@ function spawnLightMotes(count) {
 // outward spiral matches Lirien's spiral-shaped magic system. Used
 // for the "shimmer is in the air" atmosphere (NOT the one-shot
 // flash, which is fireFx("shimmer") / $shimmerFx).
+// Anchor lookup populated at boot from /lirien/shimmer_anchors.json.
+// Each entry: { x: 0-100, y: 0-100 } where x/y are percentages of
+// the bg image's natural size. Used to position the shimmer cluster
+// at the brightest point of each scene rather than a random spot.
+// Regenerate with: python3 tools/shimmer_anchors.py
+let SHIMMER_ANCHORS = {};
+fetch("shimmer_anchors.json?v=" + ASSET_VERSION)
+	.then(r => r.ok ? r.json() : null)
+	.then(d => { if (d) SHIMMER_ANCHORS = d; })
+	.catch(() => { /* missing manifest — fall back to centered cluster */ });
+
+function shimmerAnchorFor(bgName) {
+	const a = SHIMMER_ANCHORS[bgName];
+	if (a && typeof a.x === "number" && typeof a.y === "number") return a;
+	// Fallback: roughly centered, upper half. Light randomization
+	// so consecutive shimmer scenes don't pin to the exact same
+	// spot when there's no manifest entry.
+	return {
+		x: 28 + Math.random() * 40,  // 28-68%
+		y: 30 + Math.random() * 25,  // 30-55%
+	};
+}
+
+let $shimmerCluster = null;  // current cluster element (or null)
+
+// When the bg changes WHILE shimmer is the active atmosphere, glide
+// the existing cluster to the new scene's anchor rather than killing
+// + respawning. CSS transition on .shimmer-cluster's left/top makes
+// the move smooth (2.4s ease-in-out).
+function rePositionShimmerCluster(bgName) {
+	if (!$shimmerCluster) return;
+	if (currentAtmosphere !== "shimmer") return;
+	const a = shimmerAnchorFor(bgName);
+	$shimmerCluster.style.setProperty("--cluster-x", a.x.toFixed(1) + "%");
+	$shimmerCluster.style.setProperty("--cluster-y", a.y.toFixed(1) + "%");
+}
+
 function spawnShimmerParticles(count) {
 	if (!$atmosphereLayer) return;
 	// Single localized cluster — Steve's "dust devil" mental model.
@@ -1790,14 +1831,14 @@ function spawnShimmerParticles(count) {
 	// while the inner dot orbits the wrapper's origin.
 	const cluster = document.createElement("div");
 	cluster.className = "shimmer-cluster";
-	// Position the cluster off-center, lower half — feels like a
-	// wisp visible in the scene rather than a sky effect. Light
-	// randomization so consecutive shimmer atmospheres don't always
-	// anchor in the exact same spot.
-	const cx = 28 + Math.random() * 40;  // 28-68% from left
-	const cy = 50 + Math.random() * 20;  // 50-70% from top
-	cluster.style.setProperty("--cluster-x", cx.toFixed(1) + "%");
-	cluster.style.setProperty("--cluster-y", cy.toFixed(1) + "%");
+	// Position the cluster at the brightest spot of the current
+	// bg (from shimmer_anchors.json) so the fairy dust appears
+	// where the scene's light naturally pools. Falls back to a
+	// reasonable centered-upper position if no manifest entry.
+	const anchor = shimmerAnchorFor(currentBgName);
+	cluster.style.setProperty("--cluster-x", anchor.x.toFixed(1) + "%");
+	cluster.style.setProperty("--cluster-y", anchor.y.toFixed(1) + "%");
+	$shimmerCluster = cluster;
 	for (let i = 0; i < count; i++) {
 		const p = document.createElement("div");
 		p.className = "shimmer-particle";
@@ -1812,11 +1853,10 @@ function spawnShimmerParticles(count) {
 		p.style.setProperty("--opacity",     (0.55 + Math.random() * 0.40).toFixed(2));
 		const d = document.createElement("div");
 		d.className = "shimmer-dot";
-		// 1.5-3px particles — small + brighter per Steve's "fairy
-		// dust" framing 2026-05-11. The bright halo (CSS rgba 1.0
-		// alpha) carries the visual presence; the tiny core gives
-		// each particle a sharp pinpoint that twinkles cleanly.
-		d.style.setProperty("--size",          (1.5 + Math.random() * 1.5).toFixed(1) + "px");
+		// 1-2px particles — Steve 2026-05-11 wanted smaller still.
+		// The halo carries the entire visual presence; the core is
+		// just a sharp pinpoint to anchor the twinkle.
+		d.style.setProperty("--size",          (1 + Math.random() * 1).toFixed(1) + "px");
 		d.style.setProperty("--glow",          (5 + Math.random() * 6).toFixed(1) + "px");
 		// Orbit radius gives the cluster its width. 18-70px ~
 		// 130px-wide swarm.
@@ -1856,6 +1896,7 @@ function setAtmosphere(name) {
 		$atmosphereLayer.classList.remove("is-active");
 		const wasAt = currentAtmosphere;
 		currentAtmosphere = null;
+		$shimmerCluster = null;
 		setTimeout(() => {
 			if (currentAtmosphere === null) $atmosphereLayer.innerHTML = "";
 		}, 1700);
@@ -1863,6 +1904,7 @@ function setAtmosphere(name) {
 	}
 	if (name === currentAtmosphere) return;
 	$atmosphereLayer.innerHTML = "";
+	$shimmerCluster = null;
 	if (name === "ash-falling") {
 		// 70 particles is "polite" — manuscript: "as though it had
 		// been asked very politely to keep the noise down."

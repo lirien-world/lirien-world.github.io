@@ -35,6 +35,7 @@
 	}
 
 	const $form         = document.getElementById("composer-form");
+	const $chapterNum   = document.getElementById("f-chapter-num");
 	const $subject      = document.getElementById("f-subject");
 	const $preheader    = document.getElementById("f-preheader");
 	const $intro        = document.getElementById("f-intro");
@@ -43,9 +44,25 @@
 	const $bannerUrl    = document.getElementById("f-banner-url");
 	const $to           = document.getElementById("f-to");
 	const $btnPreview   = document.getElementById("btn-preview");
+	const $btnAutofill  = document.getElementById("btn-autofill");
 	const $btnTest      = document.getElementById("btn-test");
 	const $status       = document.getElementById("status");
 	const $preview      = document.getElementById("preview-frame");
+
+	// Manifest chapters live on the same origin as the dashboard, so
+	// the fetch goes direct to GitHub Pages (no CORS, no auth). Loaded
+	// once on boot, used by the auto-fill button.
+	let CHAPTERS = [];
+	async function loadChapters() {
+		try {
+			const res = await fetch("/lirien/assets_manifest.json?t=" + Date.now(), { cache: "no-store" });
+			if (!res.ok) throw new Error("manifest " + res.status);
+			const m = await res.json();
+			CHAPTERS = Array.isArray(m.chapters) ? m.chapters : [];
+		} catch (e) {
+			console.warn("couldn't load chapter list:", e);
+		}
+	}
 
 	// ---- draft persistence (localStorage) -----------------------
 
@@ -168,12 +185,51 @@
 	});
 
 	$btnPreview.addEventListener("click", refreshPreview);
+	$btnAutofill.addEventListener("click", autofillFromChapter);
+	// Pressing Enter inside the chapter-num field should trigger auto-fill,
+	// not submit the form (which would fire a test send with empty fields).
+	$chapterNum.addEventListener("keydown", (ev) => {
+		if (ev.key === "Enter") {
+			ev.preventDefault();
+			autofillFromChapter();
+		}
+	});
 	$form.addEventListener("submit", (ev) => {
 		ev.preventDefault();
 		sendTest();
 	});
 
-	// Boot: load draft, initial preview render.
-	loadDraft();
-	refreshPreview();
+	// Auto-fills subject, preheader, chapter_title, and chapter_url
+	// based on the chapter number in $chapterNum. Pulls the title from
+	// the manifest's chapters[] list (parsed from test.ink, so it
+	// matches whatever's currently shipped). intro is intentionally
+	// NOT auto-filled — that's where Steve's voice goes.
+	function autofillFromChapter() {
+		const n = parseInt($chapterNum.value, 10);
+		if (!Number.isFinite(n) || n < 1) {
+			showStatus("Enter a chapter number first.", "error");
+			return;
+		}
+		const ch = CHAPTERS.find((c) => c.number === n);
+		if (!ch) {
+			showStatus(`No chapter ${n} in the manifest (have ${CHAPTERS.length}). Did you bump the version after writing it?`, "error");
+			return;
+		}
+		// Template the templatable fields. Steve can edit any of them
+		// after — auto-fill never locks values.
+		$chapterTitle.value = ch.title;
+		$subject.value      = "A new chapter — " + ch.title;
+		$preheader.value    = ch.title + " is live.";
+		// chapter_url stays as whatever's there; default lirien.world/lirien/
+		// is fine, and a future deep-linking feature can populate per-chapter URLs.
+		if (!$chapterUrl.value.trim()) {
+			$chapterUrl.value = "https://lirien.world/lirien/";
+		}
+		showStatus(`Filled from chapter ${n}: ${ch.title}.`, "ok");
+		saveDraft();
+		refreshPreview();
+	}
+
+	// Boot: load chapters list + draft, then initial preview render.
+	loadChapters().then(loadDraft).then(refreshPreview);
 })();

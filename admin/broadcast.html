@@ -153,6 +153,15 @@
 		<div class="composer-wrap">
 			<form id="composer-form" class="composer-form" autocomplete="off">
 				<label>
+					Chapter number
+					<span class="label-aside">Type the chapter number (e.g. "5") and the fields below auto-fill from the manifest. Editable after — auto-fill never locks anything.</span>
+					<div style="display:flex; gap:10px; align-items:stretch;">
+						<input type="number" id="f-chapter-num" min="1" max="99" step="1" style="flex: 0 0 100px;" placeholder="e.g. 5">
+						<button type="button" id="btn-autofill" class="composer-btn" style="margin: 0;">Auto-fill</button>
+					</div>
+				</label>
+
+				<label>
 					Subject
 					<span class="label-aside">What lands in the inbox subject line.</span>
 					<input type="text" id="f-subject" required maxlength="200" placeholder="A new chapter — Five — The Spiral Stays">

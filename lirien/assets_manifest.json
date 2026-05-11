@@ -1,8 +1,26 @@
 {
   "manifest_version": "20260511-200927",
-  "generated_at": "2026-05-11T19:09:28Z",
+  "generated_at": "2026-05-11T20:35:33Z",
   "asset_count": 297,
   "total_size": 533483576,
+  "chapters": [
+    {
+      "number": 1,
+      "title": "One \u2014 Ash and Arrival"
+    },
+    {
+      "number": 2,
+      "title": "Two \u2014 Solrien's Light"
+    },
+    {
+      "number": 3,
+      "title": "Three \u2014 The Day the City Breathed"
+    },
+    {
+      "number": 4,
+      "title": "Four \u2014 The One Who Waits"
+    }
+  ],
   "assets": {
     "atmosphere/aerin_hand_with_glyph_v1.png": {
       "hash": "7e301e6062",

@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511l";
+const ASSET_VERSION = "20260511m";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1812,24 +1812,30 @@ function spawnShimmerParticles(count) {
 		p.style.setProperty("--opacity",     (0.55 + Math.random() * 0.40).toFixed(2));
 		const d = document.createElement("div");
 		d.className = "shimmer-dot";
-		// 3-5px particles, halo ~2-3x the particle so each catches
-		// the light. Glow does most of the read in motion — at
-		// desktop scale tiny particles disappear, so we lean on
-		// the halo for presence.
-		d.style.setProperty("--size",        (3 + Math.random() * 2).toFixed(1) + "px");
-		d.style.setProperty("--glow",        (7 + Math.random() * 6).toFixed(1) + "px");
+		// 1.5-3px particles — small + brighter per Steve's "fairy
+		// dust" framing 2026-05-11. The bright halo (CSS rgba 1.0
+		// alpha) carries the visual presence; the tiny core gives
+		// each particle a sharp pinpoint that twinkles cleanly.
+		d.style.setProperty("--size",          (1.5 + Math.random() * 1.5).toFixed(1) + "px");
+		d.style.setProperty("--glow",          (5 + Math.random() * 6).toFixed(1) + "px");
 		// Orbit radius gives the cluster its width. 18-70px ~
-		// 130px-wide swarm — small enough to read as localized,
-		// wide enough to register at viewport scale.
-		d.style.setProperty("--radius",      (18 + Math.random() * 52).toFixed(0) + "px");
+		// 130px-wide swarm.
+		d.style.setProperty("--radius",        (18 + Math.random() * 52).toFixed(0) + "px");
 		// Orbit speed varies (2-5s / revolution) so the cluster
-		// doesn't tick in unison. One-way direction — mixing CW/CCW
-		// reads as noise rather than swirl.
+		// doesn't tick in unison.
 		const orbitDur = 2 + Math.random() * 3;
-		d.style.setProperty("--orbit-dur",   orbitDur.toFixed(1) + "s");
-		d.style.setProperty("--orbit-delay", "-" + (Math.random() * orbitDur).toFixed(1) + "s");
+		d.style.setProperty("--orbit-dur",     orbitDur.toFixed(1) + "s");
+		d.style.setProperty("--orbit-delay",   "-" + (Math.random() * orbitDur).toFixed(1) + "s");
 		// Random start angle decouples particles from each other.
-		d.style.setProperty("--start",       (Math.random() * 360).toFixed(0) + "deg");
+		d.style.setProperty("--start",         (Math.random() * 360).toFixed(0) + "deg");
+		// Twinkle — each particle's opacity oscillates 0.55 → 1.0 →
+		// 0.55 on its own schedule. 1.8-4s/cycle is "not too fast"
+		// per Steve — reads as fairy-dust twinkle, not nervous
+		// flicker. Negative delay desyncs neighbours so the cluster
+		// twinkles asynchronously rather than pulsing in unison.
+		const twinkleDur = 1.8 + Math.random() * 2.2;
+		d.style.setProperty("--twinkle-dur",   twinkleDur.toFixed(1) + "s");
+		d.style.setProperty("--twinkle-delay", "-" + (Math.random() * twinkleDur).toFixed(1) + "s");
 		p.appendChild(d);
 		cluster.appendChild(p);
 	}

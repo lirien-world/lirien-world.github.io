@@ -186,19 +186,25 @@ html, body {
 }
 .shimmer-dot {
 	position: absolute;
-	width: var(--size, 3px);
-	height: var(--size, 3px);
+	width: var(--size, 2px);
+	height: var(--size, 2px);
 	border-radius: 50%;
-	background: rgba(248, 224, 158, 0.9);
-	box-shadow: 0 0 var(--glow, 6px) rgba(244, 212, 130, 0.75);
+	/* Brighter than the previous dim warm gold — near-white core
+	 * with a saturated gold halo. Steve's "fairy dust that
+	 * decided to make itself known" framing 2026-05-11. */
+	background: rgba(255, 238, 190, 1.0);
+	box-shadow: 0 0 var(--glow, 6px) rgba(252, 218, 130, 0.95);
 	/* Center the dot on the orbit point. */
-	margin-left: calc(var(--size, 3px) * -0.5);
-	margin-top:  calc(var(--size, 3px) * -0.5);
-	/* Orbits its parent at a constant radius. Speed + direction
-	 * + start-angle vary per particle so the cluster doesn't
-	 * pulse in unison. */
-	animation: shimmer-orbit var(--orbit-dur, 3s) linear var(--orbit-delay, 0s) infinite;
-	will-change: transform;
+	margin-left: calc(var(--size, 2px) * -0.5);
+	margin-top:  calc(var(--size, 2px) * -0.5);
+	/* Two parallel animations: one for the orbit (transform), one
+	 * for the twinkle (opacity). Independent durations + delays
+	 * so neighbours blink at different rhythms — random schedule
+	 * across the cluster, not a metronome. */
+	animation:
+		shimmer-orbit   var(--orbit-dur,   3s)   linear        var(--orbit-delay,   0s) infinite,
+		shimmer-twinkle var(--twinkle-dur, 2.5s) ease-in-out   var(--twinkle-delay, 0s) infinite;
+	will-change: transform, opacity;
 }
 @keyframes shimmer-rise {
 	0%   { transform: translateY(70px);  opacity: 0; }
@@ -210,6 +216,15 @@ html, body {
 @keyframes shimmer-orbit {
 	from { transform: rotate(var(--start, 0deg))                              translateX(var(--radius, 30px)); }
 	to   { transform: rotate(calc(var(--start, 0deg) + 360deg))               translateX(var(--radius, 30px)); }
+}
+/* Twinkle — dot's own opacity oscillates between dim and bright
+ * on its own schedule, multiplied with the parent's rise-fade.
+ * Floor at 0.5 (not 0) so the particle stays at least faintly
+ * visible at the dim end; the parent's rise fade-in/fade-out is
+ * what blanks it entirely at the edges of its life. */
+@keyframes shimmer-twinkle {
+	0%, 100% { opacity: 0.55; }
+	50%      { opacity: 1.0; }
 }
 
 /* ----- shimmer one-shot -----

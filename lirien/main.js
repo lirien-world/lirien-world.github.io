@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511t";
+const ASSET_VERSION = "20260511u";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1815,25 +1815,24 @@ let $shimmerCluster = null;  // current cluster element (or null)
 // keeps the look consistent with fairy-dust rather than wintery.
 const SHIMMER_GLYPH = "✦";
 
-// Synchronized motion params — all particles share the SAME rise
-// and orbit durations and are distributed in even phase offsets
-// around both cycles. The cluster reads as one continuous spiral
-// where each star is on the same helical path, just at a different
-// point along it.
+// Synchronized motion params — all particles share rise + orbit
+// durations and are distributed in (jittered) phase offsets so
+// they trace ROUGHLY the same helix without exact lockstep.
+// Steve 2026-05-11: "particles spaced more apart, not following
+// each other exactly... cloud/stream floating upwards lazily.
+// Think of it as a mini tornado but without starting from a
+// small radius at the bottom — the same spiral shape throughout."
 //
-// Key for the helix to LOOK like a spiral rather than a vertical
-// line with wiggle: ratio of orbit-radius to rise-span, AND the
-// number of revolutions per rise.
-//   • rise span 110px (CSS keyframe translateY ±55)
-//   • orbit radius ~28px  → spiral ~56px wide, ~110px tall
-//   • orbit-dur 3s vs rise-dur 9s → 3 full revolutions per rise
-// Three revs over a 110px-tall helix is a tight visible spiral,
-// not a sparse line. Steve 2026-05-11: "either an upward spiral
-// of motes or a head-on spiral with motes flowing along it" —
-// this is the upward-spiral option.
-const SHIMMER_RISE_DUR  = 9;   // seconds — full bottom→top life
-const SHIMMER_ORBIT_DUR = 3;   // seconds — full revolution (3 revs/rise)
-const SHIMMER_RADIUS    = 28;  // base orbit radius (px) — half helix width
+//   • rise-dur 16s  → slow lazy float upward (was 9s, too eager)
+//   • orbit-dur 4s  → 4 full revolutions per rise (mini-tornado feel)
+//   • radius 28px   → constant cylinder, not a cone-from-the-bottom
+//   • count 20      → ~5 particles per revolution = visible spacing
+//
+// Per-particle phase JITTER (±~1/3 of the spacing slot) breaks
+// the exact-stream feel while keeping the spiral path coherent.
+const SHIMMER_RISE_DUR  = 16;  // seconds — full bottom→top life
+const SHIMMER_ORBIT_DUR = 4;   // seconds — full revolution (4 revs/rise)
+const SHIMMER_RADIUS    = 28;  // base orbit radius (px) — constant cylinder
 
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing
@@ -1864,17 +1863,23 @@ function spawnShimmerParticles(count) {
 	cluster.style.setProperty("--cluster-x", anchor.x.toFixed(1) + "%");
 	cluster.style.setProperty("--cluster-y", anchor.y.toFixed(1) + "%");
 	$shimmerCluster = cluster;
+	// Phase-slot size for jitter: ~1/3 of the spacing between
+	// consecutive particles. Big enough that neighbours don't move
+	// in lockstep, small enough that the spiral path stays coherent.
+	const jitterFrac = 0.33 / count;
 	for (let i = 0; i < count; i++) {
-		// Phase position 0..1 — uniformly distributes each particle
-		// along the SHARED rise+orbit cycle so they trace the same
-		// helix and read as a continuous spiral stream.
-		const phase = i / count;
+		// Phase position 0..1 — distributes each particle along the
+		// shared rise+orbit cycle. Adding a small per-particle jitter
+		// breaks exact lockstep so neighbours don't trace the same
+		// path at the same offset — they roughly follow but each is
+		// a beat ahead or behind.
+		const jitter = (Math.random() - 0.5) * jitterFrac * 2;
+		const phase = (i / count + jitter + 1) % 1;
 		const p = document.createElement("div");
 		p.className = "shimmer-particle";
-		// All particles share rise duration; only the delay differs
-		// (negative + phase-distributed). That means every particle
-		// is on the same vertical path, just at a different point
-		// in its life.
+		// All particles share rise duration; the (jittered)
+		// phase-distributed delay places each at a different point
+		// in the shared cycle.
 		p.style.setProperty("--rise-dur",    SHIMMER_RISE_DUR + "s");
 		p.style.setProperty("--rise-delay",  "-" + (phase * SHIMMER_RISE_DUR).toFixed(2) + "s");
 		// Peak opacity varies — some particles are dim ghosts, some
@@ -1890,17 +1895,20 @@ function spawnShimmerParticles(count) {
 		// for depth without breaking the stream feel.
 		d.style.setProperty("--size",          (7 + Math.random() * 6).toFixed(1) + "px");
 		d.style.setProperty("--glow",          (6 + Math.random() * 6).toFixed(1) + "px");
-		// Compact orbit radius — small variation (±4px) keeps the
-		// stream consistent while preventing perfect-mechanical look.
-		d.style.setProperty("--radius",        (SHIMMER_RADIUS + (Math.random() - 0.5) * 8).toFixed(1) + "px");
-		// SHARED orbit duration. Delay matches rise-delay so each
-		// particle's orbit phase tracks its rise phase — every
-		// particle traces the same helix arc, offset only in time.
+		// Constant orbit radius with small (±5px) variation so the
+		// cylinder doesn't read mechanical. The cluster stays a
+		// rough cylinder rather than a cone-narrowing-to-a-point.
+		d.style.setProperty("--radius",        (SHIMMER_RADIUS + (Math.random() - 0.5) * 10).toFixed(1) + "px");
+		// SHARED orbit duration. Independent jitter on orbit delay
+		// (separate from rise jitter) so particles' rotational phase
+		// also breaks from neighbours — the spiral feels organic
+		// rather than perfectly mechanical.
+		const orbitJitter = (Math.random() - 0.5) * jitterFrac * 2;
+		const orbitPhase = (i / count + orbitJitter + 1) % 1;
 		d.style.setProperty("--orbit-dur",     SHIMMER_ORBIT_DUR + "s");
-		d.style.setProperty("--orbit-delay",   "-" + (phase * SHIMMER_ORBIT_DUR).toFixed(2) + "s");
-		// All particles start at the same angle — the delay does
-		// the spacing around the orbit. Together with rise-delay,
-		// this places particles uniformly along the helix.
+		d.style.setProperty("--orbit-delay",   "-" + (orbitPhase * SHIMMER_ORBIT_DUR).toFixed(2) + "s");
+		// Start angle: pure phase-from-orbit-delay places particles
+		// around the orbit.
 		d.style.setProperty("--start",         "0deg");
 		// Twinkle — each particle's opacity oscillates 0.55 → 1.0 →
 		// 0.55 on its own schedule. 1.8-4s/cycle is "not too fast"
@@ -1949,12 +1957,14 @@ function setAtmosphere(name) {
 	} else if (name === "shimmer") {
 		// Shimmer presence — distinct from the # fx: shimmer
 		// one-shot flash. Single star glyph, synchronized helical
-		// stream — 36 particles across 3 revolutions of the helix
-		// (~12 per turn) reads as a visible continuous spiral.
-		// Manuscript moments: Ch1 "a shimmer waited at the furthest
-		// limit of the flat light", Ch2 "had stopped feeling like
-		// a direction and started feeling like company."
-		spawnShimmerParticles(36);
+		// stream — 20 particles across 4 revolutions of the helix
+		// gives ~5 per turn (visibly spaced, not packed). Steve
+		// 2026-05-11: "spaced more apart, cloud/stream floating
+		// upwards lazily, mini-tornado shape." Manuscript: Ch1
+		// "a shimmer waited at the furthest limit of the flat
+		// light", Ch2 "had stopped feeling like a direction and
+		// started feeling like company."
+		spawnShimmerParticles(20);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

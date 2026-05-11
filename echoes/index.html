@@ -169,7 +169,7 @@ body{
 	.mode-meta{display:none}
 }
 
-/* Hamburger menu button — top-left, always visible. Three-bar icon
+/* Hamburger menu button — top-right, always visible. Three-bar icon
  * built from spans (no SVG dependency). Same chrome-btn footprint
  * as the drawer-toggle bottom-right so the two affordances feel
  * like a pair: hamburger opens the drawer, drawer-toggle opens the
@@ -177,7 +177,7 @@ body{
 .menu-btn{
 	position:fixed;
 	top:clamp(0.9rem, 2.4vw, 1.4rem);
-	left:clamp(0.9rem, 2.4vw, 1.4rem);
+	right:clamp(0.9rem, 2.4vw, 1.4rem);
 	z-index:30;
 	all:unset;
 	cursor:pointer;
@@ -575,30 +575,67 @@ body.is-playing .progress{
 }
 .drawer-close:hover{color:var(--gold-bright)}
 
-/* Settings section at the top of the drawer — labeled buttons for
- * play order + content scope. The active value gets a gold rim +
- * brighter text so the current state is visible at a glance, same
- * pattern as the Lirien reader's drawer rows. */
+/* Settings section at the top of the drawer — collapsible groups
+ * for play order + content scope. Both groups collapsed by default
+ * so the track list keeps the vertical real estate. The active
+ * value's row gets a gold ◆ marker + brighter rim once the user
+ * opens its group.
+ *
+ * Built with native <details>/<summary> for the accordion mechanics
+ * (no JS for expand/collapse). The summary marker is hidden via
+ * list-style:none + ::-webkit-details-marker:none; we draw our own
+ * caret that rotates when [open] is set. */
 .drawer-settings{
-	display:flex;flex-direction:column;gap:1.2rem;
-	padding:0.4rem 0 1.4rem 0;
-	margin-bottom:1.2rem;
+	display:flex;flex-direction:column;gap:0.4rem;
+	padding:0.4rem 0 0.6rem 0;
+	margin-bottom:0.8rem;
 	border-bottom:1px solid rgba(196,147,90,0.18);
 	flex-shrink:0;
 }
 .drawer-settings-group{
-	display:flex;flex-direction:column;gap:0.4rem;
+	border:none;
 }
+.drawer-settings-summary{
+	all:unset;cursor:pointer;
+	display:flex;align-items:center;justify-content:space-between;
+	padding:0.55rem 0.25rem;
+	color:var(--ash);
+	transition:color 0.3s ease;
+	list-style:none;  /* Firefox + Safari triangle marker */
+	-webkit-tap-highlight-color:transparent;
+}
+.drawer-settings-summary::-webkit-details-marker{display:none}  /* Chrome/Safari */
+.drawer-settings-summary::marker{display:none}                  /* Firefox */
+.drawer-settings-summary:hover,
+.drawer-settings-summary:focus-visible{color:var(--cream);outline:none}
 .drawer-settings-label{
 	font-family:'Cormorant Garamond',serif;
 	font-size:var(--text-xs);
 	letter-spacing:0.22em;
 	text-transform:uppercase;
-	color:var(--ash);
-	margin-bottom:0.15rem;
+}
+.drawer-settings-caret{
+	display:inline-block;
+	width:0.6em;height:0.4em;
+	transition:transform 0.25s ease, color 0.3s ease;
+	color:rgba(196,147,90,0.55);
+}
+.drawer-settings-caret::before{
+	content:"";
+	display:block;
+	width:0;height:0;
+	border-left:0.32em solid transparent;
+	border-right:0.32em solid transparent;
+	border-top:0.36em solid currentColor;
+	margin:auto;
+}
+.drawer-settings-group[open] > .drawer-settings-summary .drawer-settings-caret{
+	transform:rotate(180deg);
+	color:var(--gold);
 }
 .drawer-settings-rows{
 	display:flex;flex-direction:column;gap:0.25rem;
+	padding:0.2rem 0 0.6rem 0;
 }
 .drawer-row{
 	all:unset;cursor:pointer;
@@ -819,9 +856,6 @@ body.is-playing .progress{
 			<span class="one" data-i18n="echoes.brand.one">Chronicles of Lirien</span>
 			<span class="two" data-i18n="echoes.brand.two">a small room for the music, spiraling around</span>
 		</div>
-		<div class="brand-meta">
-			<span id="trackCountLabel">sixteen pieces</span>
-		</div>
 	</header>
 
 	<!--
@@ -940,23 +974,35 @@ body.is-playing .progress{
 		updates both surfaces. Steve's mom didn't realize the inline
 		text was clickable; the drawer's labeled rows make it obvious.
 	-->
+	<!--
+		Native <details>/<summary> for the accordion. Both collapsed
+		by default so the track list gets the vertical space it needs.
+		One click opens; another closes. No JS required for the
+		expand/collapse mechanics — browser handles it.
+	-->
 	<section class="drawer-settings">
-		<div class="drawer-settings-group">
-			<div class="drawer-settings-label" data-i18n="echoes.settings.play-order">Play order</div>
+		<details class="drawer-settings-group">
+			<summary class="drawer-settings-summary">
+				<span class="drawer-settings-label" data-i18n="echoes.settings.play-order">Play order</span>
+				<span class="drawer-settings-caret" aria-hidden="true"></span>
+			</summary>
 			<div class="drawer-settings-rows">
 				<button class="drawer-row" type="button" data-mode="shuffled"   data-i18n="echoes.settings.mode.shuffled">Shuffled</button>
 				<button class="drawer-row" type="button" data-mode="sequential" data-i18n="echoes.settings.mode.sequential">In order</button>
 				<button class="drawer-row" type="button" data-mode="repeat"     data-i18n="echoes.settings.mode.repeat">Repeat one</button>
 			</div>
-		</div>
-		<div class="drawer-settings-group">
-			<div class="drawer-settings-label" data-i18n="echoes.settings.content">What to play</div>
+		</details>
+		<details class="drawer-settings-group">
+			<summary class="drawer-settings-summary">
+				<span class="drawer-settings-label" data-i18n="echoes.settings.content">What to play</span>
+				<span class="drawer-settings-caret" aria-hidden="true"></span>
+			</summary>
 			<div class="drawer-settings-rows">
 				<button class="drawer-row" type="button" data-content="played"  data-i18n="echoes.settings.content.played">Tracks you've played</button>
 				<button class="drawer-row" type="button" data-content="all"     data-i18n="echoes.settings.content.all">Everything</button>
 				<button class="drawer-row" type="button" data-content="minimal" data-i18n="echoes.settings.content.minimal">Just the theme</button>
 			</div>
-		</div>
+		</details>
 	</section>
 
 	<div class="drawer-tracklist-header">
@@ -1009,7 +1055,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260511-231549";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-232439";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -2382,7 +2428,10 @@ function updateCounts(){
 	const word = spellNumber(n);
 	const piece = (window.lirienT && window.lirienT(n === 1 ? "echoes.count.piece" : "echoes.count.pieces")) || (n === 1 ? "piece" : "pieces");
 	const track = (window.lirienT && window.lirienT(n === 1 ? "echoes.count.track" : "echoes.count.tracks")) || (n === 1 ? "track" : "tracks");
-	$trackCountLabel.textContent = `${word} ${piece}`;
+	// $trackCountLabel was the redundant "X pieces" text in the header
+	// — removed (the same info is in the player track-info area).
+	// Keep this guard so the JS doesn't throw on the missing element.
+	if ($trackCountLabel) $trackCountLabel.textContent = `${word} ${piece}`;
 	$listBtnCount.textContent = word;
 	$listBtnUnit.textContent = track;
 	$drawerCountLabel.textContent = capFirst(word);
@@ -2444,11 +2493,15 @@ window.echoesRefreshDynamicLabels = function(){
 		reachedChapter = Math.max(1, detected);
 		$contentToggle.hidden = true;
 	} else if (detected === 0){
-		// New visitor: default to minimal so the page looks complete
-		// and non-spoilery from the first paint. reachedChapter stays
-		// at 1 so if they switch to "played" later they still get the
-		// chapter-1 set as a soft entry point.
-		content = "minimal";
+		// New visitor: default to "all" so the full catalog is
+		// immediately audible. Steve 2026-05-11: a first-time visitor
+		// hasn't read the book yet, so they have no narrative context
+		// for any of the tracks — there's no spoiler exposure. Better
+		// to give them the whole album as a first impression than
+		// "minimal" (just the title theme on repeat) which feels thin.
+		// reachedChapter still tracks at 1 so a later switch to
+		// "played" picks up the chapter-1 set as a soft entry.
+		content = "all";
 		reachedChapter = 1;
 	} else {
 		reachedChapter = detected;

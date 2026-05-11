@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511v";
+const ASSET_VERSION = "20260511w";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1816,21 +1816,21 @@ let $shimmerCluster = null;  // current cluster element (or null)
 const SHIMMER_GLYPH = "✦";
 
 // Synchronized motion params for the HEAD-ON SPIRAL view.
-// Steve 2026-05-11 replaced the upward-helix design with a head-on
-// spiral viewed face-on, like a galaxy or whirlpool seen straight
-// down: motes spawn at the center, spiral OUTWARD CCW, fade as they
-// reach the edge.
+// Each mote spawns at the cluster center and spirals OUTWARD CCW
+// over its lifetime, fading as it reaches the outer edge.
+// Steve 2026-05-11 polish: bumped spiral-dur 14s → 22s and count
+// 22 → 36 to slow rotation AND tighten the visible arm. At the
+// previous 14s × 3 revs the rotation was too brisk (~4.7s/rev);
+// now each revolution takes ~7.3s. Higher count + tighter max-r
+// range means ~12 particles per revolution following the same
+// arm closely — the spiral reads as a continuous curve rather
+// than discrete sparkles.
 //
-//   • spiral-dur 14s         → slow, lazy expansion
-//   • CSS keyframe: -1080deg → 3 full revolutions per particle's life
-//   • per-particle max-r     → 60-100px (some long arms, some short)
-//   • count 22               → ~7 particles per revolution
-//
-// Per-particle phase jitter (±1/3 of spacing slot) breaks exact
-// lockstep so particles roughly follow the spiral arm rather than
-// stamp the same path identically. Twinkle still randomized per
-// particle for sparkle.
-const SHIMMER_SPIRAL_DUR = 14;  // seconds — center→edge lifetime
+//   • spiral-dur 22s         → slow lazy expansion
+//   • CSS keyframe: -1080deg → 3 full revolutions per life
+//   • per-particle max-r     → 65-95px (tighter than 60-100)
+//   • count 36               → ~12 particles per revolution
+const SHIMMER_SPIRAL_DUR = 22;  // seconds — center→edge lifetime
 
 // When the bg changes WHILE shimmer is the active atmosphere, glide
 // the existing cluster to the new scene's anchor rather than killing
@@ -1880,11 +1880,11 @@ function spawnShimmerParticles(count) {
 		// for depth.
 		d.style.setProperty("--size",           (7 + Math.random() * 6).toFixed(1) + "px");
 		d.style.setProperty("--glow",           (6 + Math.random() * 6).toFixed(1) + "px");
-		// Each particle's MAX outer radius varies (60-100px). With
-		// the constant rotation, varied max-r means particles trace
-		// slightly different spirals — some short-armed, some
-		// long-armed — adding visual depth to the head-on view.
-		d.style.setProperty("--max-r",          (60 + Math.random() * 40).toFixed(0) + "px");
+		// Per-particle max-r 65-95px (tighter than the previous
+		// 60-100 range) so all particles trace closely-matching
+		// spiral arms — the eye reads them as one continuous
+		// curve rather than a fuzzy cloud.
+		d.style.setProperty("--max-r",          (65 + Math.random() * 30).toFixed(0) + "px");
 		// Peak opacity varies — some are dim ghosts, some catch
 		// the light fully. Visual depth, again.
 		d.style.setProperty("--peak-opacity",   (0.65 + Math.random() * 0.30).toFixed(2));
@@ -1937,15 +1937,14 @@ function setAtmosphere(name) {
 		spawnLightMotes(40);
 	} else if (name === "shimmer") {
 		// Shimmer presence — distinct from the # fx: shimmer
-		// one-shot flash. Head-on spiral view (Steve 2026-05-11
-		// switched from upward-helix to face-on spiral). Single
-		// star glyph, ~22 particles distributed (with jitter) along
-		// a 3-revolution CCW spiral that grows from center to edge
-		// over 14s. Manuscript: Ch1 "a shimmer waited at the
-		// furthest limit of the flat light", Ch2 "had stopped
-		// feeling like a direction and started feeling like
-		// company."
-		spawnShimmerParticles(22);
+		// one-shot flash. Head-on spiral view: single star glyph,
+		// 36 particles distributed along a 3-revolution CCW spiral
+		// (22s lifetime per particle, ~7s per revolution = slow).
+		// Higher count keeps the arm visually continuous. Manuscript:
+		// Ch1 "a shimmer waited at the furthest limit of the flat
+		// light", Ch2 "had stopped feeling like a direction and
+		// started feeling like company."
+		spawnShimmerParticles(36);
 	}
 	currentAtmosphere = name;
 	// rAF gives the freshly-appended particles a frame to start

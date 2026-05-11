@@ -27,7 +27,7 @@ const MUSIC_DIR = "music/";
 // tags, so without a query-param version on their URLs returning
 // visitors keep getting the cached old bytes. Appending ?v=<id>
 // makes the URL itself change → browser fetches as a new resource.
-const ASSET_VERSION = "20260511m";
+const ASSET_VERSION = "20260511n";
 function bgUrl(name)    { return ATMOSPHERE_DIR + name + ".png?v=" + ASSET_VERSION; }
 // Audio served as .m4a (AAC). Switched from .ogg on 2026-05-08:
 // Safari's Ogg Vorbis decoder caused buffer underruns on long-form
@@ -1821,9 +1821,11 @@ function spawnShimmerParticles(count) {
 		// Orbit radius gives the cluster its width. 18-70px ~
 		// 130px-wide swarm.
 		d.style.setProperty("--radius",        (18 + Math.random() * 52).toFixed(0) + "px");
-		// Orbit speed varies (2-5s / revolution) so the cluster
-		// doesn't tick in unison.
-		const orbitDur = 2 + Math.random() * 3;
+		// Orbit speed: slow + deliberate. 7-13s/revolution per
+		// Steve's "the shimmer moves purposefully with alignment"
+		// 2026-05-11 — previous 2-5s read as too eager. Varied per
+		// particle so the cluster doesn't tick in unison.
+		const orbitDur = 7 + Math.random() * 6;
 		d.style.setProperty("--orbit-dur",     orbitDur.toFixed(1) + "s");
 		d.style.setProperty("--orbit-delay",   "-" + (Math.random() * orbitDur).toFixed(1) + "s");
 		// Random start angle decouples particles from each other.

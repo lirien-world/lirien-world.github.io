@@ -837,7 +837,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260510-132842";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260511-105410";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -854,6 +854,18 @@ body.is-playing .progress{
 			const data = await r.json();
 			const live = data.echoes;
 			if (live && live !== BUILD_VERSION){
+				// Don't reload mid-playback — the user is enjoying
+				// the music and a full nav would kill the audio
+				// element and force them to tap Play again (and on
+				// iOS PWA the lock-screen control is already
+				// finicky enough — Steve hit this). Defer until
+				// audio is paused or ended; the next check() tick
+				// after that will fire the reload.
+				const a = document.getElementById("audio");
+				if (a && !a.paused && !a.ended){
+					console.log("[freshness] stale build but playing — deferring reload");
+					return;
+				}
 				console.log("[freshness] stale build " + BUILD_VERSION + " → " + live + ", reloading");
 				// Cache-bust the URL on reload — iOS PWA standalone
 				// can serve the same stale HTML from browser HTTP
@@ -1317,15 +1329,13 @@ function visibleIndices(){
 // re-shuffle — it wraps back to the start. That makes "previous"
 // always step backward through a stable, predictable order.
 // ─────────────────────────────────────────────────────────────────
-const QUEUE_STORAGE_KEY = "lirien.jukebox.queue";
-
-function localDateStamp(){
-	const d = new Date();
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, "0");
-	const dd = String(d.getDate()).padStart(2, "0");
-	return `${y}-${m}-${dd}`;
-}
+// Persistence in localStorage (was sessionStorage, which died on
+// tab close). The blob now survives reloads and PWA cold-starts.
+//   • mode / content / activeIdx — settings; never expire.
+//   • shuffledAt + fingerprint + queue + queueIdx — the queue
+//     order; valid for QUEUE_TTL_MS, then regenerated.
+const STATE_STORAGE_KEY = "lirien.jukebox.state";
+const QUEUE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // A short fingerprint of the visible set — sorted, comma-joined indices.
 // If the visible set changes (content mode toggled), the fingerprint
@@ -1334,37 +1344,85 @@ function visibleFingerprint(){
 	return visibleIndices().slice().sort((a,b) => a-b).join(",");
 }
 
-function loadStoredQueue(){
+function loadStoredState(){
 	try {
-		const raw = sessionStorage.getItem(QUEUE_STORAGE_KEY);
-		if (!raw) return null;
-		const blob = JSON.parse(raw);
-		if (blob.date !== localDateStamp()) return null;        // crossed midnight
-		if (blob.fingerprint !== visibleFingerprint()) return null; // visible set changed
-		return blob;
+		const raw = localStorage.getItem(STATE_STORAGE_KEY);
+		return raw ? JSON.parse(raw) : null;
 	} catch (e) { return null; }
 }
 
-function persistQueue(){
+// Returns the persisted blob if its queue is still valid (under TTL
+// + fingerprint matches). Settings-only fields (mode/content/activeIdx)
+// are read separately via loadStoredState; this gate only protects
+// the queue-order fields.
+function loadStoredQueue(){
+	const state = loadStoredState();
+	if (!state) return null;
+	if (typeof state.shuffledAt !== "number") return null;
+	if (Date.now() - state.shuffledAt > QUEUE_TTL_MS) return null;
+	if (state.fingerprint !== visibleFingerprint()) return null;
+	if (!Array.isArray(state.queue)) return null;
+	return state;
+}
+
+// Persist current settings + queue. `extra` lets the caller override
+// individual fields (e.g. reshuffle passes {shuffledAt: Date.now()}
+// when it generates a fresh queue).
+function persistState(extra){
 	try {
-		sessionStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify({
-			date: localDateStamp(),
-			fingerprint: visibleFingerprint(),
-			content,
-			mode,
-			queue,
+		const cur = loadStoredState() || {};
+		const next = Object.assign({}, cur, {
+			mode, content, activeIdx,
+			queue: queue.slice(),
 			queueIdx,
-		}));
+			fingerprint: visibleFingerprint(),
+		}, extra || {});
+		localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(next));
 	} catch (e) { /* private mode / quota — silent */ }
+}
+
+// Back-compat alias: existing callers say persistQueue(). The new
+// name persistState() is more accurate but the call-sites are fine.
+const persistQueue = persistState;
+
+// URL parameter parsing — share-link support. Examples:
+//   /echoes/?mode=repeat
+//   /echoes/?song=field_becomes_visible
+//   /echoes/?mode=sequential&song=ash_plains
+// The slug for `song` is the track's file name minus its audio
+// extension (.m4a / .mp3 / .ogg / .wav).
+function parseUrlParams(){
+	try {
+		const params = new URLSearchParams(window.location.search);
+		return {
+			mode: params.get("mode"),
+			song: params.get("song"),
+		};
+	} catch (e) { return { mode: null, song: null }; }
+}
+
+function trackSlug(track){
+	if (!track || !track.file) return "";
+	return String(track.file).replace(/\.(m4a|mp3|ogg|wav)$/i, "");
+}
+
+function findTrackBySlug(slug){
+	if (!slug) return -1;
+	const want = String(slug).toLowerCase();
+	for (let i = 0; i < TRACKS.length; i++){
+		if (trackSlug(TRACKS[i]).toLowerCase() === want) return i;
+	}
+	return -1;
 }
 
 function reshuffle(skipFirst){
 	// Try to restore an in-progress queue first. The restored queue
-	// is only valid if the date, visible set, AND mode match — mode
-	// matters because shuffled and sequential produce different
-	// orders and we don't want to display the wrong one.
+	// is only valid if it's fresh (< QUEUE_TTL_MS), visible set + mode
+	// match, and the queue is non-empty. Mode matters because
+	// shuffled and sequential produce different orders and we don't
+	// want to display the wrong one.
 	const restored = loadStoredQueue();
-	if (restored && restored.mode === mode && Array.isArray(restored.queue)){
+	if (restored && restored.mode === mode && Array.isArray(restored.queue) && restored.queue.length){
 		queue = restored.queue;
 		queueIdx = (typeof restored.queueIdx === "number") ? restored.queueIdx : -1;
 		return;
@@ -1396,7 +1454,10 @@ function reshuffle(skipFirst){
 	} else {
 		queueIdx = -1;
 	}
-	persistQueue();
+	// Mark this as a fresh shuffle moment — the 24h TTL gate in
+	// loadStoredQueue() reads `shuffledAt` to decide whether to
+	// reuse the queue on the next page load.
+	persistState({ shuffledAt: Date.now() });
 }
 
 function nextIndex(){
@@ -1594,8 +1655,12 @@ function loadTrack(idx, opts){
 	const queuePos = queue.indexOf(idx);
 	if (queuePos !== -1){
 		queueIdx = queuePos;
-		persistQueue();
 	}
+	// Persist regardless of queuePos: if the track isn't in the
+	// current queue (e.g. user landed via ?song= for a track from
+	// outside the visible content mode), activeIdx still needs to
+	// survive a reload.
+	persistState();
 
 	// fade text out, then update + fade in
 	$trackInfo.classList.add("is-fading");
@@ -1635,6 +1700,19 @@ function play(){
 		loadTrack(nextIndex(), {play:true});
 		return;
 	}
+	// iOS releases the audio element's decoded buffer when another
+	// app takes audio focus (mic, phone, etc), and the play action
+	// from the lock screen lands here with $audio.src empty. Re-set
+	// the src from activeIdx before play() — otherwise .play()
+	// rejects silently and the lock-screen controls appear broken
+	// (Steve: "pressing play doesn't restart the music"). loadTrack
+	// also resets BG / labels / loop flag, so this is the same path
+	// the user gets when they tap a track in the drawer.
+	const track = TRACKS[activeIdx];
+	if (track && (!$audio.src || $audio.src === "" || $audio.error)){
+		loadTrack(activeIdx, {play:true});
+		return;
+	}
 	const p = $audio.play();
 	if (p && p.catch) p.catch(()=>{});
 }
@@ -1672,6 +1750,12 @@ $audio.addEventListener("play",  ()=>{
 	$spiralBtn.setAttribute("aria-pressed","true");
 	$invitation.classList.add("is-hidden");
 	updateMediaSessionMeta();
+	// Tell the OS our playback state so the lock-screen control
+	// renders the correct icon and our action handler stays
+	// registered for the "playing" state.
+	if ("mediaSession" in navigator) {
+		try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}
+	}
 });
 $audio.addEventListener("pause", ()=>{
 	document.body.classList.remove("is-playing");
@@ -1683,6 +1767,9 @@ $audio.addEventListener("pause", ()=>{
 	// fades back in to fill the empty slot above the transport).
 	// CSS transition handles the fade.
 	$invitation.classList.remove("is-hidden");
+	if ("mediaSession" in navigator) {
+		try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
+	}
 });
 $audio.addEventListener("ended", ()=>{
 	// `paused` flips to true the instant a track ends naturally, so
@@ -2083,36 +2170,82 @@ window.echoesRefreshDynamicLabels = function(){
 		reachedChapter = detected;
 		// content stays "played" — the default
 	}
+
+	// Restore persisted settings (mode + activeIdx) before reshuffle.
+	// reshuffle() reads `mode` to decide queue order, and uses
+	// `activeIdx` to sync queueIdx after regenerating. Without this,
+	// a refresh while playing track 7 in sequential mode would land
+	// on track 0 in shuffled (the default) on next boot.
+	const VALID_MODES = ["shuffled", "sequential", "repeat"];
+	const persisted = loadStoredState();
+	if (persisted && VALID_MODES.indexOf(persisted.mode) !== -1){
+		mode = persisted.mode;
+	}
+	if (persisted && typeof persisted.activeIdx === "number"
+	    && persisted.activeIdx >= 0 && persisted.activeIdx < TRACKS.length){
+		activeIdx = persisted.activeIdx;
+	}
+
+	// URL params win over persisted state — these are how someone
+	// shares a link to a specific song-and-mode landing.
+	const urlParams = parseUrlParams();
+	if (urlParams.mode && VALID_MODES.indexOf(urlParams.mode) !== -1){
+		mode = urlParams.mode;
+	}
+	let urlSongIdx = -1;
+	if (urlParams.song){
+		urlSongIdx = findTrackBySlug(urlParams.song);
+		if (urlSongIdx !== -1) activeIdx = urlSongIdx;
+	}
+
 	updateModeLabel();
 	updateContentLabel();
 	updateCounts();
 	reshuffle();
 	buildTracklist();
 
-	// Soft-restore the previously-active track on PWA / tab reopen.
-	// reshuffle() restores queueIdx from sessionStorage, but
-	// activeIdx stays at -1 — so a tap on Play used to fall into
-	// the activeIdx<0 branch of play() and advance the queue by
-	// one (Steve: "I had to get to the next track before it would
-	// start playing"). Pre-loading the audio src + visible state
-	// here means the next tap on Play picks up exactly where the
-	// user left, no surprise track skip.
+	// Soft-restore the previously-active track on reload / PWA reopen.
+	// Source of truth is activeIdx (just restored from localStorage,
+	// or overridden by URL ?song=). Without this, a tap on Play used
+	// to fall into the activeIdx<0 branch of play() and advance the
+	// queue by one (Steve: "I had to get to the next track before it
+	// would start playing"). Pre-loading audio.src + visible state
+	// means the next tap on Play picks up exactly where the user left.
 	let restored = false;
-	if (queueIdx >= 0 && queueIdx < queue.length){
-		const idx = queue[queueIdx];
-		const track = (idx != null && idx >= 0 && idx < TRACKS.length) ? TRACKS[idx] : null;
+	const restoreIdx = (urlSongIdx !== -1) ? urlSongIdx
+	                   : (activeIdx >= 0 ? activeIdx
+	                      : (queueIdx >= 0 && queueIdx < queue.length ? queue[queueIdx] : -1));
+	if (restoreIdx != null && restoreIdx >= 0 && restoreIdx < TRACKS.length){
+		const track = TRACKS[restoreIdx];
 		if (track){
-			activeIdx = idx;
+			activeIdx = restoreIdx;
+			// Sync queueIdx to the track's position in the current
+			// queue (it may differ from the persisted queueIdx if a
+			// URL ?song= override landed on a different track).
+			const qPos = queue.indexOf(restoreIdx);
+			if (qPos !== -1) queueIdx = qPos;
 			$audio.src = trackAudioUrl(track);
-			// In repeat mode the audio element loops the active track so
-	// it plays indefinitely. In other modes the per-track loop
-	// flag only applies in minimal mode (Lirien Remembers seamless).
-	$audio.loop = (mode === "repeat") || (!!track.loop && content === "minimal");
+			// Repeat mode loops the active track; otherwise per-track
+			// loop only applies in minimal mode (seamless Lirien Remembers).
+			$audio.loop = (mode === "repeat") || (!!track.loop && content === "minimal");
 			$trackTitle.textContent = track.title;
 			$trackCaption.textContent = captionFor(track, currentLang());
 			updateActiveRow();
 			setBg(track.image);
 			restored = true;
+			// If we landed here via a URL ?song= override, try to
+			// auto-play. Browser autoplay policy may block (no prior
+			// user gesture on this page) — that's fine, the user
+			// taps Play and we resume from the loaded track.
+			if (urlSongIdx !== -1){
+				const p = $audio.play();
+				if (p && p.catch) p.catch(()=>{ /* autoplay blocked */ });
+			}
+			// Persist the resolved activeIdx (might differ from the
+			// blob's, if a URL override or queueIdx fallback landed
+			// elsewhere). Without this the next refresh forgets the
+			// override and falls back to the prior session's track.
+			persistState();
 		}
 	}
 	if (!restored){

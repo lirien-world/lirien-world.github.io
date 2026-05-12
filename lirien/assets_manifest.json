@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260512-073347",
-  "generated_at": "2026-05-12T06:33:48Z",
+  "manifest_version": "20260512-160312",
+  "generated_at": "2026-05-12T15:03:30Z",
   "asset_count": 357,
-  "total_size": 632604594,
+  "total_size": 632605160,
   "chapters": [
     {
       "number": 1,
@@ -1447,12 +1447,12 @@
       "size": 10170
     },
     "story.json": {
-      "hash": "670c5c0dff",
-      "size": 145906
+      "hash": "f871da79b5",
+      "size": 146189
     },
     "story_es.json": {
-      "hash": "0c95668852",
-      "size": 154683
+      "hash": "d22fe36cac",
+      "size": 154966
     }
   }
 }

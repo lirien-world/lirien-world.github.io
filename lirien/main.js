@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512v";
+const ASSET_VERSION = "20260512w";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1866,6 +1866,10 @@ const CHAPTER_TINTS = {
 	// Ch4 — the one who waits. Cooler steel-blue; patience.
 	"Four":   "rgba(150, 172, 200, 0.20)",
 	"Cuatro": "rgba(150, 172, 200, 0.20)",
+	// Ch5 — the path beneath the silence. Pale lichen / bone-green;
+	// road-memory, old stone, fog, and withheld rooms.
+	"Five":  "rgba(154, 184, 150, 0.20)",
+	"Cinco": "rgba(154, 184, 150, 0.20)",
 };
 
 function showChapterTitleOverlay(spec) {

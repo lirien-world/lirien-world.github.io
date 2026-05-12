@@ -1651,10 +1651,6 @@ body.story-started .chrome-btn {
 	border-bottom: 1px solid rgba(196, 147, 90, 0.12);
 }
 .drawer-section:last-child { border-bottom: none; }
-.drawer:not(.has-open-section) .drawer-section {
-	flex: 1 1 0;
-	min-height: 0;
-}
 
 .drawer-section-summary {
 	all: unset;
@@ -1676,9 +1672,6 @@ body.story-started .chrome-btn {
 	color: var(--mist);
 	transition: color 0.3s ease;
 	-webkit-tap-highlight-color: transparent;
-}
-.drawer:not(.has-open-section) .drawer-section-summary {
-	height: 100%;
 }
 @media (hover: hover) and (pointer: fine) {
 	.drawer-section-summary:hover { color: var(--gold-bright); }

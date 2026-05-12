@@ -626,7 +626,7 @@ function updateDrawerFit(drawer, settled) {
 	const measuredHeight = drawerBodyMeasuredHeight(body);
 	const baseHeight = Math.max(0, measuredHeight - currentPad);
 	const minPad = denseViewport ? (openSections > 0 ? 0.75 : 2.5) : 4;
-	const maxPad = denseViewport ? 18 : (openSections === 0 ? 40 : 64);
+	const maxPad = denseViewport ? (openSections > 0 ? 18 : 40) : 64;
 	const fittedPad = clampNum(
 		(targetBodyHeight - baseHeight) / (adjustableRows.length * 2),
 		minPad,

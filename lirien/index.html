@@ -5,6 +5,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="author" content="Steven Jordan">
+	<meta name="copyright" content="© 2026 Steven Jordan. All rights reserved.">
 	<title>Chronicles of Lirien</title>
 	<link rel="icon" href="../favicon-v3.ico" sizes="any">
 	<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32-v3.png">
@@ -16,7 +18,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512z">
+	<link rel="stylesheet" href="style.css?v=20260512aa">
 </head>
 <body>
 	<script>
@@ -196,6 +198,10 @@
 		<div class="drawer-foot-actions">
 			<button id="return-recent-btn" class="drawer-action" hidden data-i18n="lirien.action.return-recent">Return to most recent point</button>
 			<button id="restart-btn" class="drawer-action drawer-action--danger" data-i18n="lirien.action.restart">Restart from beginning</button>
+			<div class="drawer-rights">
+				<p>© 2026 Steven Jordan. All rights reserved.</p>
+				<a href="/rights/" target="_blank" rel="noopener">Rights &amp; Use</a>
+			</div>
 		</div>
 	</aside>
 	<div id="rotate-prompt" class="rotate-prompt" data-i18n="lirien.rotate">Please rotate your device to landscape</div>
@@ -277,7 +283,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260512-183352";
+		const BUILD_VERSION = "20260512-193655";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -636,8 +642,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512z"></script>
-	<script src="ink.js?v=20260512z"></script>
-	<script src="main.js?v=20260512z"></script>
+	<script src="analytics.js?v=20260512aa"></script>
+	<script src="ink.js?v=20260512aa"></script>
+	<script src="main.js?v=20260512aa"></script>
 </body>
 </html>

@@ -1392,6 +1392,29 @@ body.story-started .chrome-btn {
 	transition: color 0.3s ease, background 0.3s ease;
 	-webkit-tap-highlight-color: transparent;
 }
+.drawer-rights {
+	margin-top: 0.6rem;
+	padding: 0.8rem 0.5rem 0;
+	border-top: 1px solid rgba(196, 147, 90, 0.12);
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 0.78rem;
+	line-height: 1.5;
+	letter-spacing: 0.04em;
+	color: rgba(245, 235, 210, 0.46);
+}
+.drawer-rights p { margin: 0 0 0.35rem 0; }
+.drawer-rights a {
+	color: var(--gold);
+	text-decoration: none;
+	border-bottom: 1px solid rgba(196, 147, 90, 0.28);
+	transition: color 0.3s ease, border-color 0.3s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+	.drawer-rights a:hover {
+		color: var(--gold-bright);
+		border-color: rgba(224, 176, 112, 0.65);
+	}
+}
 
 /* ----- offline-reading panel -----
  * Dynamic panel inside the "Offline reading" drawer section. Its

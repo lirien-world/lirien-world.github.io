@@ -7,6 +7,8 @@
 <title>Lirien · The Spiral Plays</title>
 <meta name="description" content="The music of The Spiral That Remembers — the spiral plays when you ask it to.">
 <meta name="robots" content="noindex,nofollow">
+<meta name="author" content="Steven Jordan">
+<meta name="copyright" content="© 2026 Steven Jordan. All rights reserved.">
 
 <!-- PWA — homescreen-installable, plays music in the background.
      iOS Safari: apple-mobile-web-app-capable + status-bar-style
@@ -637,6 +639,28 @@ body.is-playing .progress{
 	border-top:1px solid rgba(196,147,90,0.18);
 	margin-top:0.4rem;
 }
+.drawer-rights{
+	margin-top:0.5rem;
+	padding:0.9rem 0.25rem 0;
+	border-top:1px solid rgba(196,147,90,0.12);
+	font-family:'Cormorant Garamond',serif;
+	font-size:var(--text-xs);
+	line-height:1.55;
+	letter-spacing:0.04em;
+	color:rgba(245,235,210,0.46);
+}
+.drawer-rights p{margin:0 0 0.35rem 0}
+.drawer-rights a{
+	color:var(--gold);
+	text-decoration:none;
+	border-bottom:1px solid rgba(196,147,90,0.28);
+	transition:color 0.3s ease,border-color 0.3s ease;
+}
+.drawer-rights a:hover,.drawer-rights a:focus-visible{
+	color:var(--gold-bright);
+	border-color:rgba(224,176,112,0.65);
+	outline:none;
+}
 .drawer-settings-group{
 	border:none;
 }
@@ -1058,6 +1082,10 @@ body.is-playing .progress{
 					<button class="drawer-row" type="button" data-content="minimal" data-i18n="echoes.settings.content.minimal">Just the theme</button>
 				</div>
 			</details>
+			<div class="drawer-rights">
+				<p>© 2026 Steven Jordan. All rights reserved.</p>
+				<a href="/rights/" target="_blank" rel="noopener">Rights &amp; Use</a>
+			</div>
 		</section>
 	</div>
 </aside>
@@ -1103,7 +1131,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260512-160301";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260512-193655";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;

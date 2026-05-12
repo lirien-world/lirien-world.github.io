@@ -943,11 +943,16 @@ body.is-choosing .prose {
 	 * cleanly with the start of the visible text region. */
 	scroll-snap-type: y mandatory;
 	scroll-padding-top: 8px;
-	/* Vertical padding split with .prose's 14px buffer above. Extra
-	 * bottom padding (was 12, now 18) gives descenders (g/p/y) room
+	/* Vertical padding split with .prose's 14px buffer above. Padding
+	 * top is 28px to match the is-scrolled top-fade height: the
+	 * first line of any chunk lands exactly at the fade's end, so it
+	 * always reads at full opacity even when the fade is active.
+	 * Prior content peeking above gets faded into the empty padding
+	 * zone — the fade has somewhere to work without obscuring text.
+	 * Extra bottom padding (18) gives descenders (g/p/y) room
 	 * to render below the last visible line without overflow:auto
 	 * clipping them — Steve's report 2026-05-11. */
-	padding: 4px 36px 18px 36px;
+	padding: 28px 36px 18px 36px;
 	font-size: var(--prose-font-size, 36px);
 	line-height: 1.4;
 	color: #f5ebd2;
@@ -2192,7 +2197,8 @@ body.story-started .chrome-btn {
 		border-radius: 8px;
 	}
 	.prose-content {
-		padding: 22px 18px 28px 18px;
+		/* Top matches the 28px fade height (see base rule above). */
+		padding: 28px 18px 28px 18px;
 	}
 	/* Standalone (Add to Home Screen) gets the full viewport with no
 	 * browser chrome eating space, so the prose panel can shrink and

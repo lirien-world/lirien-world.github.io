@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512u";
+const ASSET_VERSION = "20260512v";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1473,23 +1473,17 @@ function updateCharFade() {
 // events that would otherwise re-trigger the timer.
 let proseScrollEndTimer = 0;
 let snapInProgress = false;
-// scrollTop where the active chunk's top is flush with the inner
-// padding edge (set by scrollChunkToTop, cleared by clearTranscript).
-// The is-scrolled top fade is only meaningful when the user has
-// scrolled AWAY from this position — otherwise the active chunk is
-// the topmost visible content and there's nothing above it to fade.
-// Without this guard, mid-chapter continues land at scrollTop > 4
-// and the top fade obscures the first line of the new chunk as it
-// types — Steve's report 2026-05-12.
-let activeChunkScrollTop = null;
+// Toggle .is-scrolled when there's any prior content above the
+// viewport. The top fade lives in a 28px zone that exactly matches
+// the .prose-content padding-top — so the active chunk's first line
+// always lands AT the fade's end (full opacity). The fade can fire
+// aggressively because it never covers active text; it only fades
+// content peeking up into the empty padding zone above the first
+// line. Steve 2026-05-12: simpler than the activeChunkScrollTop
+// gate, and it keeps the fade in place where it's needed.
 function updateIsScrolled() {
-	const st = $proseContent.scrollTop;
-	const ac = activeChunkScrollTop;
-	const scrolled = (ac === null)
-		? st > 4
-		: Math.abs(st - ac) > 4;
-	if (scrolled) $prose.classList.add("is-scrolled");
-	else          $prose.classList.remove("is-scrolled");
+	if ($proseContent.scrollTop > 4) $prose.classList.add("is-scrolled");
+	else                             $prose.classList.remove("is-scrolled");
 }
 if ($proseContent) {
 	$proseContent.addEventListener("scroll", () => {
@@ -1613,16 +1607,6 @@ function scrollChunkToTop(paragraph) {
 			offset = Math.max(offset, prevBottom + safety);
 		}
 		$proseContent.scrollTo({ top: offset, behavior: "auto" });
-		// Record where the active chunk sits so the scroll listener
-		// can suppress the is-scrolled top fade until the user moves
-		// off this position. Without this, the top fade would catch
-		// the first line of the new chunk as it types.
-		// Read scrollTop AFTER scrollTo — the browser clamps to the
-		// max scrollable extent, so for short content that fits in
-		// the viewport the requested offset is meaningless. We want
-		// the achieved position, not the requested one.
-		activeChunkScrollTop = $proseContent.scrollTop;
-		updateIsScrolled();
 	});
 }
 
@@ -1855,7 +1839,6 @@ function clearTranscript() {
 	// the cleared panel; first prose chunk types into a clean surface.
 	$proseContent.innerHTML = "";
 	$proseContent.scrollTop = 0;
-	activeChunkScrollTop = null;
 	updateIsScrolled();
 }
 

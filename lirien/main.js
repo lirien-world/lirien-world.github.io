@@ -588,7 +588,7 @@ function verticalPadding(el) {
 	const styles = getComputedStyle(el);
 	return (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
 }
-function drawerBodyMeasuredHeight(body) {
+function drawerBodyMeasuredHeight(body, openSections) {
 	const children = Array.from(body.children);
 	if (!children.length) return 0;
 	const styles = getComputedStyle(body);
@@ -596,6 +596,10 @@ function drawerBodyMeasuredHeight(body) {
 	return children.reduce((sum, child) => {
 		const summary = child.querySelector(".drawer-section-summary");
 		const sectionBody = child.querySelector(".drawer-section-body");
+		if (summary && openSections === 0) {
+			const borderBottom = parseFloat(getComputedStyle(child).borderBottomWidth) || 0;
+			return sum + summary.getBoundingClientRect().height + borderBottom;
+		}
 		if (!summary || !sectionBody || !child.classList.contains("is-open")) {
 			return sum + child.getBoundingClientRect().height;
 		}
@@ -613,6 +617,7 @@ function updateDrawerFit(drawer, settled) {
 
 	const openSections = body.querySelectorAll(".drawer-section.is-open").length;
 	target.classList.toggle("has-open-section", openSections > 0);
+	if (openSections === 0 && body.scrollTop !== 0) body.scrollTop = 0;
 	const adjustableRows = Array.from(body.querySelectorAll(
 		".drawer-section-summary, .drawer-section.is-open .chapter-btn, .drawer-section.is-open .setting-row"
 	));
@@ -621,9 +626,9 @@ function updateDrawerFit(drawer, settled) {
 		return;
 	}
 
-	const targetBodyHeight = body.clientHeight;
+	const targetBodyHeight = Math.max(0, body.clientHeight - (openSections === 0 ? 8 : 0));
 	const currentPad = adjustableRows.reduce((sum, row) => sum + verticalPadding(row), 0);
-	const measuredHeight = drawerBodyMeasuredHeight(body);
+	const measuredHeight = drawerBodyMeasuredHeight(body, openSections);
 	const baseHeight = Math.max(0, measuredHeight - currentPad);
 	const minPad = denseViewport ? (openSections > 0 ? 0.75 : 2.5) : 4;
 	const maxPad = denseViewport ? (openSections > 0 ? 18 : 40) : 64;

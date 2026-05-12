@@ -1732,6 +1732,9 @@ body.story-started .chrome-btn {
 	gap: 0.05rem;
 	padding-bottom: 0.15rem;
 }
+.drawer-section:not(.is-open) .drawer-section-content {
+	padding-bottom: 0;
+}
 
 .chapter-list {
 	display: flex;

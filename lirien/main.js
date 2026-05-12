@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512y";
+const ASSET_VERSION = "20260512z";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1594,23 +1594,13 @@ function scrollChunkToTop(paragraph) {
 	// padding-height below the top of the visible area — i.e. flush
 	// with the inner padding edge, not the bare panel border. After
 	// settling, the user can scroll up freely to re-read prior chunks.
-	//
-	// Defensive: also ensure the previous paragraph's bottom is at
-	// least `safety` pixels above the viewport top, regardless of
-	// what the padTop+margin math says. Vollkorn (and other serifs)
-	// render descenders that extend beyond a line's offsetHeight,
-	// and sub-pixel rendering / non-integer scrollTop can leak a
-	// pixel or two of those descenders into the visible area as a
-	// ghost-text artifact at the top edge.
+	// Do not push farther down to hide the previous paragraph here:
+	// if we do, a freshly-starting chunk can land inside the top fade
+	// band and begin typing partially dimmed. The top fade exists
+	// specifically to absorb any prior text as it exits.
 	requestAnimationFrame(() => {
 		const padTop = parseInt(getComputedStyle($proseContent).paddingTop, 10) || 0;
-		let offset = Math.max(0, paragraph.offsetTop - padTop);
-		const prev = paragraph.previousElementSibling;
-		if (prev && prev.tagName === "P") {
-			const prevBottom = prev.offsetTop + prev.offsetHeight;
-			const safety = 10;  // px headroom for descenders + AA
-			offset = Math.max(offset, prevBottom + safety);
-		}
+		const offset = Math.max(0, paragraph.offsetTop - padTop);
 		$proseContent.scrollTo({ top: offset, behavior: "auto" });
 	});
 }

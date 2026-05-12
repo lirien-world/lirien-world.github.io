@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260511-200927",
-  "generated_at": "2026-05-11T20:35:33Z",
-  "asset_count": 297,
-  "total_size": 533483576,
+  "manifest_version": "20260512-073347",
+  "generated_at": "2026-05-12T06:33:48Z",
+  "asset_count": 357,
+  "total_size": 632604594,
   "chapters": [
     {
       "number": 1,
@@ -19,6 +19,10 @@
     {
       "number": 4,
       "title": "Four \u2014 The One Who Waits"
+    },
+    {
+      "number": 5,
+      "title": "Five \u2014 The Path Beneath the Silence"
     }
   ],
   "assets": {
@@ -1022,6 +1026,246 @@
       "hash": "ccb2a1ccf2",
       "size": 583950
     },
+    "atmosphere/ch05_absent_river_arch.png": {
+      "hash": "a3f81f8562",
+      "size": 3104118
+    },
+    "atmosphere/ch05_absent_river_arch.webp": {
+      "hash": "788e56d65c",
+      "size": 538158
+    },
+    "atmosphere/ch05_b01_ink_faded.png": {
+      "hash": "4b9ef82a65",
+      "size": 2753282
+    },
+    "atmosphere/ch05_b01_ink_faded.webp": {
+      "hash": "115d7892ba",
+      "size": 392322
+    },
+    "atmosphere/ch05_b02_wrong_road.png": {
+      "hash": "513ba3665e",
+      "size": 3081338
+    },
+    "atmosphere/ch05_b02_wrong_road.webp": {
+      "hash": "a0e8d6b413",
+      "size": 533446
+    },
+    "atmosphere/ch05_b03_paradox_milestone.png": {
+      "hash": "e87a67fdb8",
+      "size": 3141563
+    },
+    "atmosphere/ch05_b03_paradox_milestone.webp": {
+      "hash": "89cc6ebfd0",
+      "size": 550252
+    },
+    "atmosphere/ch05_b04_thistle_history.png": {
+      "hash": "90f771a4d4",
+      "size": 2512085
+    },
+    "atmosphere/ch05_b04_thistle_history.webp": {
+      "hash": "447f7a2988",
+      "size": 304354
+    },
+    "atmosphere/ch05_b05_after_overshoot.png": {
+      "hash": "5dfd531520",
+      "size": 2366455
+    },
+    "atmosphere/ch05_b05_after_overshoot.webp": {
+      "hash": "353cfd1fe5",
+      "size": 264546
+    },
+    "atmosphere/ch05_b06_city_doorways.png": {
+      "hash": "18800782ee",
+      "size": 2900966
+    },
+    "atmosphere/ch05_b06_city_doorways.webp": {
+      "hash": "104273fe12",
+      "size": 466528
+    },
+    "atmosphere/ch05_b07_room_uncertainty.png": {
+      "hash": "0403901697",
+      "size": 2560469
+    },
+    "atmosphere/ch05_b07_room_uncertainty.webp": {
+      "hash": "0ead205013",
+      "size": 338542
+    },
+    "atmosphere/ch05_broken_arch_city_lost.png": {
+      "hash": "4f06291962",
+      "size": 2801705
+    },
+    "atmosphere/ch05_broken_arch_city_lost.webp": {
+      "hash": "cd76598841",
+      "size": 420154
+    },
+    "atmosphere/ch05_city_lost_first_streets.png": {
+      "hash": "d9b9843d13",
+      "size": 2964911
+    },
+    "atmosphere/ch05_city_lost_first_streets.webp": {
+      "hash": "9947792a02",
+      "size": 486530
+    },
+    "atmosphere/ch05_city_lost_room.png": {
+      "hash": "129619e5db",
+      "size": 2507069
+    },
+    "atmosphere/ch05_city_lost_room.webp": {
+      "hash": "ee18945b78",
+      "size": 316920
+    },
+    "atmosphere/ch05_deeper_footstep.png": {
+      "hash": "306568203f",
+      "size": 2649455
+    },
+    "atmosphere/ch05_deeper_footstep.webp": {
+      "hash": "7064a75ce9",
+      "size": 365652
+    },
+    "atmosphere/ch05_i01_spiral_gate_release.png": {
+      "hash": "1a11533be4",
+      "size": 3057892
+    },
+    "atmosphere/ch05_i01_spiral_gate_release.webp": {
+      "hash": "a2cba20498",
+      "size": 529022
+    },
+    "atmosphere/ch05_i02_compass_inert.png": {
+      "hash": "c00e09530e",
+      "size": 2783143
+    },
+    "atmosphere/ch05_i02_compass_inert.webp": {
+      "hash": "98b4ea9d2a",
+      "size": 412064
+    },
+    "atmosphere/ch05_i03_whistled_memory.png": {
+      "hash": "83e0c9834d",
+      "size": 3020794
+    },
+    "atmosphere/ch05_i03_whistled_memory.webp": {
+      "hash": "4c6ba787b6",
+      "size": 501086
+    },
+    "atmosphere/ch05_i04_shrine_glyph_cycle.png": {
+      "hash": "ba5a2bbe9f",
+      "size": 3353524
+    },
+    "atmosphere/ch05_i04_shrine_glyph_cycle.webp": {
+      "hash": "bc0ec28e80",
+      "size": 635292
+    },
+    "atmosphere/ch05_i05_compass_steady_lunch.png": {
+      "hash": "8af39c1ab7",
+      "size": 3016367
+    },
+    "atmosphere/ch05_i05_compass_steady_lunch.webp": {
+      "hash": "74699b1a3f",
+      "size": 489586
+    },
+    "atmosphere/ch05_i06_interested_stars.png": {
+      "hash": "d7e1e5338a",
+      "size": 2825585
+    },
+    "atmosphere/ch05_i06_interested_stars.webp": {
+      "hash": "ada29eaeb1",
+      "size": 397498
+    },
+    "atmosphere/ch05_i07_thistle_name_memory.png": {
+      "hash": "06865c2db0",
+      "size": 2539672
+    },
+    "atmosphere/ch05_i07_thistle_name_memory.webp": {
+      "hash": "e440be989c",
+      "size": 302782
+    },
+    "atmosphere/ch05_i08_mushroom_contact.png": {
+      "hash": "ab2172252f",
+      "size": 2652220
+    },
+    "atmosphere/ch05_i08_mushroom_contact.webp": {
+      "hash": "9eb54ef981",
+      "size": 352876
+    },
+    "atmosphere/ch05_i09_three_flashes.png": {
+      "hash": "e6b40cd0da",
+      "size": 2278024
+    },
+    "atmosphere/ch05_i09_three_flashes.webp": {
+      "hash": "7b8333f81c",
+      "size": 256668
+    },
+    "atmosphere/ch05_i10_arch_hand_contact.png": {
+      "hash": "a4a8c85de0",
+      "size": 2744709
+    },
+    "atmosphere/ch05_i10_arch_hand_contact.webp": {
+      "hash": "43c670c2f0",
+      "size": 400862
+    },
+    "atmosphere/ch05_i11_wall_shimmer_compass.png": {
+      "hash": "cca2154b87",
+      "size": 2734696
+    },
+    "atmosphere/ch05_i11_wall_shimmer_compass.webp": {
+      "hash": "00e2299b55",
+      "size": 410836
+    },
+    "atmosphere/ch05_leaving_solrien.png": {
+      "hash": "45bc07d6c6",
+      "size": 2787384
+    },
+    "atmosphere/ch05_leaving_solrien.webp": {
+      "hash": "571482ab36",
+      "size": 412124
+    },
+    "atmosphere/ch05_mushroom_path.png": {
+      "hash": "2d9aedc676",
+      "size": 3088348
+    },
+    "atmosphere/ch05_mushroom_path.webp": {
+      "hash": "7e4613154c",
+      "size": 530886
+    },
+    "atmosphere/ch05_paradox_milestone.png": {
+      "hash": "8387835eda",
+      "size": 3360240
+    },
+    "atmosphere/ch05_paradox_milestone.webp": {
+      "hash": "c101b28447",
+      "size": 623778
+    },
+    "atmosphere/ch05_tone_anchor_overshoot.png": {
+      "hash": "79afde73a2",
+      "size": 3174936
+    },
+    "atmosphere/ch05_tone_anchor_overshoot.webp": {
+      "hash": "e7af505cc7",
+      "size": 554340
+    },
+    "atmosphere/ch05_way_shrine.png": {
+      "hash": "a8560f52c1",
+      "size": 3076803
+    },
+    "atmosphere/ch05_way_shrine.webp": {
+      "hash": "8a7d30395e",
+      "size": 540464
+    },
+    "atmosphere/ch05_white_leaf_camp.png": {
+      "hash": "e81ee17db2",
+      "size": 2830297
+    },
+    "atmosphere/ch05_white_leaf_camp.webp": {
+      "hash": "66895e5a3f",
+      "size": 426198
+    },
+    "atmosphere/ch05_wrong_road_grove.png": {
+      "hash": "14c33dc66b",
+      "size": 3104587
+    },
+    "atmosphere/ch05_wrong_road_grove.webp": {
+      "hash": "75b390ecc6",
+      "size": 519636
+    },
     "atmosphere/glyph_in_air.png": {
       "hash": "8b0745a949",
       "size": 1176208
@@ -1199,16 +1443,16 @@
       "size": 3898837
     },
     "shimmer_anchors.json": {
-      "hash": "98dfb66c68",
-      "size": 8214
+      "hash": "c1bc642f24",
+      "size": 10170
     },
     "story.json": {
-      "hash": "2eea0ffe68",
-      "size": 110665
+      "hash": "670c5c0dff",
+      "size": 145906
     },
     "story_es.json": {
-      "hash": "0c51c663be",
-      "size": 116901
+      "hash": "0c95668852",
+      "size": 154683
     }
   }
 }

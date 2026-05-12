@@ -644,12 +644,11 @@ body.is-playing .progress{
 	padding:0.9rem 0.25rem 0;
 	border-top:1px solid rgba(196,147,90,0.12);
 	font-family:'Cormorant Garamond',serif;
-	font-size:var(--text-xs);
-	line-height:1.55;
+	font-size:clamp(0.66rem,1.2vw,0.76rem);
+	line-height:1.45;
 	letter-spacing:0.04em;
 	color:rgba(245,235,210,0.46);
 }
-.drawer-rights p{margin:0 0 0.35rem 0}
 .drawer-rights a{
 	color:var(--gold);
 	text-decoration:none;
@@ -1083,8 +1082,7 @@ body.is-playing .progress{
 				</div>
 			</details>
 			<div class="drawer-rights">
-				<p>© 2026 Steven Jordan. All rights reserved.</p>
-				<a href="/rights/" target="_blank" rel="noopener">Rights &amp; Use</a>
+				© 2026 Steven Jordan. All rights reserved. <a href="/rights/" target="_blank" rel="noopener">Rights &amp; Use</a>
 			</div>
 		</section>
 	</div>

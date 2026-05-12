@@ -1397,12 +1397,11 @@ body.story-started .chrome-btn {
 	padding: 0.8rem 0.5rem 0;
 	border-top: 1px solid rgba(196, 147, 90, 0.12);
 	font-family: 'Cormorant Garamond', serif;
-	font-size: 0.78rem;
-	line-height: 1.5;
+	font-size: 0.72rem;
+	line-height: 1.45;
 	letter-spacing: 0.04em;
 	color: rgba(245, 235, 210, 0.46);
 }
-.drawer-rights p { margin: 0 0 0.35rem 0; }
 .drawer-rights a {
 	color: var(--gold);
 	text-decoration: none;

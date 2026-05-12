@@ -622,6 +622,33 @@ body.is-playing .progress{
 	-webkit-overflow-scrolling:touch;
 	display:flex;flex-direction:column;
 	gap:1rem;
+	padding-right:0.15rem;
+	scrollbar-width:thin;
+	scrollbar-color:rgba(196,147,90,0.55) rgba(245,235,210,0.08);
+}
+.drawer-body::-webkit-scrollbar{width:5px}
+.drawer-body::-webkit-scrollbar-track{background:rgba(245,235,210,0.08)}
+.drawer-body::-webkit-scrollbar-thumb{
+	background:rgba(196,147,90,0.55);
+	border-radius:3px;
+}
+.drawer.has-scroll-more .drawer-body{
+	-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - 26px),transparent 100%);
+	mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - 26px),transparent 100%);
+}
+.drawer.has-scroll-more .drawer-body::after{
+	content:"";
+	position:sticky;
+	bottom:0.25rem;
+	align-self:flex-end;
+	width:0;height:0;
+	margin-top:-0.5rem;
+	margin-right:0.45rem;
+	border-left:0.34em solid transparent;
+	border-right:0.34em solid transparent;
+	border-top:0.38em solid rgba(224,176,112,0.82);
+	filter:drop-shadow(0 0 6px rgba(196,147,90,0.45));
+	pointer-events:none;
 }
 
 /* Settings section — collapsible groups for play order + content
@@ -777,6 +804,22 @@ body.is-playing .progress{
 .track-row.is-active .name{color:var(--parchment)}
 .track-row.is-active .where{color:var(--gold)}
 .track-row.is-active .num::before{content:"◆ ";color:var(--gold);letter-spacing:0;font-size:0.85em}
+
+@media (max-height:520px),(max-width:720px){
+	.drawer-body{gap:0.55rem}
+	.drawer-settings{gap:0.25rem;padding-top:0.55rem;margin-top:0.25rem}
+	.drawer-settings-summary{padding:0.38rem 0.2rem}
+	.drawer-settings-rows{gap:0.18rem;padding:0.12rem 0 0.4rem 0}
+	.drawer-row{font-size:clamp(0.82rem,2.3vw,0.95rem);padding:0.4rem 0.55rem}
+	.tracklist{gap:0.06rem}
+	.track-row{
+		grid-template-columns:1.7rem 1fr;
+		padding:0.42rem 0.35rem 0.42rem 0;
+	}
+	.track-row .name{font-size:clamp(0.84rem,2.4vw,0.98rem);line-height:1.16}
+	.track-row .where{font-size:clamp(0.56rem,1.8vw,0.68rem);letter-spacing:0.18em}
+	.track-row .num{font-size:clamp(0.58rem,1.8vw,0.7rem);letter-spacing:0.12em}
+}
 
 .drawer-foot{
 	flex-shrink:0;
@@ -1129,7 +1172,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260512-195447";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260512-225425";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -2372,6 +2415,14 @@ function updateActiveRow(){
 }
 function escapeHtml(s){ return s.replace(/[&<>"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
+function updateDrawerScrollHint(){
+	if (!$drawer) return;
+	const body = $drawer.querySelector(".drawer-body");
+	if (!body) return;
+	const hasMore = body.scrollTop + body.clientHeight < body.scrollHeight - 2;
+	$drawer.classList.toggle("has-scroll-more", hasMore);
+}
+
 function openDrawer(){
 	$drawer.classList.add("is-open");
 	$drawerScrim.classList.add("is-open");
@@ -2390,14 +2441,17 @@ function openDrawer(){
 	// time the drawer opens — guards against external state changes
 	// (e.g. URL ?mode=repeat handling) between opens.
 	if (typeof refreshDrawerSettingsState === "function") refreshDrawerSettingsState();
+	requestAnimationFrame(updateDrawerScrollHint);
 }
 function scrollActiveTrackIntoView(){
 	const row = $tracklist.querySelector(".track-row.is-active");
 	if (!row) return;
 	row.scrollIntoView({block:"center", inline:"nearest", behavior:"auto"});
+	updateDrawerScrollHint();
 }
 function closeDrawer(){
 	$drawer.classList.remove("is-open");
+	$drawer.classList.remove("has-scroll-more");
 	$drawerScrim.classList.remove("is-open");
 	$drawer.setAttribute("aria-hidden","true");
 	$drawerScrim.setAttribute("aria-hidden","true");
@@ -2408,6 +2462,8 @@ function closeDrawer(){
 $listBtn.addEventListener("click", ()=>{ ackTap($listBtn); openDrawer(); });
 $drawerClose.addEventListener("click", closeDrawer);
 $drawerScrim.addEventListener("click", closeDrawer);
+$drawer.querySelector(".drawer-body")?.addEventListener("scroll", updateDrawerScrollHint, {passive:true});
+window.addEventListener("resize", updateDrawerScrollHint);
 
 // Hamburger menu — same target as the bottom-right "N tracks ◆"
 // button but discoverable for first-time visitors. Sets aria-expanded

@@ -593,7 +593,15 @@ function drawerBodyMeasuredHeight(body) {
 	if (!children.length) return 0;
 	const styles = getComputedStyle(body);
 	const gap = parseFloat(styles.rowGap || styles.gap) || 0;
-	return children.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0) +
+	return children.reduce((sum, child) => {
+		const summary = child.querySelector(".drawer-section-summary");
+		const sectionBody = child.querySelector(".drawer-section-body");
+		if (!summary || !sectionBody || !child.classList.contains("is-open")) {
+			return sum + child.getBoundingClientRect().height;
+		}
+		const borderBottom = parseFloat(getComputedStyle(child).borderBottomWidth) || 0;
+		return sum + summary.getBoundingClientRect().height + sectionBody.scrollHeight + borderBottom;
+	}, 0) +
 		gap * Math.max(0, children.length - 1);
 }
 function updateDrawerFit(drawer, settled) {
@@ -603,9 +611,6 @@ function updateDrawerFit(drawer, settled) {
 
 	const denseViewport = window.matchMedia("(max-height: 420px), (max-width: 720px)").matches;
 
-	const styles = getComputedStyle(target);
-	const baseSectionPad = pxFromCssVar(styles, "--drawer-section-vpad");
-	const baseOptionPad = pxFromCssVar(styles, "--drawer-option-vpad");
 	const openSections = body.querySelectorAll(".drawer-section.is-open").length;
 	target.classList.toggle("has-open-section", openSections > 0);
 	const adjustableRows = Array.from(body.querySelectorAll(
@@ -620,34 +625,23 @@ function updateDrawerFit(drawer, settled) {
 	const currentPad = adjustableRows.reduce((sum, row) => sum + verticalPadding(row), 0);
 	const measuredHeight = drawerBodyMeasuredHeight(body);
 	const baseHeight = Math.max(0, measuredHeight - currentPad);
-	const minPad = denseViewport ? 2.5 : 4;
+	const minPad = denseViewport ? (openSections > 0 ? 0.75 : 2.5) : 4;
 	const maxPad = denseViewport ? 18 : (openSections === 0 ? 40 : 64);
 	const fittedPad = clampNum(
 		(targetBodyHeight - baseHeight) / (adjustableRows.length * 2),
 		minPad,
 		maxPad
 	);
-	let sectionPad = baseSectionPad;
-	let optionPad = baseOptionPad;
-	if (openSections === 0) {
-		sectionPad = fittedPad;
-		optionPad = fittedPad;
-	} else if (baseHeight + (baseSectionPad * 2 * adjustableRows.length) > targetBodyHeight) {
-		sectionPad = fittedPad;
-		optionPad = fittedPad;
-	}
+	const sectionPad = fittedPad;
+	const optionPad = fittedPad;
 	target.style.setProperty("--drawer-fit-section-vpad", sectionPad.toFixed(1) + "px");
 	target.style.setProperty("--drawer-fit-option-vpad", optionPad.toFixed(1) + "px");
 	updateDrawerScrollHint(target);
 	updateDrawerRightsCenter(target);
 	clearTimeout(target._drawerScrollHintTimer);
 	target._drawerScrollHintTimer = setTimeout(() => {
-		if (settled) {
-			updateDrawerScrollHint(target);
-			updateDrawerRightsCenter(target);
-			return;
-		}
-		updateDrawerFit(target, true);
+		updateDrawerScrollHint(target);
+		updateDrawerRightsCenter(target);
 	}, 580);
 }
 

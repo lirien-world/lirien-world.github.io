@@ -184,10 +184,15 @@ body{
 	font:inherit;color:inherit;
 	margin:0;padding:0;
 	box-shadow:none;
-	/* Position. */
+	/* Position. iOS PWA standalone mode puts the page edge under the
+	 * notch/status bar; env(safe-area-inset-top) gives us the inset
+	 * we need to clear. Top + right padding matches the .room
+	 * container's outer padding so the menu button visually aligns
+	 * with the brand-mark text on the left edge (same top-baseline).
+	 * Steve 2026-05-12. */
 	position:fixed;
-	top:clamp(0.9rem, 2.4vw, 1.4rem);
-	right:clamp(0.9rem, 2.4vw, 1.4rem);
+	top:max(clamp(1.25rem,3vw,2.5rem), env(safe-area-inset-top));
+	right:max(clamp(1.25rem,4vw,3rem), env(safe-area-inset-right));
 	z-index:30;
 	/* Box. */
 	cursor:pointer;

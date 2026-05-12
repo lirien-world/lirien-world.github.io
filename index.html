@@ -845,6 +845,30 @@
   // Apply on boot
   applyLang(detectLang());
 
+  // Propagate the current language onto any link that lands inside
+  // the reader (/lirien/). iOS PWA standalone mode partitions
+  // localStorage per "app," so a reader installed to the home screen
+  // doesn't see lang choices made in Safari proper. Carrying the
+  // language via URL gives the reader a deterministic first-load
+  // default. The reader writes the inherited value to its own
+  // localStorage so subsequent visits don't need the param.
+  // Steve 2026-05-12.
+  document.querySelectorAll('a[href]').forEach((a) => {
+    const href = a.getAttribute("href");
+    if (!href) return;
+    // Match relative or absolute links into the reader. Skip mailto:
+    // and external URLs.
+    if (!href.match(/^(\.?\/?lirien\/|https?:\/\/[^/]+\/lirien\/)/)) return;
+    a.addEventListener("click", () => {
+      const lang = document.documentElement.lang || "en";
+      try {
+        const u = new URL(a.href, location.href);
+        u.searchParams.set("lang", lang);
+        a.href = u.toString();
+      } catch (e) { /* ignore — leave href as-is */ }
+    });
+  });
+
   function closeAllDropdowns() {
     document.querySelectorAll(".footer-lang-dropdown.open").forEach(d => d.classList.remove("open"));
     document.querySelectorAll("[data-lang-toggle].open").forEach(b => {

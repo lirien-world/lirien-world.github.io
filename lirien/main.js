@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512r";
+const ASSET_VERSION = "20260512t";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1369,7 +1369,11 @@ function scheduleProgressScroll(spans, spanTimes, timers) {
 
 				const t = setTimeout(() => {
 					if (desiredScroll > $proseContent.scrollTop) {
-						$proseContent.scrollTo({ top: desiredScroll, behavior: "smooth" });
+						// behavior:"auto" (instant). "smooth" lags ~300ms
+						// while chars keep fading in below the visible
+						// edge — Steve's report 2026-05-12: text flows
+						// past the readable area before scroll catches up.
+						$proseContent.scrollTo({ top: desiredScroll, behavior: "auto" });
 					}
 					timers.delete(t);
 				}, spanTimes[i]);
@@ -1469,18 +1473,27 @@ function updateCharFade() {
 // events that would otherwise re-trigger the timer.
 let proseScrollEndTimer = 0;
 let snapInProgress = false;
+// scrollTop where the active chunk's top is flush with the inner
+// padding edge (set by scrollChunkToTop, cleared by clearTranscript).
+// The is-scrolled top fade is only meaningful when the user has
+// scrolled AWAY from this position — otherwise the active chunk is
+// the topmost visible content and there's nothing above it to fade.
+// Without this guard, mid-chapter continues land at scrollTop > 4
+// and the top fade obscures the first line of the new chunk as it
+// types — Steve's report 2026-05-12.
+let activeChunkScrollTop = null;
+function updateIsScrolled() {
+	const st = $proseContent.scrollTop;
+	const ac = activeChunkScrollTop;
+	const scrolled = (ac === null)
+		? st > 4
+		: Math.abs(st - ac) > 4;
+	if (scrolled) $prose.classList.add("is-scrolled");
+	else          $prose.classList.remove("is-scrolled");
+}
 if ($proseContent) {
 	$proseContent.addEventListener("scroll", () => {
-		// .is-scrolled flag (currently unstyled but kept as a
-		// base-layer hook) — applied to the visual .prose panel
-		// since that's what any future scroll-state styling would
-		// target. Read scroll position from .prose-content (the
-		// actual scroll container).
-		if ($proseContent.scrollTop > 4) {
-			$prose.classList.add("is-scrolled");
-		} else {
-			$prose.classList.remove("is-scrolled");
-		}
+		updateIsScrolled();
 		// Per-character fade — actual character-level opacity based
 		// on each .ch span's distance from the viewport top edge.
 		// rAF-batched so consecutive scroll events coalesce into a
@@ -1600,6 +1613,16 @@ function scrollChunkToTop(paragraph) {
 			offset = Math.max(offset, prevBottom + safety);
 		}
 		$proseContent.scrollTo({ top: offset, behavior: "auto" });
+		// Record where the active chunk sits so the scroll listener
+		// can suppress the is-scrolled top fade until the user moves
+		// off this position. Without this, the top fade would catch
+		// the first line of the new chunk as it types.
+		// Read scrollTop AFTER scrollTo — the browser clamps to the
+		// max scrollable extent, so for short content that fits in
+		// the viewport the requested offset is meaningless. We want
+		// the achieved position, not the requested one.
+		activeChunkScrollTop = $proseContent.scrollTop;
+		updateIsScrolled();
 	});
 }
 
@@ -1832,6 +1855,8 @@ function clearTranscript() {
 	// the cleared panel; first prose chunk types into a clean surface.
 	$proseContent.innerHTML = "";
 	$proseContent.scrollTop = 0;
+	activeChunkScrollTop = null;
+	updateIsScrolled();
 }
 
 // Visual-only chapter overlay: parses the spec, paints it, and fades
@@ -2398,18 +2423,31 @@ function releasePlayerSrc(player) {
 // ----- tag dispatch -----
 
 function applyTags(tags) {
+	// First pass: bg/music/atmosphere/fx + capture the chapter spec
+	// to handle in a second pass. Chapter handling must run AFTER
+	// the other state-bearing tags so recordChapterBookmark() sees
+	// the FRESH bg/music/atmosphere (the ones this knot's entry is
+	// supposed to use), not the previous chapter's last-frame state.
+	// Steve 2026-05-12: jumping to Chapter N was loading the previous
+	// chapter's last bg because the bookmark captured currentBgName
+	// before bg: had been processed in this same applyTags call.
+	let pendingChapter = null;
 	for (const raw of tags) {
 		const tag = String(raw).trim();
 		if (tag.startsWith("bg-cut:"))          swapBackground(tag.slice(7).trim(), { instant: true });
 		else if (tag.startsWith("bg:"))         swapBackground(tag.slice(3).trim());
 		else if (tag.startsWith("music:"))      swapMusic(tag.slice(6).trim());
-		else if (tag.startsWith("chapter:"))    showChapterTitle(tag.slice(8).trim());
+		else if (tag.startsWith("chapter:"))    pendingChapter = tag.slice(8).trim();
 		else if (tag.startsWith("atmosphere:")) setAtmosphere(tag.slice(11).trim());
 		else if (tag.startsWith("fx:"))         fireFx(tag.slice(3).trim());
 		else if (tag === "transition")          { /* TODO: shimmer dissolve */ }
 		// portrait_left / portrait_right / portrait_clear can be wired
 		// later when the new game adds them.
 	}
+	// Second pass: chapter title + bookmark, with the bookmark now
+	// capturing the just-applied bg/music/atmosphere for this chapter
+	// (not the trailing state from the previous chapter).
+	if (pendingChapter) showChapterTitle(pendingChapter);
 }
 
 // ----- atmosphere + fx layer -----

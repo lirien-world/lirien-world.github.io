@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512r">
+	<link rel="stylesheet" href="style.css?v=20260512t">
 </head>
 <body>
 	<script>
@@ -473,7 +473,21 @@
 		};
 
 		function detectLang() {
+			// URL param wins — the landing page CTA appends ?lang=<current>
+			// so when a reader opens the book from the landing they
+			// inherit whichever language was active there. Critical on
+			// iOS PWA standalone, where the reader's localStorage is
+			// isolated from Safari's (different "app") and would
+			// otherwise default to navigator.language. Steve 2026-05-12.
 			try {
+				const params = new URLSearchParams(window.location.search);
+				const fromUrl = (params.get("lang") || "").toLowerCase();
+				if (fromUrl && LANGUAGES.some(l => l.code === fromUrl)) {
+					// Persist immediately so the inherited choice survives
+					// the next visit without needing the URL param again.
+					try { localStorage.setItem(STORAGE_KEY, fromUrl); } catch (e) {}
+					return fromUrl;
+				}
 				const stored = localStorage.getItem(STORAGE_KEY);
 				if (stored && LANGUAGES.some(l => l.code === stored)) return stored;
 			} catch (e) {}
@@ -590,8 +604,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512r"></script>
-	<script src="ink.js?v=20260512r"></script>
-	<script src="main.js?v=20260512r"></script>
+	<script src="analytics.js?v=20260512t"></script>
+	<script src="ink.js?v=20260512t"></script>
+	<script src="main.js?v=20260512t"></script>
 </body>
 </html>

@@ -529,11 +529,13 @@ function openDrawer(drawer) {
 	target.classList.add("is-open");
 	target.setAttribute("aria-hidden", "false");
 	if ($drawerScrim) $drawerScrim.classList.add("is-open");
+	requestAnimationFrame(() => updateDrawerFit(target));
 }
 function closeDrawer(drawer) {
 	const target = drawer || $menuPanel;
 	if (target) {
 		target.classList.remove("is-open");
+		target.classList.remove("has-scroll-more");
 		target.setAttribute("aria-hidden", "true");
 	}
 	if ($drawerScrim) $drawerScrim.classList.remove("is-open");
@@ -542,6 +544,121 @@ function closeAllDrawers() { closeDrawer($menuPanel); }
 function isDrawerOpen(drawer) {
 	const target = drawer || $menuPanel;
 	return target && target.classList.contains("is-open");
+}
+function updateDrawerScrollHint(drawer) {
+	const target = drawer || $menuPanel;
+	const body = target ? target.querySelector(".drawer-body") : null;
+	if (!target || !body) return;
+	const hasMore = body.scrollTop + body.clientHeight < body.scrollHeight - 2;
+	target.classList.toggle("has-scroll-more", hasMore);
+}
+function updateDrawerRightsCenter(drawer) {
+	const target = drawer || $menuPanel;
+	const rights = target ? target.querySelector(".drawer-rights") : null;
+	const text = rights ? rights.querySelector(".drawer-rights-text") : null;
+	if (!target || !rights || !text) return;
+
+	const styles = getComputedStyle(rights);
+	const range = document.createRange();
+	range.selectNodeContents(text);
+	const rightsRect = rights.getBoundingClientRect();
+	const textRect = range.getBoundingClientRect();
+	const drawerRect = target.getBoundingClientRect();
+	const borderTop = parseFloat(styles.borderTopWidth) || 0;
+	const currentShift = pxFromCssVar(getComputedStyle(target), "--drawer-rights-text-shift");
+	const topGap = textRect.top - rightsRect.top - borderTop;
+	const bottomGap = drawerRect.bottom - textRect.bottom;
+	const nextShift = currentShift - ((topGap - bottomGap) / 2);
+	target.style.setProperty("--drawer-rights-text-shift", nextShift.toFixed(3) + "px");
+	range.detach();
+}
+function pxFromCssVar(styles, name) {
+	const raw = styles.getPropertyValue(name).trim();
+	if (!raw) return 0;
+	if (raw.endsWith("rem")) {
+		const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+		return parseFloat(raw) * rootSize;
+	}
+	return parseFloat(raw) || 0;
+}
+function clampNum(value, min, max) {
+	return Math.min(max, Math.max(min, value));
+}
+function verticalPadding(el) {
+	const styles = getComputedStyle(el);
+	return (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+}
+function drawerBodyMeasuredHeight(body) {
+	const children = Array.from(body.children);
+	if (!children.length) return 0;
+	const styles = getComputedStyle(body);
+	const gap = parseFloat(styles.rowGap || styles.gap) || 0;
+	return children.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0) +
+		gap * Math.max(0, children.length - 1);
+}
+function updateDrawerFit(drawer, settled) {
+	const target = drawer || $menuPanel;
+	const body = target ? target.querySelector(".drawer-body") : null;
+	if (!target || !body) return;
+
+	const denseViewport = window.matchMedia("(max-height: 420px), (max-width: 720px)").matches;
+
+	const styles = getComputedStyle(target);
+	const baseSectionPad = pxFromCssVar(styles, "--drawer-section-vpad");
+	const baseOptionPad = pxFromCssVar(styles, "--drawer-option-vpad");
+	const openSections = body.querySelectorAll(".drawer-section.is-open").length;
+	target.classList.toggle("has-open-section", openSections > 0);
+	const adjustableRows = Array.from(body.querySelectorAll(
+		".drawer-section-summary, .drawer-section.is-open .chapter-btn, .drawer-section.is-open .setting-row"
+	));
+	if (!adjustableRows.length) {
+		updateDrawerScrollHint(target);
+		return;
+	}
+
+	const targetBodyHeight = body.clientHeight;
+	const currentPad = adjustableRows.reduce((sum, row) => sum + verticalPadding(row), 0);
+	const measuredHeight = drawerBodyMeasuredHeight(body);
+	const baseHeight = Math.max(0, measuredHeight - currentPad);
+	const minPad = denseViewport ? 2.5 : 4;
+	const maxPad = denseViewport ? 18 : (openSections === 0 ? 40 : 64);
+	const fittedPad = clampNum(
+		(targetBodyHeight - baseHeight) / (adjustableRows.length * 2),
+		minPad,
+		maxPad
+	);
+	let sectionPad = baseSectionPad;
+	let optionPad = baseOptionPad;
+	if (openSections === 0) {
+		sectionPad = fittedPad;
+		optionPad = fittedPad;
+	} else if (baseHeight + (baseSectionPad * 2 * adjustableRows.length) > targetBodyHeight) {
+		sectionPad = fittedPad;
+		optionPad = fittedPad;
+	}
+	target.style.setProperty("--drawer-fit-section-vpad", sectionPad.toFixed(1) + "px");
+	target.style.setProperty("--drawer-fit-option-vpad", optionPad.toFixed(1) + "px");
+	updateDrawerScrollHint(target);
+	updateDrawerRightsCenter(target);
+	clearTimeout(target._drawerScrollHintTimer);
+	target._drawerScrollHintTimer = setTimeout(() => {
+		if (settled) {
+			updateDrawerScrollHint(target);
+			updateDrawerRightsCenter(target);
+			return;
+		}
+		updateDrawerFit(target, true);
+	}, 580);
+}
+
+if ($menuPanel) {
+	const body = $menuPanel.querySelector(".drawer-body");
+	if (body) body.addEventListener("scroll", () => updateDrawerScrollHint($menuPanel), { passive: true });
+	window.addEventListener("resize", () => {
+		updateDrawerFit($menuPanel);
+		requestAnimationFrame(() => updateDrawerRightsCenter($menuPanel));
+	});
+	window.addEventListener("orientationchange", () => setTimeout(() => updateDrawerFit($menuPanel), 250));
 }
 
 // Brief glow-then-fade tap acknowledgment for chrome buttons. Same
@@ -582,6 +699,7 @@ if ($menuBtn) {
 			if (typeof renderChapterList === "function") renderChapterList();
 			if (typeof updateReturnRecentVisibility === "function") updateReturnRecentVisibility();
 			if (typeof refreshSelectionMarkers === "function") refreshSelectionMarkers();
+			updateDrawerFit($menuPanel);
 		}
 	});
 
@@ -625,6 +743,7 @@ document.addEventListener("click", (ev) => {
 	if (!section) return;
 	const open = section.classList.toggle("is-open");
 	summary.setAttribute("aria-expanded", open ? "true" : "false");
+	updateDrawerFit(section.closest(".drawer"));
 	// On expand, "pull up" the section so its choices are visible.
 	// Two failure modes the simple "scroll-header-to-top" approach hit:
 	//   1. The LAST section (Music) had its expanding content clipped
@@ -662,8 +781,11 @@ document.addEventListener("click", (ev) => {
 					target = body.scrollTop + sectionTopRel;
 				}
 				body.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+				updateDrawerScrollHint(section.closest(".drawer"));
 			}, 470);
 		}
+	} else {
+		setTimeout(() => updateDrawerScrollHint(section.closest(".drawer")), 470);
 	}
 });
 const $chapterList = document.getElementById("chapter-list");
@@ -696,6 +818,7 @@ const $devCurrent = document.getElementById("dev-current");
 // ----- settings (persisted to localStorage) -----
 
 const SETTINGS_KEY = "lirien.settings";
+const SPEED_PRESET_VERSION = 3;
 // imageQuality: "high" → PNG (pristine, ~329 MB total bgs)
 //               "standard" → WebP at original resolution + q90
 //                            (~48 MB total, visually very close to PNG).
@@ -706,7 +829,7 @@ const SETTINGS_KEY = "lirien.settings";
 // the menu drawer). When on, on every boot we do an integrity check
 // against the manifest and auto-resync any missing assets while
 // online. Default off — opt-in only.
-const DEFAULT_SETTINGS = { speedMultiplier: 0.4, fontSize: 36, musicOn: true, imageQuality: "high", offlineMode: false };
+const DEFAULT_SETTINGS = { speedMultiplier: 1.0, speedPresetVersion: SPEED_PRESET_VERSION, fontSize: 36, musicOn: true, imageQuality: "high", offlineMode: false };
 let settings = loadSettings();
 applyFontSize();
 
@@ -714,12 +837,44 @@ function loadSettings() {
 	try {
 		const raw = localStorage.getItem(SETTINGS_KEY);
 		if (!raw) return { ...DEFAULT_SETTINGS };
-		return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+		const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+		const savedSpeedVersion = parsed.speedPresetVersion || 1;
+		if (savedSpeedVersion < SPEED_PRESET_VERSION) {
+			const migrated = migrateSpeedPreset(parsed.speedMultiplier, savedSpeedVersion);
+			parsed.speedMultiplier = migrated;
+			parsed.speedPresetVersion = SPEED_PRESET_VERSION;
+			try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed)); }
+			catch (e) { /* private mode etc. */ }
+		}
+		return parsed;
 	} catch (e) {
 		return { ...DEFAULT_SETTINGS };
 	}
 }
+function migrateSpeedPreset(value, fromVersion) {
+	const migrations = {
+		1: [
+			[0.2, 0.4],
+			[0.3, 0.7],
+			[0.4, 1.0],
+			[0.7, 1.3],
+			[1.0, 1.6]
+		],
+		2: [
+			[0.3, 0.4],
+			[0.4, 0.7],
+			[0.7, 1.0],
+			[1.0, 1.3],
+			[1.3, 1.6]
+		]
+	};
+	for (const [oldValue, newValue] of migrations[fromVersion] || []) {
+		if (Math.abs(value - oldValue) < 0.01) return newValue;
+	}
+	return value;
+}
 function saveSettings() {
+	settings.speedPresetVersion = SPEED_PRESET_VERSION;
 	try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 	catch (e) { /* private mode etc. */ }
 }

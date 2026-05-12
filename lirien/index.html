@@ -16,7 +16,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260512t">
+	<link rel="stylesheet" href="style.css?v=20260512u">
 </head>
 <body>
 	<script>
@@ -209,57 +209,47 @@
 				<ol class="install-splash-steps">
 					<li>
 						<span class="step-num">1</span>
-						<span>Tap the
-							<svg class="step-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<path d="M12 16V4"/>
-								<path d="M8 8l4-4 4 4"/>
-								<path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>
-							</svg>
-							<strong>Share</strong> button at the bottom of Safari.
-						</span>
+						<span data-i18n-html="lirien.install.ios.step1">Tap the
+							<svg class="step-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
+							<strong>Share</strong> button at the bottom of Safari.</span>
 					</li>
 					<li>
 						<span class="step-num">2</span>
-						<span>Scroll down and choose
-							<svg class="step-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<rect x="4" y="4" width="16" height="16" rx="3"/>
-								<path d="M12 9v6"/>
-								<path d="M9 12h6"/>
-							</svg>
-							<strong>Add to Home Screen</strong>.
-						</span>
+						<span data-i18n-html="lirien.install.ios.step2">Scroll down and choose
+							<svg class="step-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+							<strong>Add to Home Screen</strong>.</span>
 					</li>
 					<li>
 						<span class="step-num">3</span>
-						<span>Tap <strong>Add</strong> in the top corner.</span>
+						<span data-i18n-html="lirien.install.ios.step3">Tap <strong>Add</strong> in the top corner.</span>
 					</li>
 				</ol>
 			</div>
 
 			<div id="install-splash-android-native" class="install-splash-platform" hidden>
-				<button id="install-splash-android-prompt" class="install-splash-prompt-btn">Install Chronicles of Lirien</button>
-				<p class="install-splash-prompt-sub">Your browser will ask you to confirm.</p>
+				<button id="install-splash-android-prompt" class="install-splash-prompt-btn" data-i18n="lirien.install.android.native-btn">Install Chronicles of Lirien</button>
+				<p class="install-splash-prompt-sub" data-i18n="lirien.install.android.native-sub">Your browser will ask you to confirm.</p>
 			</div>
 
 			<div id="install-splash-android-text" class="install-splash-platform" hidden>
 				<ol class="install-splash-steps">
 					<li>
 						<span class="step-num">1</span>
-						<span>Tap the <strong>menu</strong> (three dots) in the browser corner.</span>
+						<span data-i18n-html="lirien.install.android.step1">Tap the <strong>menu</strong> (three dots) in the browser corner.</span>
 					</li>
 					<li>
 						<span class="step-num">2</span>
-						<span>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</span>
+						<span data-i18n-html="lirien.install.android.step2">Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</span>
 					</li>
 				</ol>
 			</div>
 
 			<div id="install-splash-generic" class="install-splash-platform" hidden>
-				<p class="install-splash-generic-msg">Look for &ldquo;Add to Home Screen&rdquo; or &ldquo;Install&rdquo; in your browser menu.</p>
+				<p class="install-splash-generic-msg" data-i18n="lirien.install.generic">Look for &ldquo;Add to Home Screen&rdquo; or &ldquo;Install&rdquo; in your browser menu.</p>
 			</div>
 
-			<button id="install-splash-continue" class="install-splash-continue">Maybe later</button>
-			<p class="install-splash-note">The browser version still works &mdash; just less smooth on long sessions.</p>
+			<button id="install-splash-continue" class="install-splash-continue" data-i18n="lirien.install.later">Maybe later</button>
+			<p class="install-splash-note" data-i18n="lirien.install.note">The browser version still works &mdash; just less smooth on long sessions.</p>
 		</div>
 	</div>
 	<div id="confirm-dialog" class="confirm-dialog" hidden>
@@ -470,6 +460,48 @@
 
 			"lirien.install.title":    { en: "Read it like a book",                                                                           es: "Léelo como un libro" },
 			"lirien.install.body":     { en: "Add Chronicles of Lirien to your home screen and it opens full‑screen, the way the story is meant to be read.", es: "Añade Crónicas de Lirien a tu pantalla de inicio y se abrirá a pantalla completa, como la historia está pensada para leerse." },
+
+			// Install steps. The labels in <strong> mirror the EXACT
+			// wording iOS / Chrome show in each locale — readers should
+			// see the same words on the splash as on their device. Steve
+			// 2026-05-12. iOS es-ES: Share → "Compartir", Add to Home
+			// Screen → "Añadir a pantalla de inicio", final Add button →
+			// "Añadir". Chrome Android es-ES: Install app → "Instalar
+			// aplicación", Add to Home screen → "Añadir a pantalla de
+			// inicio". The inline SVG is duplicated across en/es because
+			// data-i18n-html replaces innerHTML wholesale; keeping it in
+			// the string keeps the icon in semantic position.
+			"lirien.install.ios.step1": {
+				en: "Tap the <svg class=\"step-glyph\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 16V4\"/><path d=\"M8 8l4-4 4 4\"/><path d=\"M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5\"/></svg> <strong>Share</strong> button at the bottom of Safari.",
+				es: "Toca el botón <svg class=\"step-glyph\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 16V4\"/><path d=\"M8 8l4-4 4 4\"/><path d=\"M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5\"/></svg> <strong>Compartir</strong> en la parte inferior de Safari."
+			},
+			"lirien.install.ios.step2": {
+				en: "Scroll down and choose <svg class=\"step-glyph\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/><path d=\"M12 9v6\"/><path d=\"M9 12h6\"/></svg> <strong>Add to Home Screen</strong>.",
+				es: "Desplázate hacia abajo y elige <svg class=\"step-glyph\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/><path d=\"M12 9v6\"/><path d=\"M9 12h6\"/></svg> <strong>Añadir a pantalla de inicio</strong>."
+			},
+			"lirien.install.ios.step3": {
+				en: "Tap <strong>Add</strong> in the top corner.",
+				es: "Toca <strong>Añadir</strong> en la esquina superior."
+			},
+
+			"lirien.install.android.native-btn": { en: "Install Chronicles of Lirien", es: "Instalar Crónicas de Lirien" },
+			"lirien.install.android.native-sub": { en: "Your browser will ask you to confirm.", es: "El navegador te pedirá confirmación." },
+			"lirien.install.android.step1": {
+				en: "Tap the <strong>menu</strong> (three dots) in the browser corner.",
+				es: "Toca el <strong>menú</strong> (tres puntos) en la esquina del navegador."
+			},
+			"lirien.install.android.step2": {
+				en: "Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.",
+				es: "Elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>."
+			},
+
+			"lirien.install.generic": {
+				en: "Look for “Add to Home Screen” or “Install” in your browser menu.",
+				es: "Busca «Añadir a pantalla de inicio» o «Instalar» en el menú del navegador."
+			},
+			"lirien.install.later": { en: "Maybe later", es: "Quizás más tarde" },
+			"lirien.install.note":  { en: "The browser version still works — just less smooth on long sessions.",
+			                          es: "La versión del navegador también funciona — solo menos fluida en sesiones largas." },
 		};
 
 		function detectLang() {
@@ -604,8 +636,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260512t"></script>
-	<script src="ink.js?v=20260512t"></script>
-	<script src="main.js?v=20260512t"></script>
+	<script src="analytics.js?v=20260512u"></script>
+	<script src="ink.js?v=20260512u"></script>
+	<script src="main.js?v=20260512u"></script>
 </body>
 </html>

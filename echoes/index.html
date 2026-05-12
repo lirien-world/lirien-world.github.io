@@ -568,7 +568,17 @@ body.is-playing .progress{
 	transform:translateX(100%);
 	transition:transform 0.6s cubic-bezier(.2,.7,.2,1);
 	display:flex;flex-direction:column;
-	padding:clamp(1.5rem,3vw,2.5rem);
+	/* iOS PWA standalone puts the drawer's top edge under the notch /
+	 * status bar and its bottom under the home indicator. Pad each
+	 * device-touching edge by max(designed-padding, safe-area-inset)
+	 * so MENU/CLOSE clear the system controls. Left edge is interior
+	 * (drawer is anchored to the right), no inset needed there.
+	 * Steve 2026-05-12. */
+	padding:
+		max(clamp(1.5rem,3vw,2.5rem), env(safe-area-inset-top))
+		max(clamp(1.5rem,3vw,2.5rem), env(safe-area-inset-right))
+		max(clamp(1.5rem,3vw,2.5rem), env(safe-area-inset-bottom))
+		clamp(1.5rem,3vw,2.5rem);
 	overflow:hidden;
 }
 .drawer.is-open{transform:translateX(0)}

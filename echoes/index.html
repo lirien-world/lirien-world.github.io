@@ -184,15 +184,23 @@ body{
 	font:inherit;color:inherit;
 	margin:0;padding:0;
 	box-shadow:none;
-	/* Position. iOS PWA standalone mode puts the page edge under the
-	 * notch/status bar; env(safe-area-inset-top) gives us the inset
-	 * we need to clear. Top + right padding matches the .room
-	 * container's outer padding so the menu button visually aligns
-	 * with the brand-mark text on the left edge (same top-baseline).
+	/* Top-right corner button. Independent from .frame's padding so
+	 * it stays at the corner regardless of how .frame's padding
+	 * compresses across breakpoints + PWA modes.
+	 *
+	 * Top uses max() with env(safe-area-inset-top) to clear the
+	 * portrait iOS notch in PWA standalone (the only direction where
+	 * the system reserves the top edge).
+	 *
+	 * Right uses plain clamp — no env(safe-area-inset-right). On a
+	 * landscape iPhone with a side notch the notch occupies the
+	 * vertical CENTER of the right edge, not the corner; the
+	 * hamburger lives above the notch zone, so respecting inset-
+	 * right would only push it pointlessly inboard.
 	 * Steve 2026-05-12. */
 	position:fixed;
-	top:max(clamp(1.25rem,3vw,2.5rem), env(safe-area-inset-top));
-	right:max(clamp(1.25rem,4vw,3rem), env(safe-area-inset-right));
+	top:max(clamp(0.9rem,2.4vw,1.4rem), env(safe-area-inset-top));
+	right:clamp(0.9rem,2.4vw,1.4rem);
 	z-index:30;
 	/* Box. */
 	cursor:pointer;

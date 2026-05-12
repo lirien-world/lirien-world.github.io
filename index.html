@@ -246,52 +246,105 @@
     .music-control.muted .music-bar{animation:none;opacity:.3}
     .music-control.muted .music-label{color:var(--ash)}
     .close-nav{display:none;position:fixed;inset:0;z-index:150}
-    /* Hamburger — JS controlled, fixed position */
+    /* Mobile menu — JS controlled, fixed position */
     #hamburger{
       display:none;
       position:fixed;
       top:1rem;
       right:1rem;
       z-index:500;
-      flex-direction:column;
-      gap:6px;
+      align-items:center;
+      gap:.65rem;
       cursor:pointer;
-      padding:.75rem;
+      min-height:44px;
+      padding:.55rem .8rem;
       background:rgba(8,6,15,.85);
       border:1px solid rgba(196,147,90,.35);
       border-radius:2px;
+      color:var(--mist);
+      font-family:'Cormorant Garamond',serif;
+      font-size:.82rem;
+      letter-spacing:.24em;
+      text-transform:uppercase;
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      transition:border-color .3s ease,color .3s ease,background .3s ease;
     }
-    #hamburger span{
+    #hamburger:hover,#hamburger:focus-visible,#hamburger.open{color:var(--gold-bright);border-color:rgba(196,147,90,.65);outline:none}
+    .hamburger-icon{display:flex;flex-direction:column;gap:5px}
+    .hamburger-icon span{
       display:block;
       width:22px;
       height:2px;
       background:#e0b070;
       transition:all .3s ease;
     }
-    #hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
-    #hamburger.open span:nth-child(2){opacity:0}
-    #hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+    .hamburger-label{display:block;line-height:1}
+    #hamburger.open .hamburger-icon span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+    #hamburger.open .hamburger-icon span:nth-child(2){opacity:0}
+    #hamburger.open .hamburger-icon span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
     #mobile-nav{
       display:none;
       position:fixed;
       inset:0;
       background:rgba(8,6,15,.97);
       z-index:400;
-      flex-direction:column;
       justify-content:center;
       align-items:center;
-      gap:2.5rem;
+      padding:5.5rem 1.5rem 2rem;
     }
     #mobile-nav.open{display:flex}
-    #mobile-nav a{
+    .mobile-nav-panel{
+      width:min(430px,100%);
+      border-top:1px solid rgba(196,147,90,.28);
+      border-bottom:1px solid rgba(196,147,90,.28);
+      padding:.7rem 0;
+    }
+    .mobile-nav-heading{
       font-family:'Cormorant Garamond',serif;
-      font-size:1.8rem;
-      letter-spacing:.2em;
+      font-size:.82rem;
+      letter-spacing:.35em;
+      text-transform:uppercase;
+      color:var(--gold-bright);
+      padding:.45rem .2rem .7rem;
+    }
+    .mobile-nav-link{
+      display:block;
+      padding:1rem .2rem .95rem;
+      border-top:1px solid rgba(196,147,90,.16);
+      text-decoration:none;
+      transition:background .3s ease,color .3s ease,padding-left .3s ease;
+    }
+    .mobile-nav-link:first-of-type{border-top-color:rgba(196,147,90,.28)}
+    .mobile-nav-link span{
+      display:block;
+      font-family:'Cormorant Garamond',serif;
+      font-size:1.55rem;
+      letter-spacing:.18em;
       text-transform:uppercase;
       color:#b8a8cc;
-      text-decoration:none;
+      line-height:1.05;
+      transition:color .3s ease;
     }
-    #mobile-nav a:hover{color:#c4935a}
+    .mobile-nav-link small{
+      display:block;
+      margin-top:.35rem;
+      font-size:.95rem;
+      line-height:1.25;
+      font-style:italic;
+      letter-spacing:.03em;
+      color:rgba(229,221,210,.68);
+    }
+    .mobile-nav-link:hover,.mobile-nav-link:focus-visible{background:rgba(196,147,90,.08);padding-left:.65rem;outline:none}
+    .mobile-nav-link:hover span,.mobile-nav-link:focus-visible span{color:#c4935a}
+    @media(max-height:520px){
+      #mobile-nav{padding:4.4rem 1.1rem 1rem}
+      .mobile-nav-panel{padding:.35rem 0}
+      .mobile-nav-heading{padding:.25rem .2rem .45rem}
+      .mobile-nav-link{padding:.65rem .2rem .6rem}
+      .mobile-nav-link span{font-size:1.25rem}
+      .mobile-nav-link small{font-size:.82rem;margin-top:.2rem}
+    }
         ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:var(--ash)}
   </style>
 </head>
@@ -343,17 +396,33 @@
   </ul>
 </nav>
 
-<!-- Mobile hamburger — fixed position, JS controlled -->
-<button id="hamburger" aria-label="Open navigation">
-  <span></span><span></span><span></span>
+<!-- Mobile menu — fixed position, JS controlled -->
+<button id="hamburger" aria-label="Open navigation" aria-controls="mobile-nav" aria-expanded="false">
+  <span class="hamburger-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+  <span class="hamburger-label" data-i18n="nav.menu">Menu</span>
 </button>
 
 <!-- Mobile nav overlay -->
-<div id="mobile-nav">
-  <a href="#world" class="mobile-nav-link" data-i18n="nav.world">The World</a>
-  <a href="#characters" class="mobile-nav-link" data-i18n="nav.characters">Characters</a>
-  <a href="echoes/" class="mobile-nav-link" data-i18n="nav.echoes">The Spiral Plays</a>
-  <a href="#begin" class="mobile-nav-link" data-i18n="nav.walk">Walk the Spiral</a>
+<div id="mobile-nav" aria-hidden="true">
+  <div class="mobile-nav-panel" aria-label="Main navigation">
+    <div class="mobile-nav-heading" data-i18n="nav.explore">Explore Lirien</div>
+    <a href="#world" class="mobile-nav-link">
+      <span data-i18n="nav.world">The World</span>
+      <small data-i18n="nav.world.desc">How Lirien works</small>
+    </a>
+    <a href="#characters" class="mobile-nav-link">
+      <span data-i18n="nav.characters">Characters</span>
+      <small data-i18n="nav.characters.desc">Who you'll meet</small>
+    </a>
+    <a href="echoes/" class="mobile-nav-link">
+      <span data-i18n="nav.echoes">The Spiral Plays</span>
+      <small data-i18n="nav.echoes.desc">Music from the story</small>
+    </a>
+    <a href="#begin" class="mobile-nav-link">
+      <span data-i18n="nav.walk">Walk the Spiral</span>
+      <small data-i18n="nav.walk.desc">Begin reading</small>
+    </a>
+  </div>
 </div>
 
 <section class="hero" aria-label="Hero">
@@ -612,14 +681,33 @@
 </footer>
 
 <script>
-  // Mobile hamburger — JS controlled
+  // Mobile menu — JS controlled
   const hamburger = document.getElementById('hamburger');
   const mobileNav = document.getElementById('mobile-nav');
 
 
+  function navText(key, fallback) {
+    return typeof window.lirienT === 'function' ? window.lirienT(key) : fallback;
+  }
+
+  function syncMobileNavState() {
+    const isOpen = mobileNav.classList.contains('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    hamburger.setAttribute('aria-label', isOpen ? navText('nav.closeNav', 'Close navigation') : navText('nav.openNav', 'Open navigation'));
+    mobileNav.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    const label = hamburger.querySelector('.hamburger-label');
+    if (label) label.textContent = isOpen ? navText('nav.close', 'Close') : navText('nav.menu', 'Menu');
+  }
+
+  window.updateMobileNavLabel = syncMobileNavState;
+
+  function shouldUseMobileNav() {
+    return window.innerWidth <= 900 || (window.innerHeight <= 520 && window.innerWidth <= 1100);
+  }
 
   function updateNav() {
-    if (window.innerWidth <= 900) {
+    if (shouldUseMobileNav()) {
       hamburger.style.display = 'flex';
       document.getElementById('nav-links').style.display = 'none';
     } else {
@@ -628,20 +716,21 @@
       mobileNav.classList.remove('open');
       hamburger.classList.remove('open');
     }
+    syncMobileNavState();
   }
 
   updateNav();
   window.addEventListener('resize', updateNav);
 
   hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('open');
     mobileNav.classList.toggle('open');
+    syncMobileNavState();
   });
 
   document.querySelectorAll('.mobile-nav-link').forEach(link => {
     link.addEventListener('click', () => {
-      hamburger.classList.remove('open');
       mobileNav.classList.remove('open');
+      syncMobileNavState();
     });
   });
 
@@ -726,6 +815,15 @@
     "nav.characters":    { en: "Characters",                      es: "Personajes" },
     "nav.echoes":        { en: "The Spiral Plays",                es: "La Espiral Suena" },
     "nav.walk":          { en: "Walk the Spiral",                 es: "Camina la Espiral" },
+    "nav.menu":          { en: "Menu",                            es: "Menú" },
+    "nav.close":         { en: "Close",                           es: "Cerrar" },
+    "nav.openNav":       { en: "Open navigation",                 es: "Abrir navegación" },
+    "nav.closeNav":      { en: "Close navigation",                es: "Cerrar navegación" },
+    "nav.explore":       { en: "Explore Lirien",                  es: "Explora Lirien" },
+    "nav.world.desc":    { en: "How Lirien works",                es: "Cómo funciona Lirien" },
+    "nav.characters.desc": { en: "Who you'll meet",               es: "A quién conocerás" },
+    "nav.echoes.desc":   { en: "Music from the story",            es: "Música de la historia" },
+    "nav.walk.desc":     { en: "Begin reading",                   es: "Empieza a leer" },
 
     "hero.eyebrow":      { en: "Book One — Chronicles of Lirien", es: "Libro I — Crónicas de Lirien" },
     "hero.title":        { en: "The Spiral That<br><em>Remembers</em>", es: "La Espiral Que<br><em>Recuerda</em>" },
@@ -833,6 +931,7 @@
     document.querySelectorAll("[data-lang-set]").forEach(btn => {
       btn.setAttribute("aria-pressed", btn.getAttribute("data-lang-set") === lang ? "true" : "false");
     });
+    if (typeof window.updateMobileNavLabel === "function") window.updateMobileNavLabel();
   }
 
   function setLang(lang) {

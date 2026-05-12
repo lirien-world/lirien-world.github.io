@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260512w";
+const ASSET_VERSION = "20260512x";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1493,6 +1493,11 @@ if ($proseContent) {
 		// rAF-batched so consecutive scroll events coalesce into a
 		// single update per frame.
 		scheduleCharFade();
+		// While the typewriter is active, scheduleProgressScroll owns
+		// scrollTop so the newest line remains visible. The paragraph
+		// snap cleanup is only for manual/waiting states; running it
+		// mid-reveal can pull the view away from the current line.
+		if (state === "typing") return;
 		if (snapInProgress) return;
 		clearTimeout(proseScrollEndTimer);
 		proseScrollEndTimer = setTimeout(() => {

@@ -933,15 +933,12 @@ body.is-choosing .prose {
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(245, 235, 210, 0.3) transparent;
-	/* CSS scroll-snap: scroll always settles on a paragraph boundary
-	 * (mandatory). For prose reading, paragraph alignment is the
-	 * universal intent — there's no good reason to want to park
-	 * mid-line at the top edge. proximity was leaving 11-px-style
-	 * peek-through when the browser decided no snap point was "close
-	 * enough"; mandatory removes the choice. scroll-padding-top
-	 * respects the inner top edge so the snapped paragraph lines up
-	 * cleanly with the start of the visible text region. */
-	scroll-snap-type: y mandatory;
+	/* Do not use CSS scroll snapping here. Long typewriter chunks need
+	 * to scroll within a single paragraph as later lines reveal; browser
+	 * snap points are paragraph-only and can fight those programmatic
+	 * line-progress scrolls. main.js still performs targeted settling
+	 * after typing/manual scrolls, with tall active paragraphs exempted. */
+	scroll-snap-type: none;
 	scroll-padding-top: 8px;
 	/* Vertical padding split with .prose's 14px buffer above. Padding
 	 * top is 28px to match the is-scrolled top-fade height: the

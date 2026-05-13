@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260513-205805",
-  "generated_at": "2026-05-13T19:58:06Z",
-  "asset_count": 370,
-  "total_size": 675835458,
+  "manifest_version": "20260513-232417",
+  "generated_at": "2026-05-13T22:24:18Z",
+  "asset_count": 436,
+  "total_size": 783755258,
   "chapters": [
     {
       "number": 1,
@@ -23,6 +23,10 @@
     {
       "number": 5,
       "title": "Five \u2014 The Path Beneath the Silence"
+    },
+    {
+      "number": 6,
+      "title": "Six \u2014 What the City Remembers"
     }
   ],
   "assets": {
@@ -1274,6 +1278,254 @@
       "hash": "75b390ecc6",
       "size": 519636
     },
+    "atmosphere/ch06_accommodating_doorway.png": {
+      "hash": "b33a0f571a",
+      "size": 2682630
+    },
+    "atmosphere/ch06_accommodating_doorway.webp": {
+      "hash": "691ecedaec",
+      "size": 386404
+    },
+    "atmosphere/ch06_b01_thistle_past.png": {
+      "hash": "f948eacf85",
+      "size": 2720248
+    },
+    "atmosphere/ch06_b01_thistle_past.webp": {
+      "hash": "55169f5500",
+      "size": 413018
+    },
+    "atmosphere/ch06_b02_key_wall.png": {
+      "hash": "1741b0f0c1",
+      "size": 2965314
+    },
+    "atmosphere/ch06_b02_key_wall.webp": {
+      "hash": "536bd907ae",
+      "size": 502904
+    },
+    "atmosphere/ch06_b03_unsaid_words.png": {
+      "hash": "ed018bff9b",
+      "size": 2657243
+    },
+    "atmosphere/ch06_b03_unsaid_words.webp": {
+      "hash": "fbabe4a57f",
+      "size": 380098
+    },
+    "atmosphere/ch06_b04_memory_child.png": {
+      "hash": "ba8feff4ac",
+      "size": 2618596
+    },
+    "atmosphere/ch06_b04_memory_child.webp": {
+      "hash": "bb2bac5cc4",
+      "size": 355540
+    },
+    "atmosphere/ch06_b05_feather_response.png": {
+      "hash": "144bebaefc",
+      "size": 2556275
+    },
+    "atmosphere/ch06_b05_feather_response.webp": {
+      "hash": "15df5bfc10",
+      "size": 343160
+    },
+    "atmosphere/ch06_b06_house_memory.png": {
+      "hash": "fa2b9d3184",
+      "size": 2413767
+    },
+    "atmosphere/ch06_b06_house_memory.webp": {
+      "hash": "0e1a0c5634",
+      "size": 314560
+    },
+    "atmosphere/ch06_b07_courtyard_promise.png": {
+      "hash": "83de649a82",
+      "size": 2915820
+    },
+    "atmosphere/ch06_b07_courtyard_promise.webp": {
+      "hash": "56ae5d2802",
+      "size": 484452
+    },
+    "atmosphere/ch06_city_route_bends.png": {
+      "hash": "b80013e42b",
+      "size": 2925085
+    },
+    "atmosphere/ch06_city_route_bends.webp": {
+      "hash": "308a5756c9",
+      "size": 491476
+    },
+    "atmosphere/ch06_compass_ready.png": {
+      "hash": "813e479af1",
+      "size": 2738421
+    },
+    "atmosphere/ch06_compass_ready.webp": {
+      "hash": "812d65c4d6",
+      "size": 395142
+    },
+    "atmosphere/ch06_courtyard_remembers.png": {
+      "hash": "6ec2b1e8f5",
+      "size": 2926202
+    },
+    "atmosphere/ch06_courtyard_remembers.webp": {
+      "hash": "240c14b6f6",
+      "size": 484244
+    },
+    "atmosphere/ch06_house_aftermemory.png": {
+      "hash": "136243eac4",
+      "size": 2313548
+    },
+    "atmosphere/ch06_house_aftermemory.webp": {
+      "hash": "6082964e71",
+      "size": 272670
+    },
+    "atmosphere/ch06_i01_fog_stopped_sulking.png": {
+      "hash": "9ae1adda92",
+      "size": 2830371
+    },
+    "atmosphere/ch06_i01_fog_stopped_sulking.webp": {
+      "hash": "e443dea9fa",
+      "size": 429180
+    },
+    "atmosphere/ch06_i02_key_vanish_absence.png": {
+      "hash": "734df35d41",
+      "size": 2292607
+    },
+    "atmosphere/ch06_i02_key_vanish_absence.webp": {
+      "hash": "84875b2f12",
+      "size": 265030
+    },
+    "atmosphere/ch06_i03_waiting_almost_person.png": {
+      "hash": "53a5f56648",
+      "size": 2628690
+    },
+    "atmosphere/ch06_i03_waiting_almost_person.webp": {
+      "hash": "26be580049",
+      "size": 348988
+    },
+    "atmosphere/ch06_i04_feather_names_close.png": {
+      "hash": "d29b0bd0fd",
+      "size": 2193179
+    },
+    "atmosphere/ch06_i04_feather_names_close.webp": {
+      "hash": "82a20d3192",
+      "size": 233974
+    },
+    "atmosphere/ch06_i05_compass_glyph_sync.png": {
+      "hash": "ddd654054a",
+      "size": 2553772
+    },
+    "atmosphere/ch06_i05_compass_glyph_sync.webp": {
+      "hash": "6717d2663a",
+      "size": 348690
+    },
+    "atmosphere/ch06_memory_child_stair.png": {
+      "hash": "97e799848b",
+      "size": 2513968
+    },
+    "atmosphere/ch06_memory_child_stair.webp": {
+      "hash": "41a42f33de",
+      "size": 315062
+    },
+    "atmosphere/ch06_older_name_flash.png": {
+      "hash": "644b27951d",
+      "size": 2309706
+    },
+    "atmosphere/ch06_older_name_flash.webp": {
+      "hash": "7041244730",
+      "size": 240008
+    },
+    "atmosphere/ch06_paradox_doorframe.png": {
+      "hash": "9836999f44",
+      "size": 2878717
+    },
+    "atmosphere/ch06_paradox_doorframe.webp": {
+      "hash": "697d9851a1",
+      "size": 482266
+    },
+    "atmosphere/ch06_parchment_feather.png": {
+      "hash": "2d2b003e6b",
+      "size": 2533644
+    },
+    "atmosphere/ch06_parchment_feather.webp": {
+      "hash": "4e8d4a09ae",
+      "size": 337122
+    },
+    "atmosphere/ch06_remember_us_awaken.png": {
+      "hash": "3605eb7b96",
+      "size": 3057450
+    },
+    "atmosphere/ch06_remember_us_awaken.webp": {
+      "hash": "2c898e5481",
+      "size": 541140
+    },
+    "atmosphere/ch06_remembering_house_exterior.png": {
+      "hash": "a3165a6705",
+      "size": 2976628
+    },
+    "atmosphere/ch06_remembering_house_exterior.webp": {
+      "hash": "d4408f1c37",
+      "size": 498820
+    },
+    "atmosphere/ch06_return_room_sleepless.png": {
+      "hash": "596d7e41e6",
+      "size": 2426392
+    },
+    "atmosphere/ch06_return_room_sleepless.webp": {
+      "hash": "33080eff87",
+      "size": 287278
+    },
+    "atmosphere/ch06_room_morning.png": {
+      "hash": "7f0f1184ae",
+      "size": 2687604
+    },
+    "atmosphere/ch06_room_morning.webp": {
+      "hash": "b754cd172f",
+      "size": 376474
+    },
+    "atmosphere/ch06_song_glass_balcony.png": {
+      "hash": "d82fd69b77",
+      "size": 3161681
+    },
+    "atmosphere/ch06_song_glass_balcony.webp": {
+      "hash": "c343f1c859",
+      "size": 571160
+    },
+    "atmosphere/ch06_specific_footstep.png": {
+      "hash": "469c1e5536",
+      "size": 2777657
+    },
+    "atmosphere/ch06_specific_footstep.webp": {
+      "hash": "6e1380df47",
+      "size": 415546
+    },
+    "atmosphere/ch06_table_of_names.png": {
+      "hash": "97d4c049f1",
+      "size": 2503583
+    },
+    "atmosphere/ch06_table_of_names.webp": {
+      "hash": "05fffb9124",
+      "size": 326232
+    },
+    "atmosphere/ch06_thistle_unexisted.png": {
+      "hash": "2850b81c75",
+      "size": 2742874
+    },
+    "atmosphere/ch06_thistle_unexisted.webp": {
+      "hash": "35c391fdcb",
+      "size": 384618
+    },
+    "atmosphere/ch06_unsaid_words_vendor.png": {
+      "hash": "5332744515",
+      "size": 2548335
+    },
+    "atmosphere/ch06_unsaid_words_vendor.webp": {
+      "hash": "853bcd5429",
+      "size": 348468
+    },
+    "atmosphere/ch06_wall_of_keys.png": {
+      "hash": "3deff02740",
+      "size": 3095384
+    },
+    "atmosphere/ch06_wall_of_keys.webp": {
+      "hash": "1df729f7b9",
+      "size": 552430
+    },
     "atmosphere/glyph_in_air.png": {
       "hash": "8b0745a949",
       "size": 1176208
@@ -1314,6 +1566,10 @@
       "hash": "d9e8cb5e22",
       "size": 261138
     },
+    "music/approach_to_solrien.m4a": {
+      "hash": "3ecd959211",
+      "size": 3390637
+    },
     "music/archive.m4a": {
       "hash": "f8a6b387bd",
       "size": 3677945
@@ -1321,6 +1577,10 @@
     "music/archive_gravitas.m4a": {
       "hash": "4d440b5863",
       "size": 4624603
+    },
+    "music/ash_displacement.m4a": {
+      "hash": "ddf8f9611d",
+      "size": 433859
     },
     "music/ash_plains.m4a": {
       "hash": "f0629bd7e5",
@@ -1342,6 +1602,10 @@
       "hash": "606a236b2d",
       "size": 1549731
     },
+    "music/dream_corridor.m4a": {
+      "hash": "dbd7c4b69e",
+      "size": 4142345
+    },
     "music/echo_eater_memory.m4a": {
       "hash": "46abad19d9",
       "size": 4145306
@@ -1353,6 +1617,10 @@
     "music/forgotten_song_child.m4a": {
       "hash": "49d831fa10",
       "size": 3869763
+    },
+    "music/glyph_awakening.m4a": {
+      "hash": "6515fd3a33",
+      "size": 4619070
     },
     "music/key_wall_chord.m4a": {
       "hash": "67a2d055d9",
@@ -1495,16 +1763,16 @@
       "size": 3898837
     },
     "shimmer_anchors.json": {
-      "hash": "5a692c3ab5",
-      "size": 10244
+      "hash": "da2293fe21",
+      "size": 12260
     },
     "story.json": {
-      "hash": "f871da79b5",
-      "size": 146189
+      "hash": "d0517c2e1d",
+      "size": 174612
     },
     "story_es.json": {
-      "hash": "d22fe36cac",
-      "size": 154966
+      "hash": "1ed0a0b60a",
+      "size": 186871
     }
   }
 }

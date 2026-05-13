@@ -623,6 +623,130 @@
     "x": 77.0,
     "y": 33.0
   },
+  "ch06_accommodating_doorway": {
+    "x": 86.5,
+    "y": 22.3
+  },
+  "ch06_b01_thistle_past": {
+    "x": 51.5,
+    "y": 19.6
+  },
+  "ch06_b02_key_wall": {
+    "x": 94.5,
+    "y": 19.6
+  },
+  "ch06_b03_unsaid_words": {
+    "x": 72.5,
+    "y": 43.8
+  },
+  "ch06_b04_memory_child": {
+    "x": 78.5,
+    "y": 34.8
+  },
+  "ch06_b05_feather_response": {
+    "x": 66.0,
+    "y": 26.8
+  },
+  "ch06_b06_house_memory": {
+    "x": 91.0,
+    "y": 25.9
+  },
+  "ch06_b07_courtyard_promise": {
+    "x": 64.5,
+    "y": 36.6
+  },
+  "ch06_city_route_bends": {
+    "x": 17.0,
+    "y": 33.0
+  },
+  "ch06_compass_ready": {
+    "x": 74.5,
+    "y": 19.6
+  },
+  "ch06_courtyard_remembers": {
+    "x": 60.5,
+    "y": 24.1
+  },
+  "ch06_house_aftermemory": {
+    "x": 90.5,
+    "y": 32.1
+  },
+  "ch06_i01_fog_stopped_sulking": {
+    "x": 70.0,
+    "y": 21.4
+  },
+  "ch06_i02_key_vanish_absence": {
+    "x": 73.0,
+    "y": 47.3
+  },
+  "ch06_i03_waiting_almost_person": {
+    "x": 80.0,
+    "y": 42.9
+  },
+  "ch06_i04_feather_names_close": {
+    "x": 52.0,
+    "y": 36.6
+  },
+  "ch06_i05_compass_glyph_sync": {
+    "x": 42.0,
+    "y": 44.6
+  },
+  "ch06_memory_child_stair": {
+    "x": 87.5,
+    "y": 19.6
+  },
+  "ch06_older_name_flash": {
+    "x": 80.0,
+    "y": 20.5
+  },
+  "ch06_paradox_doorframe": {
+    "x": 95.5,
+    "y": 33.9
+  },
+  "ch06_parchment_feather": {
+    "x": 66.5,
+    "y": 30.4
+  },
+  "ch06_remember_us_awaken": {
+    "x": 63.5,
+    "y": 32.1
+  },
+  "ch06_remembering_house_exterior": {
+    "x": 65.0,
+    "y": 50.0
+  },
+  "ch06_return_room_sleepless": {
+    "x": 3.0,
+    "y": 57.1
+  },
+  "ch06_room_morning": {
+    "x": 63.5,
+    "y": 28.6
+  },
+  "ch06_song_glass_balcony": {
+    "x": 62.5,
+    "y": 20.5
+  },
+  "ch06_specific_footstep": {
+    "x": 77.5,
+    "y": 45.5
+  },
+  "ch06_table_of_names": {
+    "x": 78.0,
+    "y": 24.1
+  },
+  "ch06_thistle_unexisted": {
+    "x": 69.0,
+    "y": 24.1
+  },
+  "ch06_unsaid_words_vendor": {
+    "x": 69.0,
+    "y": 42.9
+  },
+  "ch06_wall_of_keys": {
+    "x": 94.0,
+    "y": 19.6
+  },
   "glyph_in_air": {
     "x": 56.0,
     "y": 47.0

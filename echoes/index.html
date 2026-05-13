@@ -1305,7 +1305,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-141737";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-143900";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -1409,6 +1409,7 @@ body.is-playing .progress{
 		"echoes.offline.intro":              { en: "Keep every track and its artwork on this device.",
 		                                       es: "Guarda todas las pistas y sus imágenes en este dispositivo." },
 		"echoes.offline.items":              { en: "Items",              es: "Elementos" },
+		"echoes.offline.storage":            { en: "Storage needed",     es: "Almacenamiento necesario" },
 		"echoes.offline.cached":             { en: "On device",          es: "En el dispositivo" },
 		"echoes.offline.enable":             { en: "Enable offline music", es: "Activar música sin conexión" },
 		"echoes.offline.disable":            { en: "Disable",            es: "Desactivar" },
@@ -1556,6 +1557,7 @@ body.is-playing .progress{
 // ─────────────────────────────────────────────────────────────────
 
 let TRACKS = [];
+let ECHOES_ASSET_MANIFEST = null;
 
 const MUSIC_BASE = "../lirien/music/";
 const ATMOS_BASE = "../lirien/atmosphere/";
@@ -1569,15 +1571,33 @@ function trackAudioUrl(track){
 	if (!track || !track.file) return "";
 	return track.file.startsWith("../") ? track.file : (MUSIC_BASE + track.file);
 }
+function webpImageUrl(url){
+	if (!url) return url;
+	return url.replace(/\.(png|jpe?g)(\?.*)?$/i, ".webp$2");
+}
 function trackImageUrl(track){
 	if (!track || !track.image) return HERO_BG_PATH;
-	return track.image.startsWith("../") ? track.image : (ATMOS_BASE + track.image);
+	const image = webpImageUrl(track.image);
+	return image.startsWith("../") ? image : (ATMOS_BASE + image);
 }
 
 async function loadTracks(){
 	const resp = await fetch("tracks.json", {cache:"no-store"});
 	if (!resp.ok) throw new Error(`tracks.json: ${resp.status}`);
 	TRACKS = await resp.json();
+}
+
+async function loadEchoesAssetManifest(){
+	try {
+		const resp = await fetch("assets_manifest.json", {cache:"no-store"});
+		if (!resp.ok) throw new Error(`assets_manifest.json: ${resp.status}`);
+		const manifest = await resp.json();
+		if (manifest && manifest.assets && typeof manifest.assets === "object") {
+			ECHOES_ASSET_MANIFEST = manifest;
+		}
+	} catch (e) {
+		ECHOES_ASSET_MANIFEST = null;
+	}
 }
 
 // Music progression: maps knot names to line numbers, and track
@@ -1705,7 +1725,7 @@ let mode = "shuffled";
 //                                          no chapter spoilers)
 let content = "played";
 let reachedChapter = 1;
-const HERO_BG_PATH = "../solrien_wide.png";
+const HERO_BG_PATH = "../solrien_wide.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // Offline music
@@ -1737,6 +1757,30 @@ function offlineItemUrl(url){
 	return new URL(url, location.href).href;
 }
 
+function offlineItemSize(url){
+	if (!ECHOES_ASSET_MANIFEST || !ECHOES_ASSET_MANIFEST.assets) return 0;
+	try {
+		const pathname = new URL(url, location.href).pathname;
+		const entry = ECHOES_ASSET_MANIFEST.assets[pathname];
+		return entry && Number(entry.size) > 0 ? Number(entry.size) : 0;
+	} catch (e) {
+		return 0;
+	}
+}
+
+function formatBytes(bytes){
+	if (!bytes || bytes <= 0) return "";
+	const units = ["B", "KB", "MB", "GB"];
+	let value = bytes;
+	let unit = 0;
+	while (value >= 1024 && unit < units.length - 1) {
+		value /= 1024;
+		unit += 1;
+	}
+	const decimals = unit >= 2 && value < 100 ? 1 : 0;
+	return `${value.toFixed(decimals)} ${units[unit]}`;
+}
+
 function buildOfflineItems(){
 	const seen = new Set();
 	const items = [];
@@ -1745,7 +1789,7 @@ function buildOfflineItems(){
 		const href = offlineItemUrl(url);
 		if (seen.has(href)) return;
 		seen.add(href);
-		items.push({ url: href, kind: kind || "asset" });
+		items.push({ url: href, kind: kind || "asset", size: offlineItemSize(href) });
 	};
 	add("./", "shell");
 	add("index.html", "shell");
@@ -1774,6 +1818,10 @@ function missingOfflineCount(){
 		: buildOfflineItems().length;
 }
 
+function offlineTotalBytes(){
+	return buildOfflineItems().reduce((sum, item) => sum + (item.size || 0), 0);
+}
+
 function renderOfflinePanel(){
 	if (!$offlinePanel) return;
 	const t = (window.lirienT || ((k) => k));
@@ -1781,6 +1829,7 @@ function renderOfflinePanel(){
 	const cached = cachedOfflineCount();
 	const missing = missingOfflineCount();
 	const allGood = items.length > 0 && missing === 0;
+	const storageNeeded = formatBytes(offlineTotalBytes());
 	let html = "";
 
 	if (!("serviceWorker" in navigator)) {
@@ -1801,6 +1850,12 @@ function renderOfflinePanel(){
 		     + `</div>`;
 	} else if (offline.enabled) {
 		html += `<p class="offline-intro">${escapeHtml(allGood ? t("echoes.offline.ready") : t("echoes.offline.needs-sync"))}</p>`;
+		if (storageNeeded) {
+			html += `<div class="offline-line">`
+			     +    `<span class="lbl">${escapeHtml(t("echoes.offline.storage"))}</span>`
+			     +    `<span class="val">${escapeHtml(storageNeeded)}</span>`
+			     + `</div>`;
+		}
 		html += `<div class="offline-line">`
 		     +    `<span class="lbl">${escapeHtml(t("echoes.offline.cached"))}</span>`
 		     +    `<span class="val ${allGood ? "ok" : "warn"}">${cached} / ${items.length}</span>`
@@ -1817,6 +1872,12 @@ function renderOfflinePanel(){
 		     +    `<span class="lbl">${escapeHtml(t("echoes.offline.items"))}</span>`
 		     +    `<span class="val">${items.length}</span>`
 		     + `</div>`;
+		if (storageNeeded) {
+			html += `<div class="offline-line">`
+			     +    `<span class="lbl">${escapeHtml(t("echoes.offline.storage"))}</span>`
+			     +    `<span class="val">${escapeHtml(storageNeeded)}</span>`
+			     + `</div>`;
+		}
 		if (offline.cacheState) {
 			html += `<div class="offline-line">`
 			     +    `<span class="lbl">${escapeHtml(t("echoes.offline.cached"))}</span>`
@@ -2364,9 +2425,9 @@ function setBg(imageFile){
 	} else if (!imageFile){
 		url = HERO_BG_PATH;
 	} else if (imageFile.startsWith("../")){
-		url = imageFile;
+		url = webpImageUrl(imageFile);
 	} else {
-		url = ATMOS_BASE + imageFile;
+		url = ATMOS_BASE + webpImageUrl(imageFile);
 	}
 	const incoming = activeBg === "a" ? $bgB : $bgA;
 	const outgoing = activeBg === "a" ? $bgA : $bgB;
@@ -2455,17 +2516,25 @@ function reloadActiveTrackAndPlay(position){
 	}
 }
 
+let nativeResumeWatchdogToken = 0;
 function armNativeResumeWatchdog(startTime){
-	setTimeout(() => {
+	const token = ++nativeResumeWatchdogToken;
+	const check = () => {
+		if (token !== nativeResumeWatchdogToken) return;
 		if (activeIdx < 0 || !TRACKS[activeIdx]) return;
-		if ($audio.paused || $audio.ended) return;
+		if ($audio.ended) return;
 		const now = Number.isFinite($audio.currentTime) ? $audio.currentTime : 0;
 		// Native iOS controls can report "playing" after an external
 		// pause while the media clock is actually stuck. If the clock
 		// has not moved after a short grace period, rebuild the current
 		// audio source and resume near the same timestamp.
-		if (now <= startTime + 0.15) reloadActiveTrackAndPlay(startTime);
-	}, 1600);
+		if ($audio.paused || now <= startTime + 0.15) {
+			nativeResumeWatchdogToken += 1;
+			reloadActiveTrackAndPlay(now > 0 ? now : startTime);
+		}
+	};
+	setTimeout(check, 1800);
+	setTimeout(check, 3600);
 }
 
 function play(opts){
@@ -2607,7 +2676,7 @@ function maybePrefetchAhead(){
 		// image references reuse the same cached entry.
 		if (track.image){
 			const img = new Image();
-			img.src = (track.image.startsWith("../") ? track.image : (ATMOS_BASE + track.image));
+			img.src = trackImageUrl(track);
 		}
 		// Audio: a separate Audio() with preload="auto" warms the
 		// browser's media cache for the track. We deliberately don't
@@ -2767,7 +2836,12 @@ $progress.addEventListener("keydown", (ev)=>{
 	}
 	if (!("mediaSession" in navigator)) return;
 	try {
-		navigator.mediaSession.setActionHandler("play",         () => play({recoverNative:true}));
+		navigator.mediaSession.setActionHandler("play",         () => {
+			if ("audioSession" in navigator){
+				try { navigator.audioSession.type = "playback"; } catch (e) {}
+			}
+			play({recoverNative:true});
+		});
 		navigator.mediaSession.setActionHandler("pause",        () => pause());
 		navigator.mediaSession.setActionHandler("nexttrack",    () => next());
 		navigator.mediaSession.setActionHandler("previoustrack",() => previous());
@@ -2784,8 +2858,8 @@ function updateMediaSessionMeta(){
 			artist: "Chronicles of Lirien",
 			album: "The Spiral That Remembers",
 			artwork: [
-				{ src: "icon-192.png",  sizes: "192x192", type: "image/png" },
-				{ src: "icon-512.png",  sizes: "512x512", type: "image/png" }
+				{ src: "icon-192-v3.png",  sizes: "192x192", type: "image/png" },
+				{ src: "icon-512-v3.png",  sizes: "512x512", type: "image/png" }
 			]
 		});
 	} catch (e) { /* silent */ }
@@ -3041,7 +3115,7 @@ window.echoesRefreshDynamicLabels = function(){
 	}
 	// Load the progression manifest in parallel-ish — its absence is
 	// not fatal (played mode falls back to chapter granularity).
-	await loadMusicProgression();
+	await Promise.all([loadMusicProgression(), loadEchoesAssetManifest()]);
 	const detected = detectReachedChapter();
 	const isStandalone = window.matchMedia("(display-mode: standalone)").matches
 	                     || window.navigator.standalone === true;
@@ -3160,7 +3234,7 @@ window.echoesRefreshDynamicLabels = function(){
 		const primeUrl = (content === "minimal")
 			? HERO_BG_PATH
 			: (queue.length
-				? (ATMOS_BASE + TRACKS[queue[0]].image)
+				? trackImageUrl(TRACKS[queue[0]])
 				: HERO_BG_PATH);
 		$bgA.style.backgroundImage = `url("${primeUrl}")`;
 		$bgA.classList.add("is-active");

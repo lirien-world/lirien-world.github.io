@@ -36,6 +36,7 @@ const SHELL_URLS = [
 	"/echoes/index.html",
 	"/echoes/tracks.json",
 	"/echoes/music_progression.json",
+	"/echoes/assets_manifest.json",
 	"/echoes/spiral.png",
 	"/echoes/icon-192-v3.png",
 	"/echoes/icon-512-v3.png",

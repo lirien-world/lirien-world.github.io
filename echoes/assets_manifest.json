@@ -1,0 +1,239 @@
+{
+  "manifest_version": "20260513-143900",
+  "generated_at": "2026-05-13T13:46:26Z",
+  "asset_count": 77,
+  "total_size": 158924190,
+  "assets": {
+    "/echoes/": {
+      "size": 138432
+    },
+    "/echoes/index.html": {
+      "size": 138432
+    },
+    "/echoes/tracks.json": {
+      "size": 9858
+    },
+    "/echoes/music_progression.json": {
+      "size": 3605
+    },
+    "/echoes/spiral.png": {
+      "size": 1557411
+    },
+    "/solrien_wide.webp": {
+      "size": 241332
+    },
+    "/echoes/icon-192-v3.png": {
+      "size": 47441
+    },
+    "/echoes/icon-512-v3.png": {
+      "size": 336356
+    },
+    "/lirien/music/ash_plains.m4a": {
+      "size": 5546417
+    },
+    "/lirien/atmosphere/ch01_ash_hollow_panorama.webp": {
+      "size": 168804
+    },
+    "/lirien/music/world_waking.m4a": {
+      "size": 3755240
+    },
+    "/lirien/atmosphere/ch01_aerin_awakens.webp": {
+      "size": 273352
+    },
+    "/lirien/music/solrien_1.m4a": {
+      "size": 3520097
+    },
+    "/lirien/atmosphere/ch01_approach_to_solrien.webp": {
+      "size": 208988
+    },
+    "/lirien/music/thistle_theme.m4a": {
+      "size": 2368968
+    },
+    "/lirien/atmosphere/ch03_thistle_joke.webp": {
+      "size": 251972
+    },
+    "/lirien/music/archive.m4a": {
+      "size": 3677945
+    },
+    "/lirien/atmosphere/ch02_archive_establishing.webp": {
+      "size": 476952
+    },
+    "/lirien/music/solrien_night.m4a": {
+      "size": 5183435
+    },
+    "/lirien/atmosphere/ch03_evening_with_shard.webp": {
+      "size": 354734
+    },
+    "/lirien/music/solrien_morning.m4a": {
+      "size": 4617863
+    },
+    "/lirien/atmosphere/ch03_solrien_morning.webp": {
+      "size": 411026
+    },
+    "/lirien/music/quiet_room.m4a": {
+      "size": 3243833
+    },
+    "/lirien/atmosphere/ch03_tonescribe_room.webp": {
+      "size": 405234
+    },
+    "/lirien/music/warm_transition.m4a": {
+      "size": 3615329
+    },
+    "/lirien/atmosphere/ch03_tonescribe_tea.webp": {
+      "size": 360588
+    },
+    "/lirien/music/solrien_morning_shifted.m4a": {
+      "size": 3971253
+    },
+    "/lirien/atmosphere/ch03_next_morning.webp": {
+      "size": 364040
+    },
+    "/lirien/music/ysolde_theme.m4a": {
+      "size": 3898837
+    },
+    "/lirien/atmosphere/ch03_ysolde_first_appearance.webp": {
+      "size": 473606
+    },
+    "/lirien/music/archive_gravitas.m4a": {
+      "size": 4624603
+    },
+    "/lirien/atmosphere/ch03_archive_fading_figure.webp": {
+      "size": 496734
+    },
+    "/lirien/music/solrien_morning_training.m4a": {
+      "size": 2584600
+    },
+    "/lirien/atmosphere/ch04_courtyard_practice.webp": {
+      "size": 575322
+    },
+    "/lirien/music/coherence_unstable.m4a": {
+      "size": 5049957
+    },
+    "/lirien/atmosphere/ch04_coherence_accident.webp": {
+      "size": 700980
+    },
+    "/lirien/music/coherence_quiet.m4a": {
+      "size": 4253093
+    },
+    "/lirien/atmosphere/ch04_thistle_names_coherence.webp": {
+      "size": 562106
+    },
+    "/lirien/music/solrien_wandering.m4a": {
+      "size": 3637038
+    },
+    "/lirien/atmosphere/ch04_solrien_paths_suggest.webp": {
+      "size": 587324
+    },
+    "/lirien/music/memory_near_miss.m4a": {
+      "size": 4952587
+    },
+    "/lirien/atmosphere/ch04_locked_cafe.webp": {
+      "size": 476994
+    },
+    "/lirien/music/rooftop_quiet.m4a": {
+      "size": 5633337
+    },
+    "/lirien/atmosphere/ch04_rooftop_thistle.webp": {
+      "size": 541492
+    },
+    "/lirien/music/old_solrien_dream.m4a": {
+      "size": 4860175
+    },
+    "/lirien/atmosphere/ch04_dream_old_solrien.webp": {
+      "size": 547604
+    },
+    "/lirien/music/velhara_recognition.m4a": {
+      "size": 3987743
+    },
+    "/lirien/atmosphere/ch04_velhara_arrives.webp": {
+      "size": 469546
+    },
+    "/lirien/music/thread_cafe.m4a": {
+      "size": 6079555
+    },
+    "/lirien/atmosphere/ch04_thread_cafe.webp": {
+      "size": 493124
+    },
+    "/lirien/music/threshold_walk.m4a": {
+      "size": 3816368
+    },
+    "/lirien/atmosphere/ch05_leaving_solrien.webp": {
+      "size": 412124
+    },
+    "/lirien/music/lost_road.m4a": {
+      "size": 4178273
+    },
+    "/lirien/atmosphere/ch05_b02_wrong_road.webp": {
+      "size": 533446
+    },
+    "/lirien/music/road_quiet.m4a": {
+      "size": 3146360
+    },
+    "/lirien/atmosphere/ch05_i05_compass_steady_lunch.webp": {
+      "size": 489586
+    },
+    "/lirien/music/stars_listening.m4a": {
+      "size": 4476764
+    },
+    "/lirien/atmosphere/ch05_i06_interested_stars.webp": {
+      "size": 397498
+    },
+    "/lirien/music/road_strange.m4a": {
+      "size": 3289508
+    },
+    "/lirien/atmosphere/ch05_mushroom_path.webp": {
+      "size": 530886
+    },
+    "/lirien/music/memory_flash.m4a": {
+      "size": 4714851
+    },
+    "/lirien/atmosphere/ch05_i09_three_flashes.webp": {
+      "size": 256668
+    },
+    "/lirien/music/lost_city_threshold.m4a": {
+      "size": 4346717
+    },
+    "/lirien/atmosphere/ch05_i10_arch_hand_contact.webp": {
+      "size": 400862
+    },
+    "/lirien/music/lost_city_first_sight.m4a": {
+      "size": 4443199
+    },
+    "/lirien/atmosphere/ch05_city_lost_first_streets.webp": {
+      "size": 486530
+    },
+    "/lirien/music/lost_city_room.m4a": {
+      "size": 3855879
+    },
+    "/lirien/atmosphere/ch05_city_lost_room.webp": {
+      "size": 316920
+    },
+    "/lirien/music/corrupted_areas.m4a": {
+      "size": 1549731
+    },
+    "/lirien/atmosphere/ch01_displacement.webp": {
+      "size": 255282
+    },
+    "/lirien/music/solrien_2.m4a": {
+      "size": 3719481
+    },
+    "/lirien/atmosphere/ch02_first_sight_solrien.webp": {
+      "size": 366256
+    },
+    "/lirien/music/thistle_1.m4a": {
+      "size": 4266664
+    },
+    "/lirien/atmosphere/ch03_waking_with_thistle.webp": {
+      "size": 447196
+    },
+    "/lirien/music/thistle_2.m4a": {
+      "size": 3887583
+    },
+    "/lirien/atmosphere/ch03_thistle_rest.webp": {
+      "size": 221626
+    },
+    "/lirien_theme.mp3": {
+      "size": 3382638
+    }
+  }
+}

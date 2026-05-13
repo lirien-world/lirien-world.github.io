@@ -52,6 +52,7 @@ const SHELL_URLS = [
 	"/lirien/main.js",
 	"/lirien/assets_manifest.json",
 	"/lirien/sw.js",
+	"/spiral_stone.png",
 ];
 
 // What we cache. shouldCache() is the single authority — both the

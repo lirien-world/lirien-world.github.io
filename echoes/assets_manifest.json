@@ -1,17 +1,17 @@
 {
-  "manifest_version": "20260513-143900",
-  "generated_at": "2026-05-13T13:46:26Z",
-  "asset_count": 77,
-  "total_size": 158924190,
+  "manifest_version": "20260513-164932",
+  "generated_at": "2026-05-13T15:50:19Z",
+  "asset_count": 88,
+  "total_size": 198272605,
   "assets": {
     "/echoes/": {
-      "size": 138432
+      "size": 138985
     },
     "/echoes/index.html": {
-      "size": 138432
+      "size": 138985
     },
     "/echoes/tracks.json": {
-      "size": 9858
+      "size": 13499
     },
     "/echoes/music_progression.json": {
       "size": 3605
@@ -207,6 +207,39 @@
     },
     "/lirien/atmosphere/ch05_city_lost_room.webp": {
       "size": 316920
+    },
+    "/lirien/music/city_memory_walk.m4a": {
+      "size": 3671434
+    },
+    "/lirien/music/echo_eater_memory.m4a": {
+      "size": 4145306
+    },
+    "/lirien/music/song_glass.m4a": {
+      "size": 4388067
+    },
+    "/lirien/music/key_wall_chord.m4a": {
+      "size": 4371457
+    },
+    "/lirien/music/unsaid_words_vendor.m4a": {
+      "size": 1917562
+    },
+    "/lirien/music/forgotten_song_child.m4a": {
+      "size": 3869763
+    },
+    "/lirien/music/thistle_feather.m4a": {
+      "size": 3735214
+    },
+    "/lirien/music/remembering_house.m4a": {
+      "size": 3901611
+    },
+    "/lirien/music/older_name_flash.m4a": {
+      "size": 2267157
+    },
+    "/lirien/music/we_remember_you.m4a": {
+      "size": 3370881
+    },
+    "/lirien/music/footstep_deeper.m4a": {
+      "size": 3705216
     },
     "/lirien/music/corrupted_areas.m4a": {
       "size": 1549731

@@ -69,6 +69,11 @@ body{
 		overflow:hidden;
 		overscroll-behavior:none;
 	}
+	.bg-stage,.tint,.grain,.motes{
+		height:var(--echoes-viewport-height,100dvh);
+		min-height:var(--echoes-viewport-height,100dvh);
+		bottom:auto;
+	}
 }
 
 /* ───── BACKGROUND IMAGE LAYER (two stacked, crossfade) ───── */
@@ -1274,19 +1279,31 @@ body.is-playing .progress{
 	}
 	function syncViewportHeight() {
 		const vv = window.visualViewport;
-		const height = Math.round((vv && vv.height) || window.innerHeight || 0);
+		const candidates = [
+			vv && vv.height,
+			window.innerHeight,
+			document.documentElement && document.documentElement.clientHeight,
+		].filter((value) => Number.isFinite(value) && value > 0);
+		const height = Math.round(Math.max.apply(Math, candidates));
 		if (height > 0) root.style.setProperty("--echoes-viewport-height", height + "px");
 		if (isStandaloneDisplay()) {
 			requestAnimationFrame(() => window.scrollTo(0, 0));
 		}
 	}
-	syncViewportHeight();
+	function settleViewportHeight() {
+		syncViewportHeight();
+		[60, 180, 420, 900, 1600].forEach((delay) => {
+			setTimeout(syncViewportHeight, delay);
+		});
+	}
+	settleViewportHeight();
 	window.addEventListener("resize", syncViewportHeight, { passive: true });
-	window.addEventListener("orientationchange", () => setTimeout(syncViewportHeight, 250), { passive: true });
-	window.addEventListener("pageshow", syncViewportHeight, { passive: true });
-	window.addEventListener("focus", syncViewportHeight, { passive: true });
+	window.addEventListener("orientationchange", settleViewportHeight, { passive: true });
+	window.addEventListener("pageshow", settleViewportHeight, { passive: true });
+	window.addEventListener("load", settleViewportHeight, { passive: true });
+	window.addEventListener("focus", settleViewportHeight, { passive: true });
 	document.addEventListener("visibilitychange", () => {
-		if (!document.hidden) syncViewportHeight();
+		if (!document.hidden) settleViewportHeight();
 	});
 	if (window.visualViewport) {
 		window.visualViewport.addEventListener("resize", syncViewportHeight, { passive: true });
@@ -1305,7 +1322,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-143900";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-164932";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;

@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260513-143900",
-  "generated_at": "2026-05-13T13:39:04Z",
-  "asset_count": 357,
-  "total_size": 632605160,
+  "manifest_version": "20260513-164932",
+  "generated_at": "2026-05-13T15:49:33Z",
+  "asset_count": 370,
+  "total_size": 675835458,
   "chapters": [
     {
       "number": 1,
@@ -1146,6 +1146,14 @@
       "hash": "4c6ba787b6",
       "size": 501086
     },
+    "atmosphere/ch05_i03b_tree_shadow_keeps_pace.png": {
+      "hash": "67327b401e",
+      "size": 3289480
+    },
+    "atmosphere/ch05_i03b_tree_shadow_keeps_pace.webp": {
+      "hash": "b4b9451f4c",
+      "size": 597076
+    },
     "atmosphere/ch05_i04_shrine_glyph_cycle.png": {
       "hash": "ba5a2bbe9f",
       "size": 3353524
@@ -1318,6 +1326,10 @@
       "hash": "f0629bd7e5",
       "size": 5546417
     },
+    "music/city_memory_walk.m4a": {
+      "hash": "39960ae884",
+      "size": 3671434
+    },
     "music/coherence_quiet.m4a": {
       "hash": "d7ac3228d5",
       "size": 4253093
@@ -1329,6 +1341,22 @@
     "music/corrupted_areas.m4a": {
       "hash": "606a236b2d",
       "size": 1549731
+    },
+    "music/echo_eater_memory.m4a": {
+      "hash": "46abad19d9",
+      "size": 4145306
+    },
+    "music/footstep_deeper.m4a": {
+      "hash": "f8a7c31139",
+      "size": 3705216
+    },
+    "music/forgotten_song_child.m4a": {
+      "hash": "49d831fa10",
+      "size": 3869763
+    },
+    "music/key_wall_chord.m4a": {
+      "hash": "67a2d055d9",
+      "size": 4371457
     },
     "music/lost_city_first_sight.m4a": {
       "hash": "396c3e4628",
@@ -1358,9 +1386,17 @@
       "hash": "bda7169481",
       "size": 4860175
     },
+    "music/older_name_flash.m4a": {
+      "hash": "9721b195ea",
+      "size": 2267157
+    },
     "music/quiet_room.m4a": {
       "hash": "593c7170cb",
       "size": 3243833
+    },
+    "music/remembering_house.m4a": {
+      "hash": "af6b482a6d",
+      "size": 3901611
     },
     "music/road_quiet.m4a": {
       "hash": "175c2a134a",
@@ -1402,6 +1438,10 @@
       "hash": "9b4419124a",
       "size": 3637038
     },
+    "music/song_glass.m4a": {
+      "hash": "287745c070",
+      "size": 4388067
+    },
     "music/stars_listening.m4a": {
       "hash": "0cf9691ed5",
       "size": 4476764
@@ -1413,6 +1453,10 @@
     "music/thistle_2.m4a": {
       "hash": "d4873a078b",
       "size": 3887583
+    },
+    "music/thistle_feather.m4a": {
+      "hash": "7236e122e7",
+      "size": 3735214
     },
     "music/thistle_theme.m4a": {
       "hash": "f3c1efb398",
@@ -1426,6 +1470,10 @@
       "hash": "08705fcc8f",
       "size": 3816368
     },
+    "music/unsaid_words_vendor.m4a": {
+      "hash": "f8e9a79b43",
+      "size": 1917562
+    },
     "music/velhara_recognition.m4a": {
       "hash": "15b93e0bef",
       "size": 3987743
@@ -1433,6 +1481,10 @@
     "music/warm_transition.m4a": {
       "hash": "0f70ae933c",
       "size": 3615329
+    },
+    "music/we_remember_you.m4a": {
+      "hash": "0c16c4d041",
+      "size": 3370881
     },
     "music/world_waking.m4a": {
       "hash": "587993b5a9",
@@ -1443,8 +1495,8 @@
       "size": 3898837
     },
     "shimmer_anchors.json": {
-      "hash": "c1bc642f24",
-      "size": 10170
+      "hash": "5a692c3ab5",
+      "size": 10244
     },
     "story.json": {
       "hash": "f871da79b5",

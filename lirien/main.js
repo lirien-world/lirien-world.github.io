@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260513ac";
+const ASSET_VERSION = "20260513af";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1839,6 +1839,10 @@ function showChoices(choices) {
 	// rim and dim the bg slightly so the choice itself becomes the
 	// focal point. Released in pickChoice() after the click.
 	document.body.classList.add("is-choosing");
+	const prompt = document.createElement("div");
+	prompt.className = "choice-prompt";
+	prompt.textContent = (window.lirienT && window.lirienT("lirien.choice.prompt")) || "What do you choose?";
+	$choices.appendChild(prompt);
 	choices.forEach((choice, i) => {
 		const btn = document.createElement("button");
 		btn.className = "choice";

@@ -66,14 +66,14 @@ body.is-standalone-display{
 	position:fixed;
 	inset:0;
 	width:100%;
-	height:var(--echoes-viewport-height,100dvh);
-	min-height:var(--echoes-viewport-height,100dvh);
+	height:max(var(--echoes-viewport-height,100dvh),100lvh);
+	min-height:max(var(--echoes-viewport-height,100dvh),100lvh);
 	overflow:hidden;
 }
 @media (display-mode:standalone),(display-mode:fullscreen){
 	html,body{
-		height:var(--echoes-viewport-height,100dvh);
-		min-height:var(--echoes-viewport-height,100dvh);
+		height:max(var(--echoes-viewport-height,100dvh),100lvh);
+		min-height:max(var(--echoes-viewport-height,100dvh),100lvh);
 		overflow:hidden;
 		overscroll-behavior:none;
 	}
@@ -149,7 +149,7 @@ body.is-standalone-display{
 }
 @media (display-mode:standalone),(display-mode:fullscreen){
 	.frame{
-		height:var(--echoes-viewport-height,100dvh);
+		height:max(var(--echoes-viewport-height,100dvh),100lvh);
 		min-height:0;
 		overflow:hidden;
 	}
@@ -954,6 +954,27 @@ body.is-playing .progress{
 .echoes-lang-item .lang-code{letter-spacing:0.18em;min-width:1.6em}
 .echoes-lang-item .lang-name{font-style:italic;font-size:0.95em;letter-spacing:0.06em;text-transform:none;color:inherit;opacity:0.85;font-weight:400}
 
+/* Hidden diagnostics: backtick on keyboard, or three-finger tap on iOS.
+   Kept intentionally plain so screenshots are readable during PWA
+   viewport debugging. */
+.echoes-debug{
+	position:fixed;left:50%;bottom:max(1rem,env(safe-area-inset-bottom));
+	transform:translateX(-50%);z-index:1000;width:min(720px,calc(100vw - 2rem));
+	max-height:min(78vh,640px);overflow:auto;padding:1rem 1.1rem;
+	background:rgba(8,6,15,.96);border:1px solid rgba(196,147,90,.35);
+	box-shadow:0 18px 50px rgba(0,0,0,.65);color:var(--cream);
+	font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+	font-size:12px;line-height:1.45;letter-spacing:0;
+}
+.echoes-debug[hidden]{display:none}
+.echoes-debug-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
+.echoes-debug-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.echoes-debug-close{all:unset;cursor:pointer;color:var(--mist);font-size:1.5rem;line-height:1;padding:.1rem .35rem}
+.echoes-debug-close:hover,.echoes-debug-close:focus-visible{color:var(--gold-bright);outline:none}
+.echoes-debug-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.3rem .9rem}
+.echoes-debug .label{color:var(--ash)}
+.echoes-debug .value{color:var(--gold-bright);word-break:break-word}
+
 /* ───── ANIMATIONS ───── */
 @keyframes reveal{from{opacity:0;transform:translateY(0.6rem)}to{opacity:1;transform:translateY(0)}}
 @keyframes reveal-scale{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
@@ -1272,6 +1293,14 @@ body.is-playing .progress{
      iOS; x-webkit-airplay defaults to "allow" so AirPlay just works. -->
 <audio id="audio" preload="auto" playsinline crossorigin="anonymous"></audio>
 
+<section class="echoes-debug" id="echoesDebug" aria-label="Echoes debug" hidden>
+	<div class="echoes-debug-head">
+		<div class="echoes-debug-title">Echoes Debug</div>
+		<button class="echoes-debug-close" id="echoesDebugClose" type="button" aria-label="Close debug">×</button>
+	</div>
+	<div class="echoes-debug-grid" id="echoesDebugGrid"></div>
+</section>
+
 <script>
 "use strict";
 
@@ -1296,8 +1325,10 @@ body.is-playing .progress{
 			vv && vv.height,
 			window.innerHeight,
 			document.documentElement && document.documentElement.clientHeight,
+			standalone && window.screen && window.screen.height,
+			standalone && window.screen && window.screen.availHeight,
 		].filter((value) => Number.isFinite(value) && value > 0);
-		const height = Math.round((standalone ? Math.min : Math.max).apply(Math, candidates));
+		const height = Math.round(Math.max.apply(Math, candidates));
 		if (height > 0) root.style.setProperty("--echoes-viewport-height", height + "px");
 		if (standalone) {
 			requestAnimationFrame(() => window.scrollTo(0, 0));
@@ -1335,7 +1366,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-204314";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-205805";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -1579,6 +1610,110 @@ body.is-playing .progress{
 			}
 		});
 	}
+})();
+
+// ─────────────────────────────────────────────────────────────────
+// Debug panel — backtick on desktop, three-finger tap on iOS.
+// Gives real standalone viewport values from the device so we can
+// distinguish CSS viewport, visual viewport, safe area, and service
+// worker state without guessing from screenshots.
+// ─────────────────────────────────────────────────────────────────
+(function setupDebugPanel(){
+	const panel = document.getElementById("echoesDebug");
+	const grid = document.getElementById("echoesDebugGrid");
+	const close = document.getElementById("echoesDebugClose");
+	if (!panel || !grid || !close) return;
+
+	function escapeHtml(value){
+		return String(value).replace(/[&<>"']/g, (ch) => ({
+			"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+		})[ch]);
+	}
+	function round(value){
+		return Number.isFinite(value) ? Math.round(value * 10) / 10 : "(n/a)";
+	}
+	function rectSummary(selector){
+		const el = document.querySelector(selector);
+		if (!el) return "(missing)";
+		const r = el.getBoundingClientRect();
+		return `${round(r.top)}-${round(r.bottom)} h${round(r.height)}`;
+	}
+	function safeAreaValue(edge){
+		const probe = document.createElement("div");
+		probe.style.cssText = `position:fixed;visibility:hidden;padding-${edge}:env(safe-area-inset-${edge});`;
+		document.body.appendChild(probe);
+		const value = parseFloat(getComputedStyle(probe).getPropertyValue(`padding-${edge}`)) || 0;
+		probe.remove();
+		return value;
+	}
+	async function serviceWorkerInfo(){
+		if (!("serviceWorker" in navigator)) return "unsupported";
+		try {
+			const reg = await navigator.serviceWorker.getRegistration();
+			const active = reg && reg.active && reg.active.scriptURL;
+			const waiting = reg && reg.waiting && reg.waiting.scriptURL;
+			const controller = navigator.serviceWorker.controller && navigator.serviceWorker.controller.scriptURL;
+			return `ctrl:${controller || "none"} active:${active || "none"} wait:${waiting || "none"}`;
+		} catch (err) {
+			return `error:${err && err.message ? err.message : err}`;
+		}
+	}
+	async function render(){
+		const vv = window.visualViewport;
+		const html = document.documentElement;
+		const body = document.body;
+		const frame = document.querySelector(".frame");
+		const bg = document.querySelector(".bg-stage");
+		const frameStyle = frame ? getComputedStyle(frame) : null;
+		const bgStyle = bg ? getComputedStyle(bg) : null;
+		const rows = [
+			["build", window.ECHOES_BUILD_VERSION || "(unknown)"],
+			["mode", `mq:${window.matchMedia && window.matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser"} nav:${window.navigator.standalone === true ? "standalone" : "normal"}`],
+			["viewport", `inner ${round(innerWidth)}x${round(innerHeight)} outer ${round(outerWidth)}x${round(outerHeight)}`],
+			["visual", vv ? `${round(vv.width)}x${round(vv.height)} offset ${round(vv.offsetTop)}/${round(vv.offsetLeft)} scale ${round(vv.scale)}` : "none"],
+			["screen", window.screen ? `${round(screen.width)}x${round(screen.height)} avail ${round(screen.availWidth)}x${round(screen.availHeight)}` : "none"],
+			["client", `html ${round(html.clientWidth)}x${round(html.clientHeight)} body ${round(body.clientWidth)}x${round(body.clientHeight)}`],
+			["css var", getComputedStyle(html).getPropertyValue("--echoes-viewport-height").trim() || "(unset)"],
+			["safe area", `top ${round(safeAreaValue("top"))} bottom ${round(safeAreaValue("bottom"))}`],
+			["scroll", `window ${round(scrollX)}/${round(scrollY)} html ${round(html.scrollWidth)}x${round(html.scrollHeight)} body ${round(body.scrollWidth)}x${round(body.scrollHeight)}`],
+			["body class", body.className || "(none)"],
+			["frame rect", rectSummary(".frame")],
+			["bg rect", rectSummary(".bg-stage")],
+			["layer rect", rectSummary(".bg-layer.is-active")],
+			["frame css", frameStyle ? `h ${frameStyle.height} min ${frameStyle.minHeight} pb ${frameStyle.paddingBottom}` : "(missing)"],
+			["bg css", bgStyle ? `h ${bgStyle.height} min ${bgStyle.minHeight} bottom ${bgStyle.bottom}` : "(missing)"],
+			["worker", await serviceWorkerInfo()],
+		];
+		grid.innerHTML = rows.map(([label, value]) => (
+			`<div><span class="label">${escapeHtml(label)}:</span> <span class="value">${escapeHtml(value)}</span></div>`
+		)).join("");
+	}
+	function toggle(force){
+		panel.hidden = typeof force === "boolean" ? !force : !panel.hidden;
+		if (!panel.hidden) render();
+	}
+	document.addEventListener("keydown", (ev) => {
+		const inText = ev.target && ev.target.matches && ev.target.matches("input, textarea");
+		if (ev.code === "Backquote" && !inText) {
+			ev.preventDefault();
+			toggle();
+		} else if (ev.code === "Escape" && !panel.hidden) {
+			panel.hidden = true;
+		}
+	});
+	document.addEventListener("touchstart", (ev) => {
+		if (ev.touches && ev.touches.length >= 3) {
+			ev.preventDefault();
+			toggle();
+		}
+	}, { passive: false });
+	close.addEventListener("click", () => { panel.hidden = true; });
+	["resize", "orientationchange", "pageshow"].forEach((eventName) => {
+		window.addEventListener(eventName, () => { if (!panel.hidden) setTimeout(render, 80); }, { passive: true });
+	});
+	document.addEventListener("visibilitychange", () => {
+		if (!document.hidden && !panel.hidden) setTimeout(render, 80);
+	});
 })();
 
 // ─────────────────────────────────────────────────────────────────

@@ -1,14 +1,14 @@
 {
-  "manifest_version": "20260513-204314",
-  "generated_at": "2026-05-13T19:44:20Z",
+  "manifest_version": "20260513-205805",
+  "generated_at": "2026-05-13T19:58:57Z",
   "asset_count": 90,
-  "total_size": 198288654,
+  "total_size": 198303525,
   "assets": {
     "/echoes/": {
-      "size": 139422
+      "size": 146801
     },
     "/echoes/index.html": {
-      "size": 139422
+      "size": 146801
     },
     "/echoes/tracks.json": {
       "size": 13499
@@ -17,7 +17,7 @@
       "size": 3605
     },
     "/echoes/assets_manifest.json": {
-      "size": 6729
+      "size": 6842
     },
     "/echoes/sw.js": {
       "size": 8446

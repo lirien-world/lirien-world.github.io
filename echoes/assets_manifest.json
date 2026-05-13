@@ -1,20 +1,26 @@
 {
-  "manifest_version": "20260513-202748",
-  "generated_at": "2026-05-13T19:29:49Z",
-  "asset_count": 88,
-  "total_size": 198273203,
+  "manifest_version": "20260513-204314",
+  "generated_at": "2026-05-13T19:44:20Z",
+  "asset_count": 90,
+  "total_size": 198288654,
   "assets": {
     "/echoes/": {
-      "size": 139284
+      "size": 139422
     },
     "/echoes/index.html": {
-      "size": 139284
+      "size": 139422
     },
     "/echoes/tracks.json": {
       "size": 13499
     },
     "/echoes/music_progression.json": {
       "size": 3605
+    },
+    "/echoes/assets_manifest.json": {
+      "size": 6729
+    },
+    "/echoes/sw.js": {
+      "size": 8446
     },
     "/echoes/spiral.png": {
       "size": 1557411

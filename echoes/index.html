@@ -1335,7 +1335,8 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-202748";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-204314";  // bump on echoes/ deploys
+	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -1550,7 +1551,8 @@ body.is-playing .progress{
 	const params = new URLSearchParams(location.search);
 	const wantsPurge = params.has("clear-cache") || params.has("nocache");
 
-	navigator.serviceWorker.register("sw.js").then((reg) => {
+	const swVersion = encodeURIComponent(window.ECHOES_BUILD_VERSION || "dev");
+	navigator.serviceWorker.register("sw.js?v=" + swVersion).then((reg) => {
 		// If the user asked to clear cache, message the active worker
 		// and reload to a clean URL once it's done.
 		if (!wantsPurge) return;

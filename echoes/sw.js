@@ -30,7 +30,7 @@
 //   fetch        → cache-first for asset URLs; passthrough for HTML
 //   message      → handle purge / cache-state / preload commands
 
-const CACHE_NAME = "lirien-jukebox-v15";
+const CACHE_NAME = "lirien-jukebox-v16";
 const SHELL_URLS = [
 	"/echoes/",
 	"/echoes/index.html",
@@ -72,7 +72,10 @@ self.addEventListener("install", (ev) => {
 });
 
 self.addEventListener("activate", (ev) => {
-	ev.waitUntil(self.clients.claim());
+	ev.waitUntil((async () => {
+		await migrateLegacyCaches();
+		await self.clients.claim();
+	})());
 });
 
 self.addEventListener("fetch", (ev) => {
@@ -98,6 +101,25 @@ async function precacheShell(){
 			// Do not fail install; runtime fetches fill any misses.
 		}
 	}));
+}
+
+async function migrateLegacyCaches(){
+	const names = await caches.keys();
+	const legacyNames = names.filter((name) => (
+		name !== CACHE_NAME && /^lirien-jukebox-v\d+$/.test(name)
+	));
+	if (!legacyNames.length) return;
+	const target = await caches.open(CACHE_NAME);
+	for (const legacyName of legacyNames) {
+		const legacy = await caches.open(legacyName);
+		const requests = await legacy.keys();
+		for (const request of requests) {
+			if (await target.match(request, { ignoreSearch: false })) continue;
+			const response = await legacy.match(request);
+			if (response) await target.put(request, response.clone());
+		}
+		await caches.delete(legacyName);
+	}
 }
 
 async function networkFirstShell(request){

@@ -28,7 +28,7 @@
 //   install      → take effect immediately (skipWaiting)
 //   activate     → claim all clients (no reload required)
 //   fetch        → cache-first for asset URLs; passthrough for HTML
-//   message      → handle "purge" command from page
+//   message      → handle purge / cache-state / preload commands
 
 const CACHE_NAME = "lirien-jukebox-v15";
 const SHELL_URLS = [
@@ -143,11 +143,96 @@ async function cacheFirst(request){
 
 self.addEventListener("message", (ev) => {
 	const data = ev.data || {};
+	const port = (ev.ports && ev.ports[0]) || null;
+	const reply = (msg) => {
+		if (port) { try { port.postMessage(msg); } catch (_) {} }
+		else if (ev.source) ev.source.postMessage(msg);
+	};
 	if (data.type === "purge"){
 		ev.waitUntil((async () => {
 			await caches.delete(CACHE_NAME);
 			// Reply so the page can confirm and reload.
-			if (ev.source) ev.source.postMessage({ type: "purged" });
+			reply({ type: "purged" });
 		})());
+		return;
+	}
+	if (data.type === "getCacheState"){
+		ev.waitUntil((async () => {
+			const cache = await caches.open(CACHE_NAME);
+			const cached = [];
+			const missing = [];
+			for (const item of normalizeItems(data.items)) {
+				const hit = await cache.match(item.url, { ignoreSearch: false })
+					|| await cache.match(item.url, { ignoreSearch: true });
+				(hit ? cached : missing).push(item.url);
+			}
+			reply({ type: "cacheState", cached, missing });
+		})());
+		return;
+	}
+	if (data.type === "preloadAll"){
+		ev.waitUntil(runPreload(data, port));
+		return;
+	}
+	if (data.type === "preloadCancel"){
+		preloadCancelled = true;
 	}
 });
+
+let preloadCancelled = false;
+
+function normalizeItems(items){
+	if (!Array.isArray(items)) return [];
+	const seen = new Set();
+	const out = [];
+	for (const raw of items) {
+		const url = raw && raw.url;
+		if (!url) continue;
+		let href;
+		try { href = new URL(url, self.location.origin).href; }
+		catch (e) { continue; }
+		if (seen.has(href)) continue;
+		seen.add(href);
+		out.push({ url: href, size: Number(raw.size) || 0 });
+	}
+	return out;
+}
+
+async function runPreload(data, port){
+	preloadCancelled = false;
+	const reply = (msg) => { try { port && port.postMessage(msg); } catch (_) {} };
+	const items = normalizeItems(data.items);
+	const cache = await caches.open(CACHE_NAME);
+	const total = items.length;
+	const totalBytes = items.reduce((sum, item) => sum + (item.size || 0), 0);
+	let done = 0;
+	let doneBytes = 0;
+	const failed = [];
+	reply({ type: "preloadProgress", done, total, doneBytes, totalBytes });
+	for (const item of items) {
+		if (preloadCancelled) {
+			reply({ type: "preloadComplete", failed, cancelled: true });
+			return;
+		}
+		try {
+			const existing = await cache.match(item.url, { ignoreSearch: false })
+				|| await cache.match(item.url, { ignoreSearch: true });
+			if (!existing) {
+				const req = new Request(item.url, { cache: "default" });
+				const response = await fetch(req);
+				if (response && response.ok && response.status === 200) {
+					await cache.put(req, response.clone());
+				} else {
+					failed.push(item.url);
+				}
+			}
+		} catch (err) {
+			failed.push(item.url);
+		} finally {
+			done += 1;
+			doneBytes += item.size || 0;
+			reply({ type: "preloadProgress", done, total, doneBytes, totalBytes });
+		}
+	}
+	reply({ type: "preloadComplete", failed, cancelled: false });
+}

@@ -778,6 +778,82 @@ body.is-playing .progress{
 	font-style:normal;
 	letter-spacing:0;
 }
+.offline-panel{
+	display:flex;
+	flex-direction:column;
+	gap:0.42rem;
+	padding:0.3rem 0.2rem 0.65rem;
+	font-family:'Cormorant Garamond',serif;
+	font-size:clamp(0.86rem,2.4vw,1rem);
+	color:var(--mist);
+}
+.offline-panel .offline-intro{
+	margin:0 0 0.15rem;
+	font-style:italic;
+	line-height:1.45;
+	color:rgba(245,235,210,0.72);
+}
+.offline-panel .offline-line{
+	display:flex;
+	justify-content:space-between;
+	gap:0.7rem;
+	line-height:1.25;
+}
+.offline-panel .lbl{
+	color:rgba(245,235,210,0.52);
+	font-style:italic;
+}
+.offline-panel .val{
+	color:var(--mist);
+	font-variant-numeric:tabular-nums;
+	text-align:right;
+}
+.offline-panel .val.ok{color:var(--gold-bright)}
+.offline-panel .val.warn{color:#e89a6e}
+.offline-panel .offline-progress{
+	height:4px;
+	background:rgba(245,235,210,0.12);
+	border-radius:3px;
+	overflow:hidden;
+	margin:0.15rem 0 0.1rem;
+}
+.offline-panel .offline-progress-bar{
+	height:100%;
+	width:0%;
+	background:linear-gradient(90deg,rgba(196,147,90,0.82),rgba(224,176,112,1));
+	transition:width 0.2s ease-out;
+}
+.offline-panel .offline-actions{
+	display:flex;
+	flex-wrap:wrap;
+	gap:0.42rem;
+	margin-top:0.3rem;
+}
+.offline-panel .offline-btn{
+	all:unset;
+	cursor:pointer;
+	font-family:'Cormorant Garamond',serif;
+	font-style:italic;
+	font-size:clamp(0.88rem,2.4vw,1rem);
+	letter-spacing:0.03em;
+	color:var(--gold-bright);
+	padding:0.42rem 0.68rem;
+	border:1px solid rgba(196,147,90,0.42);
+	border-radius:3px;
+	background:rgba(8,6,15,0.38);
+	transition:color 0.3s ease,background 0.3s ease,border-color 0.3s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.offline-panel .offline-btn--ghost{
+	color:rgba(245,235,210,0.65);
+	border-color:rgba(245,235,210,0.25);
+}
+.offline-panel .offline-btn:hover,
+.offline-panel .offline-btn:focus-visible{
+	outline:none;
+	background:rgba(196,147,90,0.1);
+	border-color:rgba(196,147,90,0.72);
+}
 .drawer-tracklist-header{
 	font-family:'Cormorant Garamond',serif;
 	font-size:var(--text-xs);
@@ -1139,6 +1215,13 @@ body.is-playing .progress{
 					<button class="drawer-row" type="button" data-content="minimal" data-i18n="echoes.settings.content.minimal">Just the theme</button>
 				</div>
 			</details>
+			<details class="drawer-settings-group">
+				<summary class="drawer-settings-summary">
+					<span class="drawer-settings-label" data-i18n="echoes.settings.offline">Offline music</span>
+					<span class="drawer-settings-caret" aria-hidden="true"></span>
+				</summary>
+				<div id="offlinePanel" class="offline-panel"></div>
+			</details>
 			<div class="drawer-rights">
 				© 2026 Steven Jordan. All rights reserved. <a href="/rights/" target="_blank" rel="noopener">Rights &amp; Use</a>
 			</div>
@@ -1222,7 +1305,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-134008";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-140654";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -1322,6 +1405,21 @@ body.is-playing .progress{
 		"echoes.settings.content.played":    { en: "Tracks you've played",  es: "Pistas escuchadas" },
 		"echoes.settings.content.all":       { en: "Everything",         es: "Todo" },
 		"echoes.settings.content.minimal":   { en: "Just the theme",     es: "Solo el tema" },
+		"echoes.settings.offline":           { en: "Offline music",      es: "Música sin conexión" },
+		"echoes.offline.intro":              { en: "Keep every track and its artwork on this device.",
+		                                       es: "Guarda todas las pistas y sus imágenes en este dispositivo." },
+		"echoes.offline.items":              { en: "Items",              es: "Elementos" },
+		"echoes.offline.cached":             { en: "On device",          es: "En el dispositivo" },
+		"echoes.offline.enable":             { en: "Enable offline music", es: "Activar música sin conexión" },
+		"echoes.offline.disable":            { en: "Disable",            es: "Desactivar" },
+		"echoes.offline.resync":             { en: "Re-sync now",        es: "Volver a sincronizar" },
+		"echoes.offline.cancel":             { en: "Cancel",             es: "Cancelar" },
+		"echoes.offline.downloading":        { en: "Downloading…",       es: "Descargando…" },
+		"echoes.offline.ready":              { en: "Available offline.", es: "Disponible sin conexión." },
+		"echoes.offline.needs-sync":         { en: "Some files need to be re-downloaded.",
+		                                       es: "Algunos archivos necesitan volver a descargarse." },
+		"echoes.offline.unavailable":        { en: "Open once online to prepare offline music.",
+		                                       es: "Abre una vez con conexión para preparar la música sin conexión." },
 		"echoes.drawer.foot":   { en: " pieces written for <em>The Spiral That Remembers</em>. They play in shuffled order, never repeating until each has been heard. Touch any title to step there directly.",
 		                          es: " piezas escritas para <em>La Espiral Que Recuerda</em>. Suenan en orden aleatorio, sin repetirse hasta que cada una se haya escuchado. Toca cualquier título para ir allí directamente." },
 	};
@@ -1566,6 +1664,7 @@ const $modeToggle       = document.getElementById("modeToggle");
 const $modeValue        = document.getElementById("modeValue");
 const $contentToggle    = document.getElementById("contentToggle");
 const $contentValue     = document.getElementById("contentValue");
+const $offlinePanel     = document.getElementById("offlinePanel");
 
 // ─────────────────────────────────────────────────────────────────
 // Queue + mode
@@ -1607,6 +1706,247 @@ let mode = "shuffled";
 let content = "played";
 let reachedChapter = 1;
 const HERO_BG_PATH = "../solrien_wide.png";
+
+// ─────────────────────────────────────────────────────────────────
+// Offline music
+// ─────────────────────────────────────────────────────────────────
+const OFFLINE_MODE_KEY = "echoes.offlineMode";
+const offline = {
+	enabled: false,
+	cacheState: null,
+	preloading: false,
+	done: 0,
+	total: 0,
+	doneBytes: 0,
+	totalBytes: 0,
+	channel: null,
+};
+
+function loadOfflineMode(){
+	try { return localStorage.getItem(OFFLINE_MODE_KEY) === "true"; }
+	catch (e) { return false; }
+}
+function saveOfflineMode(value){
+	offline.enabled = !!value;
+	try { localStorage.setItem(OFFLINE_MODE_KEY, offline.enabled ? "true" : "false"); }
+	catch (e) { /* private mode */ }
+}
+offline.enabled = loadOfflineMode();
+
+function offlineItemUrl(url){
+	return new URL(url, location.href).href;
+}
+
+function buildOfflineItems(){
+	const seen = new Set();
+	const items = [];
+	const add = (url, kind) => {
+		if (!url) return;
+		const href = offlineItemUrl(url);
+		if (seen.has(href)) return;
+		seen.add(href);
+		items.push({ url: href, kind: kind || "asset" });
+	};
+	add("./", "shell");
+	add("index.html", "shell");
+	add("tracks.json", "manifest");
+	add("music_progression.json", "manifest");
+	add("spiral.png", "image");
+	add(HERO_BG_PATH, "image");
+	add("icon-192-v3.png", "image");
+	add("icon-512-v3.png", "image");
+	for (const track of TRACKS) {
+		add(trackAudioUrl(track), "audio");
+		add(trackImageUrl(track), "image");
+	}
+	return items;
+}
+
+function cachedOfflineCount(){
+	return offline.cacheState && Array.isArray(offline.cacheState.cached)
+		? offline.cacheState.cached.length
+		: 0;
+}
+
+function missingOfflineCount(){
+	return offline.cacheState && Array.isArray(offline.cacheState.missing)
+		? offline.cacheState.missing.length
+		: buildOfflineItems().length;
+}
+
+function renderOfflinePanel(){
+	if (!$offlinePanel) return;
+	const t = (window.lirienT || ((k) => k));
+	const items = buildOfflineItems();
+	const cached = cachedOfflineCount();
+	const missing = missingOfflineCount();
+	const allGood = items.length > 0 && missing === 0;
+	let html = "";
+
+	if (!("serviceWorker" in navigator)) {
+		html += `<p class="offline-intro">${escapeHtml(t("echoes.offline.unavailable"))}</p>`;
+		$offlinePanel.innerHTML = html;
+		return;
+	}
+
+	if (offline.preloading) {
+		const pct = offline.total > 0 ? Math.round(100 * offline.done / offline.total) : 0;
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${escapeHtml(t("echoes.offline.downloading"))}</span>`
+		     +    `<span class="val">${pct}% &middot; ${offline.done} / ${offline.total}</span>`
+		     + `</div>`;
+		html += `<div class="offline-progress"><div class="offline-progress-bar" style="width:${pct}%"></div></div>`;
+		html += `<div class="offline-actions">`
+		     +    `<button class="offline-btn offline-btn--ghost" data-offline-action="cancel">${escapeHtml(t("echoes.offline.cancel"))}</button>`
+		     + `</div>`;
+	} else if (offline.enabled) {
+		html += `<p class="offline-intro">${escapeHtml(allGood ? t("echoes.offline.ready") : t("echoes.offline.needs-sync"))}</p>`;
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${escapeHtml(t("echoes.offline.cached"))}</span>`
+		     +    `<span class="val ${allGood ? "ok" : "warn"}">${cached} / ${items.length}</span>`
+		     + `</div>`;
+		html += `<div class="offline-actions">`;
+		if (!allGood) {
+			html += `<button class="offline-btn" data-offline-action="resync">${escapeHtml(t("echoes.offline.resync"))}</button>`;
+		}
+		html += `<button class="offline-btn offline-btn--ghost" data-offline-action="disable">${escapeHtml(t("echoes.offline.disable"))}</button>`;
+		html += `</div>`;
+	} else {
+		html += `<p class="offline-intro">${escapeHtml(t("echoes.offline.intro"))}</p>`;
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${escapeHtml(t("echoes.offline.items"))}</span>`
+		     +    `<span class="val">${items.length}</span>`
+		     + `</div>`;
+		if (offline.cacheState) {
+			html += `<div class="offline-line">`
+			     +    `<span class="lbl">${escapeHtml(t("echoes.offline.cached"))}</span>`
+			     +    `<span class="val">${cached} / ${items.length}</span>`
+			     + `</div>`;
+		}
+		html += `<div class="offline-actions">`
+		     +    `<button class="offline-btn" data-offline-action="enable">${escapeHtml(t("echoes.offline.enable"))}</button>`
+		     + `</div>`;
+	}
+	$offlinePanel.innerHTML = html;
+}
+
+async function serviceWorkerTarget(){
+	if (!("serviceWorker" in navigator)) return null;
+	if (navigator.serviceWorker.controller) return navigator.serviceWorker.controller;
+	try {
+		const reg = await navigator.serviceWorker.ready;
+		return reg.active || null;
+	} catch (e) {
+		return null;
+	}
+}
+
+async function postToServiceWorker(message, timeoutMs){
+	const target = await serviceWorkerTarget();
+	if (!target) throw new Error("no service worker");
+	return await new Promise((resolve, reject) => {
+		const channel = new MessageChannel();
+		const timer = setTimeout(() => {
+			try { channel.port1.close(); } catch (e) {}
+			reject(new Error("service worker timeout"));
+		}, timeoutMs || 8000);
+		channel.port1.onmessage = (ev) => {
+			clearTimeout(timer);
+			resolve(ev.data);
+		};
+		target.postMessage(message, [channel.port2]);
+	});
+}
+
+async function refreshOfflineState(){
+	if (!$offlinePanel || !TRACKS.length) return;
+	renderOfflinePanel();
+	try {
+		offline.cacheState = await postToServiceWorker({
+			type: "getCacheState",
+			items: buildOfflineItems(),
+		});
+	} catch (e) {
+		offline.cacheState = null;
+	}
+	renderOfflinePanel();
+}
+
+async function enableOfflineMusic(){
+	saveOfflineMode(true);
+	if (navigator.storage && navigator.storage.persist) {
+		try { await navigator.storage.persist(); } catch (e) {}
+	}
+	startOfflinePreload();
+}
+
+async function disableOfflineMusic(){
+	saveOfflineMode(false);
+	await refreshOfflineState();
+}
+
+async function startOfflinePreload(){
+	if (offline.preloading) return;
+	const target = await serviceWorkerTarget();
+	if (!target) {
+		renderOfflinePanel();
+		return;
+	}
+	offline.preloading = true;
+	offline.done = 0;
+	offline.total = 0;
+	offline.doneBytes = 0;
+	offline.totalBytes = 0;
+	renderOfflinePanel();
+
+	const channel = new MessageChannel();
+	offline.channel = channel;
+	channel.port1.onmessage = (ev) => {
+		const msg = ev.data || {};
+		if (msg.type === "preloadProgress") {
+			offline.done = msg.done || 0;
+			offline.total = msg.total || 0;
+			offline.doneBytes = msg.doneBytes || 0;
+			offline.totalBytes = msg.totalBytes || 0;
+			renderOfflinePanel();
+		} else if (msg.type === "preloadComplete") {
+			offline.preloading = false;
+			offline.channel = null;
+			refreshOfflineState();
+		}
+	};
+	target.postMessage({
+		type: "preloadAll",
+		items: buildOfflineItems(),
+	}, [channel.port2]);
+}
+
+async function cancelOfflinePreload(){
+	try {
+		const target = await serviceWorkerTarget();
+		if (target) target.postMessage({ type: "preloadCancel" });
+	} catch (e) {}
+}
+
+function bindOfflinePanel(){
+	if (!$offlinePanel) return;
+	$offlinePanel.addEventListener("click", (ev) => {
+		const btn = ev.target.closest("[data-offline-action]");
+		if (!btn) return;
+		const action = btn.dataset.offlineAction;
+		if (action === "enable") enableOfflineMusic();
+		else if (action === "disable") disableOfflineMusic();
+		else if (action === "resync") startOfflinePreload();
+		else if (action === "cancel") cancelOfflinePreload();
+	});
+	renderOfflinePanel();
+}
+
+async function bootOfflineIntegrityCheck(){
+	if (!offline.enabled) return;
+	await refreshOfflineState();
+	if (missingOfflineCount() > 0 && navigator.onLine) startOfflinePreload();
+}
 
 function detectReachedChapter(){
 	// Coarse fallback used when ink-position lookup can't resolve.
@@ -2517,6 +2857,7 @@ function openDrawer(){
 	$drawerScrim.classList.add("is-open");
 	$drawer.setAttribute("aria-hidden","false");
 	$drawerScrim.setAttribute("aria-hidden","false");
+	refreshOfflineState();
 	// {preventScroll:true} so focus() doesn't yank the drawer's
 	// scroll back to the top of the list — we want the active
 	// row centered, not the close button visible.
@@ -2676,6 +3017,7 @@ window.echoesRefreshDynamicLabels = function(){
 	// buildTracklist resets the DOM, so re-apply the active-row marker.
 	if (typeof buildTracklist === "function") buildTracklist();
 	if (typeof updateActiveRow === "function") updateActiveRow();
+	if (typeof renderOfflinePanel === "function") renderOfflinePanel();
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -2763,6 +3105,9 @@ window.echoesRefreshDynamicLabels = function(){
 	updateCounts();
 	reshuffle();
 	buildTracklist();
+	bindOfflinePanel();
+	refreshOfflineState();
+	bootOfflineIntegrityCheck();
 
 	// Soft-restore the previously-active track on reload / PWA reopen.
 	// Source of truth is activeIdx (just restored from localStorage,

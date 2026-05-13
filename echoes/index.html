@@ -78,10 +78,12 @@ body.is-standalone-display{
 		overscroll-behavior:none;
 	}
 	.bg-stage,.tint,.grain,.motes{
-		height:var(--echoes-viewport-height,100dvh);
-		min-height:var(--echoes-viewport-height,100dvh);
-		max-height:var(--echoes-viewport-height,100dvh);
-		bottom:auto;
+		inset:0;
+		height:auto;
+		min-height:100vh;
+		min-height:100lvh;
+		max-height:none;
+		bottom:0;
 	}
 }
 
@@ -1333,7 +1335,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-165838";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-202748";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;

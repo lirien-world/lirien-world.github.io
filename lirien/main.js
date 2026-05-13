@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260513af";
+const ASSET_VERSION = "20260513ag";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char

@@ -62,6 +62,14 @@ body{
 	   element via specificity. */
 	touch-action:manipulation;
 }
+body.is-standalone-display{
+	position:fixed;
+	inset:0;
+	width:100%;
+	height:var(--echoes-viewport-height,100dvh);
+	min-height:var(--echoes-viewport-height,100dvh);
+	overflow:hidden;
+}
 @media (display-mode:standalone),(display-mode:fullscreen){
 	html,body{
 		height:var(--echoes-viewport-height,100dvh);
@@ -72,6 +80,7 @@ body{
 	.bg-stage,.tint,.grain,.motes{
 		height:var(--echoes-viewport-height,100dvh);
 		min-height:var(--echoes-viewport-height,100dvh);
+		max-height:var(--echoes-viewport-height,100dvh);
 		bottom:auto;
 	}
 }
@@ -1279,14 +1288,16 @@ body.is-playing .progress{
 	}
 	function syncViewportHeight() {
 		const vv = window.visualViewport;
+		const standalone = isStandaloneDisplay();
+		document.body.classList.toggle("is-standalone-display", standalone);
 		const candidates = [
 			vv && vv.height,
 			window.innerHeight,
 			document.documentElement && document.documentElement.clientHeight,
 		].filter((value) => Number.isFinite(value) && value > 0);
-		const height = Math.round(Math.max.apply(Math, candidates));
+		const height = Math.round((standalone ? Math.min : Math.max).apply(Math, candidates));
 		if (height > 0) root.style.setProperty("--echoes-viewport-height", height + "px");
-		if (isStandaloneDisplay()) {
+		if (standalone) {
 			requestAnimationFrame(() => window.scrollTo(0, 0));
 		}
 	}
@@ -1322,7 +1333,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-164932";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-165838";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;

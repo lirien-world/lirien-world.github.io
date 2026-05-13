@@ -1,14 +1,14 @@
 {
-  "manifest_version": "20260513-164932",
-  "generated_at": "2026-05-13T15:50:19Z",
+  "manifest_version": "20260513-165838",
+  "generated_at": "2026-05-13T15:59:18Z",
   "asset_count": 88,
-  "total_size": 198272605,
+  "total_size": 198273335,
   "assets": {
     "/echoes/": {
-      "size": 138985
+      "size": 139350
     },
     "/echoes/index.html": {
-      "size": 138985
+      "size": 139350
     },
     "/echoes/tracks.json": {
       "size": 13499

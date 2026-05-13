@@ -1464,14 +1464,17 @@ function typeChunk(text) {
 
 	currentReveal = {
 		paragraph,  // ← exposed so updateCharFade can skip in-flight chars
+		cancelFn() {
+			clearTimeout(completionTimer);
+			for (const t of scrollTimers) clearTimeout(t);
+			scrollTimers.clear();
+		},
 		skipFn() {
 			// Skip-to-end: clear all per-char animation delays so each
 			// span snaps to fully-revealed immediately. Cancel pending
 			// progressive-scroll timers so they don't lurch the panel
 			// around after the user has resumed control.
-			clearTimeout(completionTimer);
-			for (const t of scrollTimers) clearTimeout(t);
-			scrollTimers.clear();
+			currentReveal.cancelFn();
 			for (const s of spans) {
 				s.style.animation = "none";
 				s.style.opacity = "1";
@@ -1494,6 +1497,12 @@ function typeChunk(text) {
 			onChunkRevealed();
 		}
 	};
+}
+
+function cancelCurrentReveal() {
+	if (!currentReveal) return;
+	if (typeof currentReveal.cancelFn === "function") currentReveal.cancelFn();
+	currentReveal = null;
 }
 
 function scheduleProgressScroll(spans, spanTimes, timers) {
@@ -3264,13 +3273,14 @@ function returnToMostRecent() {
 			source: "return"
 		});
 	}
+	cancelCurrentReveal();
 	try { story.state.LoadJson(saved.state); }
 	catch (e) { console.warn("[autosave] LoadJson failed:", e); return; }
-	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
-	currentReveal = null;
 	$choices.innerHTML = "";
 	$choices.classList.remove("visible");
+	document.body.classList.remove("is-choosing");
 	hideContinueHint();
+	hideOfflineBlock();
 	clearTranscript();
 	applyAutosaveVisuals(saved);
 	isExploring = false;
@@ -3597,7 +3607,7 @@ function recordChapterBookmark(spec) {
 // but dynamically-rendered drawer content stays in the previous
 // language until the next user action.
 window.lirienRefreshDynamicLabels = function () {
-	if ($chaptersPanel && !$chaptersPanel.hidden && typeof renderChapterList === "function") {
+	if ($chaptersPanel && isDrawerOpen($chaptersPanel) && typeof renderChapterList === "function") {
 		renderChapterList();
 	}
 	if (typeof refreshSelectionMarkers === "function") {
@@ -3620,7 +3630,9 @@ function renderChapterList() {
 		if (b.name === currentChapterName) btn.classList.add("current");
 		btn.textContent = b.name;
 		btn.addEventListener("click", () => {
-			$chaptersPanel.hidden = true;
+			currentChapterName = b.name;
+			renderChapterList();
+			closeDrawer($chaptersPanel);
 			jumpToChapter(b);
 		});
 		$chapterList.appendChild(btn);
@@ -3629,6 +3641,7 @@ function renderChapterList() {
 
 function jumpToChapter(bookmark) {
 	if (!story) return;
+	closeAllDrawers();
 	if (window.lirienAnalytics) {
 		window.lirienAnalytics.track("chapter_jump", {
 			from_bg: currentBgName || null,
@@ -3636,13 +3649,14 @@ function jumpToChapter(bookmark) {
 			source: "menu"
 		});
 	}
+	cancelCurrentReveal();
 	try { story.state.LoadJson(bookmark.state); }
 	catch (e) { console.warn("[chapters] LoadJson failed:", e); return; }
-	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
-	currentReveal = null;
 	$choices.innerHTML = "";
 	$choices.classList.remove("visible");
+	document.body.classList.remove("is-choosing");
 	hideContinueHint();
+	hideOfflineBlock();
 	clearTranscript();
 	// Apply the visual state captured at bookmark time BEFORE
 	// advancing. The bookmark state is pre-Continue, so the next
@@ -3672,11 +3686,10 @@ function jumpToChapter(bookmark) {
 
 function restartFromBeginning() {
 	if (!story) return;
-	try { story.ResetState(); } catch (e) { console.warn("ResetState failed", e); return; }
 	// Cancel any in-flight reveal timers so they don't fire after the
 	// restart and trigger a stray continue-hint or scroll on the new chunk.
-	if (currentReveal && currentReveal.skipFn) currentReveal.skipFn();
-	currentReveal = null;
+	cancelCurrentReveal();
+	try { story.ResetState(); } catch (e) { console.warn("ResetState failed", e); return; }
 	clearTranscript();
 	$choices.innerHTML = "";
 	$choices.classList.remove("visible");

@@ -62,6 +62,14 @@ body{
 	   element via specificity. */
 	touch-action:manipulation;
 }
+@media (display-mode:standalone),(display-mode:fullscreen){
+	html,body{
+		height:var(--echoes-viewport-height,100dvh);
+		min-height:var(--echoes-viewport-height,100dvh);
+		overflow:hidden;
+		overscroll-behavior:none;
+	}
+}
 
 /* ───── BACKGROUND IMAGE LAYER (two stacked, crossfade) ───── */
 .bg-stage{position:fixed;inset:0;z-index:0;background:var(--void);overflow:hidden}
@@ -122,6 +130,13 @@ body{
 	padding-bottom:max(clamp(1.25rem,3vw,2.5rem),env(safe-area-inset-bottom));
 	padding-top:max(clamp(1.25rem,3vw,2.5rem),env(safe-area-inset-top));
 	gap:clamp(1.25rem,3vw,2.5rem);
+}
+@media (display-mode:standalone),(display-mode:fullscreen){
+	.frame{
+		height:var(--echoes-viewport-height,100dvh);
+		min-height:0;
+		overflow:hidden;
+	}
 }
 
 /* ───── HEADER (brand) ───── */
@@ -1161,6 +1176,41 @@ body.is-playing .progress{
 <script>
 "use strict";
 
+// iOS standalone PWAs can resume with a stale layout viewport and a
+// non-zero page scroll, leaving a dead strip below the app frame until
+// the user nudges the page. In installed mode, pin the frame to the
+// visual viewport and re-seat scroll on resume/resize.
+(function () {
+	const root = document.documentElement;
+	const standaloneMq = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
+	const fullscreenMq = window.matchMedia ? window.matchMedia("(display-mode: fullscreen)") : null;
+	function isStandaloneDisplay() {
+		return (standaloneMq && standaloneMq.matches)
+			|| (fullscreenMq && fullscreenMq.matches)
+			|| window.navigator.standalone === true;
+	}
+	function syncViewportHeight() {
+		const vv = window.visualViewport;
+		const height = Math.round((vv && vv.height) || window.innerHeight || 0);
+		if (height > 0) root.style.setProperty("--echoes-viewport-height", height + "px");
+		if (isStandaloneDisplay()) {
+			requestAnimationFrame(() => window.scrollTo(0, 0));
+		}
+	}
+	syncViewportHeight();
+	window.addEventListener("resize", syncViewportHeight, { passive: true });
+	window.addEventListener("orientationchange", () => setTimeout(syncViewportHeight, 250), { passive: true });
+	window.addEventListener("pageshow", syncViewportHeight, { passive: true });
+	window.addEventListener("focus", syncViewportHeight, { passive: true });
+	document.addEventListener("visibilitychange", () => {
+		if (!document.hidden) syncViewportHeight();
+	});
+	if (window.visualViewport) {
+		window.visualViewport.addEventListener("resize", syncViewportHeight, { passive: true });
+		window.visualViewport.addEventListener("scroll", syncViewportHeight, { passive: true });
+	}
+})();
+
 // ─────────────────────────────────────────────────────────────────
 // PWA freshness check. iOS standalone (Add to Home Screen) caches
 // HTML + JS at install time and won't refresh on its own — users
@@ -1172,7 +1222,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260512-225425";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260513-134008";  // bump on echoes/ deploys
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
 	let inFlight = false;
@@ -2042,7 +2092,44 @@ function loadTrack(idx, opts){
 	}
 }
 
-function play(){
+function reloadActiveTrackAndPlay(position){
+	if (activeIdx < 0 || !TRACKS[activeIdx]) return;
+	const resumeAt = Number.isFinite(position) ? Math.max(0, position) : 0;
+	loadTrack(activeIdx, {play:false});
+	const start = () => {
+		$audio.removeEventListener("loadedmetadata", start);
+		$audio.removeEventListener("canplay", start);
+		try {
+			if (resumeAt > 0 && $audio.duration && isFinite($audio.duration)) {
+				$audio.currentTime = Math.min(resumeAt, Math.max(0, $audio.duration - 0.25));
+			}
+		} catch (e) { /* Safari may reject early seeks; play anyway */ }
+		const p = $audio.play();
+		if (p && p.catch) p.catch(()=>{ /* user may need in-app gesture */ });
+	};
+	if ($audio.readyState >= 1) start();
+	else {
+		$audio.addEventListener("loadedmetadata", start, {once:true});
+		$audio.addEventListener("canplay", start, {once:true});
+		try { $audio.load(); } catch (e) {}
+	}
+}
+
+function armNativeResumeWatchdog(startTime){
+	setTimeout(() => {
+		if (activeIdx < 0 || !TRACKS[activeIdx]) return;
+		if ($audio.paused || $audio.ended) return;
+		const now = Number.isFinite($audio.currentTime) ? $audio.currentTime : 0;
+		// Native iOS controls can report "playing" after an external
+		// pause while the media clock is actually stuck. If the clock
+		// has not moved after a short grace period, rebuild the current
+		// audio source and resume near the same timestamp.
+		if (now <= startTime + 0.15) reloadActiveTrackAndPlay(startTime);
+	}, 1600);
+}
+
+function play(opts){
+	opts = opts || {};
 	if (activeIdx < 0){
 		loadTrack(nextIndex(), {play:true});
 		return;
@@ -2060,7 +2147,9 @@ function play(){
 	// as playing while the speaker stayed silent. playbackState is
 	// now set ONLY from the real audio 'play' / 'pause' events
 	// below, so the lock-screen icon always reflects truth.
+	const startTime = Number.isFinite($audio.currentTime) ? $audio.currentTime : 0;
 	const p = $audio.play();
+	if (opts.recoverNative) armNativeResumeWatchdog(startTime);
 	if (p && p.catch){
 		// If play() rejects outright (the most reliable failure
 		// signal), reload the track from scratch — that's the
@@ -2070,7 +2159,7 @@ function play(){
 		// currentTime here: getting audio back at all matters
 		// more than position when iOS has interrupted us.
 		p.catch(()=>{
-			try { loadTrack(activeIdx, {play:true}); } catch (e) {}
+			try { reloadActiveTrackAndPlay(startTime); } catch (e) {}
 		});
 	}
 }
@@ -2338,7 +2427,7 @@ $progress.addEventListener("keydown", (ev)=>{
 	}
 	if (!("mediaSession" in navigator)) return;
 	try {
-		navigator.mediaSession.setActionHandler("play",         () => play());
+		navigator.mediaSession.setActionHandler("play",         () => play({recoverNative:true}));
 		navigator.mediaSession.setActionHandler("pause",        () => pause());
 		navigator.mediaSession.setActionHandler("nexttrack",    () => next());
 		navigator.mediaSession.setActionHandler("previoustrack",() => previous());

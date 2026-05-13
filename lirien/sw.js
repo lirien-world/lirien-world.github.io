@@ -16,10 +16,14 @@
 //
 // Caching policy:
 //   - Cache-first for asset URLs that match shouldCache().
+//   - Network-first with cached fallback for the reader shell
+//     (/lirien/, index.html, JS/CSS, asset manifest) so an installed
+//     PWA can launch while offline instead of failing before app code
+//     runs.
 //   - Network-only (pass-through) for everything else — including
-//     HTML/JS/CSS (those use the freshness-check path to ship updates
-//     without users force-refreshing) and assets_manifest.json itself
-//     (always check network for the latest catalog).
+//     unrelated requests. Shell updates still ship through the
+//     freshness-check path because network-first refreshes the cache
+//     whenever online.
 //   - The cache is never auto-evicted by the SW. The browser may evict
 //     under storage pressure (especially iOS Safari); the page handles
 //     re-sync on next online boot.
@@ -39,6 +43,16 @@
 // NOT require a bump — they're handled by URL change.
 
 const CACHE_NAME = "lirien-reader-v1";
+const SHELL_URLS = [
+	"/lirien/",
+	"/lirien/index.html",
+	"/lirien/style.css",
+	"/lirien/analytics.js",
+	"/lirien/ink.js",
+	"/lirien/main.js",
+	"/lirien/assets_manifest.json",
+	"/lirien/sw.js",
+];
 
 // What we cache. shouldCache() is the single authority — both the
 // fetch handler and the message handlers consult it.
@@ -53,15 +67,21 @@ function shouldCache(url) {
 	const u = new URL(url);
 	if (u.origin !== self.location.origin) return false;
 	if (!u.pathname.startsWith("/lirien/")) return false;
-	// Never cache the manifest itself — it's how we detect updates.
-	if (u.pathname === "/lirien/assets_manifest.json") return false;
 	if (CACHEABLE_EXT_RE.test(u.pathname)) return true;
 	if (CACHEABLE_JSON.has(u.pathname)) return true;
 	return false;
 }
 
+function isShellRequest(url) {
+	const u = new URL(url);
+	if (u.origin !== self.location.origin) return false;
+	if (u.pathname === "/lirien" || u.pathname === "/lirien/") return true;
+	return SHELL_URLS.includes(u.pathname);
+}
+
 self.addEventListener("install", (ev) => {
 	// Take effect immediately, no waiting for old tabs to close.
+	ev.waitUntil(precacheShell());
 	self.skipWaiting();
 });
 
@@ -82,9 +102,49 @@ self.addEventListener("activate", (ev) => {
 self.addEventListener("fetch", (ev) => {
 	const req = ev.request;
 	if (req.method !== "GET") return;
+	if (req.mode === "navigate" || isShellRequest(req.url)) {
+		ev.respondWith(networkFirstShell(req));
+		return;
+	}
 	if (!shouldCache(req.url)) return;
 	ev.respondWith(cacheFirst(req));
 });
+
+async function precacheShell() {
+	const cache = await caches.open(CACHE_NAME);
+	await Promise.all(SHELL_URLS.map(async (url) => {
+		try {
+			const response = await fetch(url, { cache: "no-cache" });
+			if (response && response.ok && response.status === 200) {
+				await cache.put(url, response.clone());
+			}
+		} catch (e) {
+			// Install must not fail just because one shell request was
+			// interrupted. Runtime networkFirstShell still fills gaps.
+		}
+	}));
+}
+
+async function networkFirstShell(request) {
+	const cache = await caches.open(CACHE_NAME);
+	try {
+		const response = await fetch(request);
+		if (response && response.ok && response.status === 200) {
+			cache.put(request, response.clone());
+			if (request.mode === "navigate") cache.put("/lirien/", response.clone());
+		}
+		return response;
+	} catch (err) {
+		const cached = await cache.match(request, { ignoreSearch: true });
+		if (cached) return cached;
+		if (request.mode === "navigate") {
+			const fallback = await cache.match("/lirien/", { ignoreSearch: true })
+				|| await cache.match("/lirien/index.html", { ignoreSearch: true });
+			if (fallback) return fallback;
+		}
+		throw err;
+	}
+}
 
 async function cacheFirst(request) {
 	const cache = await caches.open(CACHE_NAME);

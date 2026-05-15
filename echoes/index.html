@@ -1293,6 +1293,183 @@ body.is-playing .progress{
      iOS; x-webkit-airplay defaults to "allow" so AirPlay just works. -->
 <audio id="audio" preload="auto" playsinline crossorigin="anonymous"></audio>
 
+<script>
+/* Audio adapter — drives HTML5 <audio> on the web; in the Capacitor
+ * iOS app, routes through @capacitor-community/native-audio
+ * (AVAudioPlayer under the hood) so pause/resume and background
+ * playback are reliable.
+ *
+ * Bundled-music note: Echoes references files under ../lirien/music/
+ * which sit outside the iOS bundle (only website/echoes/ is webDir).
+ * For v1 the native path streams from https://lirien.world/lirien/...
+ * Lock-screen Now Playing controls are a follow-up; web mediaSession
+ * doesn't bridge to AVAudioPlayer.
+ */
+"use strict";
+window.createAudioAdapter = function(htmlEl){
+	var Cap = window.Capacitor;
+	// Prefer the StreamingAudio plugin (AVPlayer-backed, supports HTTP
+	// streaming + reliable pause/resume). Fall back to NativeAudio
+	// (AVAudioPlayer-backed, local files only) if it's the only thing
+	// available. In a web browser neither is present and we use HTMLAudio.
+	var native = (Cap && Cap.isNativePlatform && Cap.isNativePlatform())
+		? (Cap.Plugins && (Cap.Plugins.StreamingAudio || Cap.Plugins.NativeAudio)) : null;
+	if (!native) return htmlEl;  // web: HTMLAudio unchanged
+
+	var DEBUG = false; // flip to true to surface adapter activity in console
+	var log = DEBUG ? function(){ console.log.apply(console, ["[audio-native]"].concat([].slice.call(arguments))); } : function(){};
+
+	try { native.configure({focus: true, fade: false}); } catch (e) {}
+
+	var ev = new EventTarget();
+	var state = {
+		src: "", assetId: null, loadedIds: Object.create(null),
+		duration: NaN, currentTime: 0,
+		paused: true, ended: false, loop: false,
+		readyState: 0, error: null,
+		pollTimer: null, loadSeq: 0
+	};
+	function fire(type){ ev.dispatchEvent(new Event(type)); }
+	function idOf(url){ return "echoes:" + String(url).split("?")[0]; }
+	function resolveForNative(url){
+		if (!url) return url;
+		if (/^https?:\/\//i.test(url)) return url;
+		try { return new URL(url, "https://lirien.world/echoes/").href; }
+		catch (e) { return url; }
+	}
+
+	// Natural end-of-track. Loop-mode: replay; else fire 'ended'.
+	if (native.addListener) {
+		try {
+			native.addListener("complete", function(e){
+				if (!e || e.assetId !== state.assetId) return;
+				if (state.loop) {
+					state.currentTime = 0;
+					try { native.play({assetId: state.assetId, time: 0}); } catch (_) {}
+					return;
+				}
+				state.ended = true; state.paused = true;
+				stopPolling();
+				fire("ended");
+			});
+		} catch (_) {}
+	}
+
+	function startPolling(){
+		if (state.pollTimer) return;
+		state.pollTimer = setInterval(function(){
+			if (!state.assetId || state.paused) return;
+			native.getCurrentTime({assetId: state.assetId}).then(function(r){
+				if (r && typeof r.currentTime === "number") {
+					state.currentTime = r.currentTime;
+					fire("timeupdate");
+				}
+			}).catch(function(){});
+		}, 200);
+	}
+	function stopPolling(){
+		if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+	}
+
+	function loadAsset(url){
+		var seq = ++state.loadSeq;
+		var id = idOf(url);
+		var prev = state.assetId;
+		state.assetId = id;
+		state.duration = NaN;
+		state.currentTime = 0;
+		state.readyState = 0;
+		state.ended = false;
+		state.error = null;
+
+		var unloadPrev = (prev && prev !== id && state.loadedIds[prev])
+			? native.unload({assetId: prev}).catch(function(){})
+			: Promise.resolve();
+
+		unloadPrev.then(function(){
+			if (prev && prev !== id) delete state.loadedIds[prev];
+			if (state.loadedIds[id]) return;
+			var resolved = resolveForNative(url);
+			var isUrl = /^https?:\/\//i.test(resolved);
+			log("preload", id, resolved);
+			return native.preload({assetId: id, assetPath: resolved, isUrl: isUrl});
+		}).then(function(){
+			if (seq !== state.loadSeq) return;
+			state.loadedIds[id] = true;
+			return native.getDuration({assetId: id}).catch(function(){ return null; });
+		}).then(function(r){
+			if (seq !== state.loadSeq) return;
+			if (r && typeof r.duration === "number") state.duration = r.duration;
+			state.readyState = 4;
+			fire("loadedmetadata");
+			fire("canplay");
+		}).catch(function(err){
+			if (seq !== state.loadSeq) return;
+			log("preload-failed", id, err && err.message);
+			state.error = {code: 4, message: String((err && err.message) || err)};
+			fire("error");
+		});
+	}
+
+	var adapter = {
+		get src(){ return state.src; },
+		set src(v){
+			if (v === state.src) return;
+			state.src = v || "";
+			if (state.assetId && !state.paused) {
+				try { native.pause({assetId: state.assetId}); } catch (_) {}
+				state.paused = true;
+				stopPolling();
+			}
+			if (v) loadAsset(v);
+		},
+		get currentTime(){ return state.currentTime; },
+		set currentTime(t){
+			var max = isFinite(state.duration) ? state.duration : Infinity;
+			state.currentTime = Math.max(0, Math.min(t, max));
+			if (state.assetId && !state.paused) {
+				try { native.play({assetId: state.assetId, time: state.currentTime}); } catch (_) {}
+			}
+		},
+		get duration(){ return state.duration; },
+		get paused(){ return state.paused; },
+		get ended(){ return state.ended; },
+		get readyState(){ return state.readyState; },
+		get error(){ return state.error; },
+		get loop(){ return state.loop; },
+		set loop(v){ state.loop = !!v; },
+		play: function(){
+			if (!state.assetId) return Promise.reject(new Error("no source"));
+			var wasPaused = state.paused;
+			var resumeMid = wasPaused && state.currentTime > 0 && !state.ended;
+			var p = resumeMid
+				? native.resume({assetId: state.assetId})
+				: native.play({assetId: state.assetId, time: state.currentTime || 0});
+			return p.then(function(){
+				state.paused = false;
+				state.ended = false;
+				fire("play");
+				startPolling();
+			});
+		},
+		pause: function(){
+			if (!state.assetId || state.paused) return;
+			try { native.pause({assetId: state.assetId}); } catch (_) {}
+			state.paused = true;
+			stopPolling();
+			fire("pause");
+		},
+		load: function(){
+			if (state.src) { var u = state.src; state.src = ""; adapter.src = u; }
+		},
+		addEventListener: ev.addEventListener.bind(ev),
+		removeEventListener: ev.removeEventListener.bind(ev),
+		dispatchEvent: ev.dispatchEvent.bind(ev),
+	};
+	return adapter;
+};
+</script>
+
 <section class="echoes-debug" id="echoesDebug" aria-label="Echoes debug" hidden>
 	<div class="echoes-debug-head">
 		<div class="echoes-debug-title">Echoes Debug</div>
@@ -1366,7 +1543,7 @@ body.is-playing .progress{
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260513-232417";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260515-161950";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -1823,7 +2000,7 @@ function capFirst(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 // ─────────────────────────────────────────────────────────────────
 // DOM
 // ─────────────────────────────────────────────────────────────────
-const $audio            = document.getElementById("audio");
+const $audio            = window.createAudioAdapter(document.getElementById("audio"));
 const $bgA              = document.getElementById("bg-a");
 const $bgB              = document.getElementById("bg-b");
 const $spiralBtn        = document.getElementById("spiralBtn");

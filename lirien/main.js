@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260513am";
+const ASSET_VERSION = "20260515pm";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -925,6 +925,11 @@ window.addEventListener("beforeinstallprompt", (ev) => {
 });
 
 function isStandaloneMode() {
+	// Capacitor iOS app counts as standalone — the install-splash is
+	// for "add to home screen" prompting, which doesn't apply when
+	// you're already running inside a native app shell.
+	if (window.Capacitor && typeof window.Capacitor.isNativePlatform === "function"
+		&& window.Capacitor.isNativePlatform()) return true;
 	return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
 	       window.navigator.standalone === true;
 }

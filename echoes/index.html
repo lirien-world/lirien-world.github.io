@@ -1397,6 +1397,27 @@ window.createAudioAdapter = function(htmlEl){
 				fire("ended");
 			});
 		} catch (_) {}
+		// Native auto-advance — when the plugin transitions to a
+		// pre-registered next track on its own (so iOS background
+		// audio stays continuous), it notifies "advanced". The JS-side
+		// state has to catch up: the new track is already playing.
+		try {
+			native.addListener("advanced", function(e){
+				if (!e || !e.assetId) return;
+				state.assetId = e.assetId;
+				state.currentTime = 0;
+				state.duration = NaN;
+				state.ended = false;
+				state.paused = false;
+				state.loadedIds[e.assetId] = true;
+				state.readyState = 4;
+				fire("nativeadvanced");  // player listens to update UI
+				fire("loadedmetadata");
+				fire("canplay");
+				fire("play");
+				startPolling();
+			});
+		} catch (_) {}
 		// Lock-screen / Control Center remote commands from iOS.
 		// Native handles play/pause/toggle/seek on the AVPlayer side; we
 		// fire synthetic events here so the in-app UI (play button,
@@ -1581,6 +1602,24 @@ window.createAudioAdapter = function(htmlEl){
 			return Filesystem.deleteFile({path: fileName, directory: "DATA"}).catch(function(){});
 		},
 		listOfflineFiles: function(){ return loadOfflineRegistry(); },
+		// Pre-register the next track so the plugin can transition
+		// seamlessly in the background without bouncing through JS.
+		// The plugin pauses the current AVPlayer and immediately starts
+		// the next one, keeping AVAudioSession alive so iOS doesn't
+		// suspend the WebView mid-transition.
+		setNextAsset: function(url){
+			if (!native.setNextAsset) return Promise.resolve();
+			if (!url) return adapter.clearNextAsset();
+			var resolved = resolveForNative(url);
+			return native.setNextAsset({
+				assetId: idOf(url),
+				assetPath: resolved
+			}).catch(function(){});
+		},
+		clearNextAsset: function(){
+			if (!native.clearNextAsset) return Promise.resolve();
+			return native.clearNextAsset().catch(function(){});
+		},
 		// Push track metadata to iOS Now Playing (lock screen, Control
 		// Center, Dynamic Island, AirPods double-tap UI). Safe to call
 		// repeatedly; the plugin caches artwork by URL so it only
@@ -1681,7 +1720,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260515-184211";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260515-190809";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -2837,6 +2876,22 @@ function reshuffle(skipFirst){
 	persistState({ shuffledAt: Date.now() });
 }
 
+// Peek what nextIndex() would return without mutating queueIdx —
+// used for pre-registering the upcoming track with the native
+// audio plugin so iOS can transition seamlessly in background.
+function peekNextIndex(){
+	if (mode === "sequential" || mode === "repeat"){
+		const visible = visibleIndices();
+		if (!visible.length) return null;
+		const pos = visible.indexOf(activeIdx);
+		if (pos === -1) return visible[0];
+		return visible[(pos + 1) % visible.length];
+	}
+	if (!queue.length) return null;
+	const peekQ = (queueIdx + 1) % queue.length;
+	return queue[peekQ];
+}
+
 function nextIndex(){
 	if (mode === "sequential" || mode === "repeat"){
 		// Repeat mode handles auto-loop via $audio.loop=true, so this
@@ -3072,6 +3127,57 @@ function loadTrack(idx, opts){
 		const p = $audio.play();
 		if (p && p.catch) p.catch(()=>{ /* autoplay may block; silent */ });
 	}
+	// Pre-register the upcoming track with the native plugin so it
+	// can keep playback continuous in background without bouncing
+	// through JS at every track boundary. Repeat mode loops the
+	// active track natively, so there's no "next" to register there.
+	registerUpcomingNativeAsset();
+}
+
+function registerUpcomingNativeAsset(){
+	if (!$audio.setNextAsset) return;
+	if (mode === "repeat") { $audio.clearNextAsset && $audio.clearNextAsset(); return; }
+	const nextIdx = peekNextIndex();
+	if (nextIdx == null) { $audio.clearNextAsset && $audio.clearNextAsset(); return; }
+	const nextTrack = TRACKS[nextIdx];
+	if (!nextTrack) return;
+	pendingNativeNextIdx = nextIdx;
+	$audio.setNextAsset(trackAudioUrl(nextTrack));
+}
+
+// When the native plugin auto-advances on track-end, it tells us via
+// 'nativeadvanced' — by then the next track is already playing on
+// AVPlayer, so the JS side just has to catch up the UI and register
+// the *next* next track to keep the chain going.
+let pendingNativeNextIdx = -1;
+function handleNativeAdvanced(){
+	if (pendingNativeNextIdx < 0 || pendingNativeNextIdx >= TRACKS.length) return;
+	const idx = pendingNativeNextIdx;
+	pendingNativeNextIdx = -1;
+	// Sync queue position for non-shuffled modes via the same path
+	// loadTrack uses; for shuffled mode, advance queueIdx by one.
+	if (mode === "shuffled" && queue.length) {
+		queueIdx = (queueIdx + 1) % queue.length;
+		persistQueue();
+	}
+	const track = TRACKS[idx];
+	activeIdx = idx;
+	const queuePos = queue.indexOf(idx);
+	if (queuePos !== -1) queueIdx = queuePos;
+	persistState();
+	$trackInfo.classList.add("is-fading");
+	$spiralWrap.classList.add("is-changing");
+	setTimeout(()=>{
+		$trackTitle.textContent = track.title;
+		$trackCaption.textContent = captionFor(track, currentLang());
+		$trackInfo.classList.remove("is-fading");
+	}, 350);
+	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
+	setBg(track.image);
+	updateActiveRow();
+	resetPrefetchMarkers();
+	updateMediaSessionMeta();
+	registerUpcomingNativeAsset();
 }
 
 function reloadActiveTrackAndPlay(position){
@@ -3215,6 +3321,12 @@ $audio.addEventListener("ended", ()=>{
 	// until you press it to stop" — so on natural end, force-continue.
 	loadTrack(nextIndex(), {play:true});
 });
+// Native iOS app only: the plugin transitioned to the pre-registered
+// next track on its own (the 'ended' path above never fired because
+// AVPlayer never went idle). Catch JS up.
+if ($audio.isNative === true) {
+	$audio.addEventListener("nativeadvanced", () => handleNativeAdvanced());
+}
 $audio.addEventListener("error", ()=>{
 	// Move past a bad file — never get stuck on a single track. Use
 	// `started` (not !$audio.paused) because an errored audio reads

@@ -1314,7 +1314,40 @@ window.createAudioAdapter = function(htmlEl){
 	// available. In a web browser neither is present and we use HTMLAudio.
 	var native = (Cap && Cap.isNativePlatform && Cap.isNativePlatform())
 		? (Cap.Plugins && (Cap.Plugins.StreamingAudio || Cap.Plugins.NativeAudio)) : null;
+	var Filesystem = (Cap && Cap.Plugins && Cap.Plugins.Filesystem) || null;
 	if (!native) return htmlEl;  // web: HTMLAudio unchanged
+
+	// Offline-track registry — maps remote URL → local file URI for any
+	// tracks the user downloaded via "Enable offline music". AVPlayer
+	// can play file:// URIs directly so when a local copy exists we
+	// route the asset path through that instead of streaming. Survives
+	// app restarts via localStorage.
+	var OFFLINE_REGISTRY_KEY = "echoes.offline.nativePaths";
+	function loadOfflineRegistry(){
+		try { return JSON.parse(localStorage.getItem(OFFLINE_REGISTRY_KEY) || "{}") || {}; }
+		catch (e) { return {}; }
+	}
+	function saveOfflineRegistry(reg){
+		try { localStorage.setItem(OFFLINE_REGISTRY_KEY, JSON.stringify(reg)); }
+		catch (e) { /* private mode / quota */ }
+	}
+	function offlineFileName(url){
+		var clean = String(url).split("?")[0];
+		var base = clean.split("/").pop() || "track";
+		return "echoes-music/" + base;
+	}
+	function blobToBase64(blob){
+		return new Promise(function(resolve, reject){
+			var reader = new FileReader();
+			reader.onloadend = function(){
+				var result = reader.result || "";
+				var comma = result.indexOf(",");
+				resolve(comma >= 0 ? result.slice(comma + 1) : result);
+			};
+			reader.onerror = function(){ reject(reader.error); };
+			reader.readAsDataURL(blob);
+		});
+	}
 
 	var DEBUG = false; // flip to true to surface adapter activity in console
 	var log = DEBUG ? function(){ console.log.apply(console, ["[audio-native]"].concat([].slice.call(arguments))); } : function(){};
@@ -1331,11 +1364,22 @@ window.createAudioAdapter = function(htmlEl){
 	};
 	function fire(type){ ev.dispatchEvent(new Event(type)); }
 	function idOf(url){ return "echoes:" + String(url).split("?")[0]; }
-	function resolveForNative(url){
+	function absoluteUrl(url){
 		if (!url) return url;
 		if (/^https?:\/\//i.test(url)) return url;
 		try { return new URL(url, "https://lirien.world/echoes/").href; }
 		catch (e) { return url; }
+	}
+	function resolveForNative(url){
+		var abs = absoluteUrl(url);
+		// Prefer a downloaded local copy if we have one — AVPlayer
+		// handles file:// URIs natively so offline playback uses the
+		// real file rather than streaming through the network stack.
+		try {
+			var reg = loadOfflineRegistry();
+			if (reg[abs]) return reg[abs];
+		} catch (e) {}
+		return abs;
 	}
 
 	// Natural end-of-track. Loop-mode: replay; else fire 'ended'.
@@ -1485,6 +1529,58 @@ window.createAudioAdapter = function(htmlEl){
 		load: function(){
 			if (state.src) { var u = state.src; state.src = ""; adapter.src = u; }
 		},
+		// Filesystem-backed offline support. The web service worker
+		// caches into WKWebView storage, which AVPlayer can't see;
+		// these methods download tracks to the app's data directory
+		// so the native player can use them via file:// URIs.
+		isOfflineCached: function(url){
+			var abs = absoluteUrl(url);
+			var reg = loadOfflineRegistry();
+			return !!reg[abs];
+		},
+		downloadForOffline: function(url){
+			if (!Filesystem) return Promise.reject(new Error("filesystem plugin missing"));
+			var abs = absoluteUrl(url);
+			var reg = loadOfflineRegistry();
+			if (reg[abs]) return Promise.resolve(reg[abs]);
+			var fileName = offlineFileName(abs);
+			return fetch(abs, {cache: "no-store"})
+				.then(function(r){
+					if (!r.ok) throw new Error("fetch failed: " + r.status);
+					return r.blob();
+				})
+				.then(function(blob){ return blobToBase64(blob); })
+				.then(function(b64){
+					return Filesystem.writeFile({
+						path: fileName,
+						data: b64,
+						directory: "DATA",
+						recursive: true
+					});
+				})
+				.then(function(){
+					return Filesystem.getUri({path: fileName, directory: "DATA"});
+				})
+				.then(function(result){
+					var uri = result && result.uri;
+					if (!uri) throw new Error("no uri returned");
+					var reg2 = loadOfflineRegistry();
+					reg2[abs] = uri;
+					saveOfflineRegistry(reg2);
+					return uri;
+				});
+		},
+		removeOfflineFile: function(url){
+			if (!Filesystem) return Promise.resolve();
+			var abs = absoluteUrl(url);
+			var reg = loadOfflineRegistry();
+			if (!reg[abs]) return Promise.resolve();
+			var fileName = offlineFileName(abs);
+			delete reg[abs];
+			saveOfflineRegistry(reg);
+			return Filesystem.deleteFile({path: fileName, directory: "DATA"}).catch(function(){});
+		},
+		listOfflineFiles: function(){ return loadOfflineRegistry(); },
 		// Push track metadata to iOS Now Playing (lock screen, Control
 		// Center, Dynamic Island, AirPods double-tap UI). Safe to call
 		// repeatedly; the plugin caches artwork by URL so it only
@@ -1585,7 +1681,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260515-182236";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260515-184211";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -2208,8 +2304,37 @@ function offlineTotalBytes(){
 	return buildOfflineItems().reduce((sum, item) => sum + (item.size || 0), 0);
 }
 
+// Track which logical state the offline panel last rendered so that
+// progress ticks during a download don't tear down and rebuild the
+// whole DOM (which on iOS WKWebView caused the action-button hover/
+// active state to flicker between colour values on every tick).
+let lastOfflinePanelState = null;
+
+function offlinePanelState(){
+	if (!("serviceWorker" in navigator)) return "unavailable";
+	if (offline.preloading) return "preloading";
+	if (offline.enabled) return "enabled";
+	return "disabled";
+}
+
+function updateOfflineProgressInPlace(){
+	if (!$offlinePanel) return;
+	const pct = offline.total > 0 ? Math.round(100 * offline.done / offline.total) : 0;
+	const valEl = $offlinePanel.querySelector(".offline-line .val");
+	const barEl = $offlinePanel.querySelector(".offline-progress-bar");
+	if (valEl) valEl.innerHTML = pct + "% &middot; " + offline.done + " / " + offline.total;
+	if (barEl) barEl.style.width = pct + "%";
+}
+
 function renderOfflinePanel(){
 	if (!$offlinePanel) return;
+	const state = offlinePanelState();
+	// While preloading, just mutate the numbers in place instead of
+	// replacing innerHTML on every progress tick.
+	if (state === "preloading" && lastOfflinePanelState === "preloading") {
+		updateOfflineProgressInPlace();
+		return;
+	}
 	const t = (window.lirienT || ((k) => k));
 	const items = buildOfflineItems();
 	const cached = cachedOfflineCount();
@@ -2218,9 +2343,10 @@ function renderOfflinePanel(){
 	const storageNeeded = formatBytes(offlineTotalBytes());
 	let html = "";
 
-	if (!("serviceWorker" in navigator)) {
+	if (state === "unavailable") {
 		html += `<p class="offline-intro">${escapeHtml(t("echoes.offline.unavailable"))}</p>`;
 		$offlinePanel.innerHTML = html;
+		lastOfflinePanelState = state;
 		return;
 	}
 
@@ -2275,6 +2401,7 @@ function renderOfflinePanel(){
 		     + `</div>`;
 	}
 	$offlinePanel.innerHTML = html;
+	lastOfflinePanelState = state;
 }
 
 async function serviceWorkerTarget(){
@@ -2308,13 +2435,38 @@ async function postToServiceWorker(message, timeoutMs){
 async function refreshOfflineState(){
 	if (!$offlinePanel || !TRACKS.length) return;
 	renderOfflinePanel();
-	try {
-		offline.cacheState = await postToServiceWorker({
-			type: "getCacheState",
-			items: buildOfflineItems(),
-		});
-	} catch (e) {
-		offline.cacheState = null;
+	const items = buildOfflineItems();
+	const isNative = $audio.isNative === true && typeof $audio.isOfflineCached === "function";
+	let cached = [];
+	let missing = [];
+	if (isNative) {
+		// Audio tracks live in the native filesystem registry; the SW
+		// can't see those, and AVPlayer can't see the SW cache. Query
+		// each side separately and merge.
+		for (const item of items) {
+			if (item.kind === "audio") {
+				if ($audio.isOfflineCached(item.url)) cached.push(item.url);
+				else missing.push(item.url);
+			}
+		}
+		const swItems = items.filter(i => i.kind !== "audio");
+		if (swItems.length) {
+			try {
+				const swState = await postToServiceWorker({type: "getCacheState", items: swItems});
+				if (swState && Array.isArray(swState.cached)) cached = cached.concat(swState.cached);
+				if (swState && Array.isArray(swState.missing)) missing = missing.concat(swState.missing);
+			} catch (e) {}
+		}
+		offline.cacheState = {cached: cached, missing: missing};
+	} else {
+		try {
+			offline.cacheState = await postToServiceWorker({
+				type: "getCacheState",
+				items: items,
+			});
+		} catch (e) {
+			offline.cacheState = null;
+		}
 	}
 	renderOfflinePanel();
 }
@@ -2329,46 +2481,89 @@ async function enableOfflineMusic(){
 
 async function disableOfflineMusic(){
 	saveOfflineMode(false);
+	// Reclaim disk space: delete any native filesystem copies we'd
+	// previously downloaded. Web SW cache is untouched (Steve's PWA
+	// users may share the device with the app); only the app's
+	// private DATA directory is cleared.
+	if ($audio.isNative === true && typeof $audio.listOfflineFiles === "function" && typeof $audio.removeOfflineFile === "function") {
+		try {
+			const reg = $audio.listOfflineFiles();
+			for (const url of Object.keys(reg)) {
+				await $audio.removeOfflineFile(url);
+			}
+		} catch (e) { /* best effort */ }
+	}
 	await refreshOfflineState();
 }
 
 async function startOfflinePreload(){
 	if (offline.preloading) return;
-	const target = await serviceWorkerTarget();
-	if (!target) {
-		renderOfflinePanel();
-		return;
-	}
+	const items = buildOfflineItems();
+	if (!items.length) { renderOfflinePanel(); return; }
+
+	const isNative = $audio.isNative === true && typeof $audio.downloadForOffline === "function";
+	const audioItems = isNative ? items.filter(i => i.kind === "audio") : [];
+	const swItems = isNative ? items.filter(i => i.kind !== "audio") : items;
+
 	offline.preloading = true;
 	offline.done = 0;
-	offline.total = 0;
+	offline.total = items.length;
 	offline.doneBytes = 0;
-	offline.totalBytes = 0;
+	offline.totalBytes = items.reduce((s, i) => s + (i.size || 0), 0);
+	offline.cancelled = false;
 	renderOfflinePanel();
 
-	const channel = new MessageChannel();
-	offline.channel = channel;
-	channel.port1.onmessage = (ev) => {
-		const msg = ev.data || {};
-		if (msg.type === "preloadProgress") {
-			offline.done = msg.done || 0;
-			offline.total = msg.total || 0;
-			offline.doneBytes = msg.doneBytes || 0;
-			offline.totalBytes = msg.totalBytes || 0;
+	let swDoneSoFar = 0;
+	const swPromise = (async function(){
+		if (!swItems.length) return;
+		const target = await serviceWorkerTarget();
+		if (!target) return;
+		await new Promise(function(resolve){
+			const channel = new MessageChannel();
+			offline.channel = channel;
+			channel.port1.onmessage = function(ev){
+				const msg = ev.data || {};
+				if (offline.cancelled) { resolve(); return; }
+				if (msg.type === "preloadProgress") {
+					const delta = (msg.done || 0) - swDoneSoFar;
+					swDoneSoFar = msg.done || 0;
+					if (delta > 0) {
+						offline.done += delta;
+						offline.doneBytes += (msg.doneBytes || 0) - (offline._swBytes || 0);
+						offline._swBytes = msg.doneBytes || 0;
+						renderOfflinePanel();
+					}
+				} else if (msg.type === "preloadComplete") {
+					resolve();
+				}
+			};
+			target.postMessage({type: "preloadAll", items: swItems}, [channel.port2]);
+		});
+	})();
+
+	const nativePromise = (async function(){
+		if (!audioItems.length) return;
+		for (const item of audioItems) {
+			if (offline.cancelled) break;
+			try { await $audio.downloadForOffline(item.url); }
+			catch (e) { /* skip a failed track; continue the batch */ }
+			offline.done++;
+			offline.doneBytes += item.size || 0;
 			renderOfflinePanel();
-		} else if (msg.type === "preloadComplete") {
-			offline.preloading = false;
-			offline.channel = null;
-			refreshOfflineState();
 		}
-	};
-	target.postMessage({
-		type: "preloadAll",
-		items: buildOfflineItems(),
-	}, [channel.port2]);
+	})();
+
+	try { await Promise.all([swPromise, nativePromise]); }
+	finally {
+		offline.preloading = false;
+		offline.channel = null;
+		offline._swBytes = 0;
+		refreshOfflineState();
+	}
 }
 
 async function cancelOfflinePreload(){
+	offline.cancelled = true;
 	try {
 		const target = await serviceWorkerTarget();
 		if (target) target.postMessage({ type: "preloadCancel" });

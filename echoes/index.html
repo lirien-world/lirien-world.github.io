@@ -1720,7 +1720,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260515-190809";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260515-204047";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -2510,7 +2510,35 @@ async function refreshOfflineState(){
 	renderOfflinePanel();
 }
 
+// Confirms with the user before kicking off a large download on
+// a metered connection. Returns true if the download should proceed.
+// The 25 MB threshold matches the soft limit Apple uses for App
+// Store cellular downloads — a deliberate echo, so the UX feels
+// consistent with system prompts users already know.
+async function confirmLargeCellularDownload(sizeBytes){
+	const THRESHOLD = 25 * 1024 * 1024;
+	if (!sizeBytes || sizeBytes < THRESHOLD) return true;
+	let onWifi = null;
+	try {
+		const Cap = window.Capacitor;
+		if (Cap && Cap.Plugins && Cap.Plugins.Network) {
+			const status = await Cap.Plugins.Network.getStatus();
+			onWifi = status.connectionType === "wifi";
+		}
+	} catch (e) {}
+	if (onWifi === null && navigator.connection && navigator.connection.type) {
+		onWifi = navigator.connection.type === "wifi";
+	}
+	if (onWifi === true) return true;
+	const mb = Math.round(sizeBytes / 1024 / 1024);
+	return window.confirm(
+		"This will download about " + mb + " MB of music and artwork. You're not on Wi-Fi — continue anyway?"
+	);
+}
+
 async function enableOfflineMusic(){
+	const need = offlineTotalBytes();
+	if (!(await confirmLargeCellularDownload(need))) return;
 	saveOfflineMode(true);
 	if (navigator.storage && navigator.storage.persist) {
 		try { await navigator.storage.persist(); } catch (e) {}

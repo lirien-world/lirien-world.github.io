@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260515pm";
+const ASSET_VERSION = "20260515pm2";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -182,6 +182,29 @@ function fmtMB(bytes) {
 function pathExt(path) {
 	const i = path.lastIndexOf(".");
 	return i >= 0 ? path.slice(i + 1).toLowerCase() : "";
+}
+
+// Cellular-warning gate for enabling offline mode. Returns true
+// when the download should proceed; false when the user declined.
+async function confirmLargeCellularDownload(sizeBytes) {
+	const THRESHOLD = 25 * 1024 * 1024;
+	if (!sizeBytes || sizeBytes < THRESHOLD) return true;
+	let onWifi = null;
+	try {
+		const Cap = window.Capacitor;
+		if (Cap && Cap.Plugins && Cap.Plugins.Network) {
+			const status = await Cap.Plugins.Network.getStatus();
+			onWifi = status.connectionType === "wifi";
+		}
+	} catch (e) {}
+	if (onWifi === null && navigator.connection && navigator.connection.type) {
+		onWifi = navigator.connection.type === "wifi";
+	}
+	if (onWifi === true) return true;
+	const mb = Math.round(sizeBytes / 1024 / 1024);
+	return window.confirm(
+		"Downloading the whole catalog will use about " + mb + " MB. You're not on Wi-Fi — continue anyway?"
+	);
 }
 
 // Total bytes that would be downloaded if offline mode were enabled
@@ -379,6 +402,13 @@ async function enableOfflineMode() {
 			return;
 		}
 	}
+
+	// On a metered connection, confirm before pulling the catalog —
+	// at standard quality this is ~200 MB and at high quality far
+	// more. iOS Capacitor reads connection type via @capacitor/network;
+	// browsers fall back to navigator.connection (when supported);
+	// if neither is available we treat as cellular and warn anyway.
+	if (!(await confirmLargeCellularDownload(need))) return;
 
 	// Ask the browser to mark our storage persistent — best-effort.
 	// On Chrome this is often granted silently for installed PWAs.

@@ -1353,6 +1353,29 @@ window.createAudioAdapter = function(htmlEl){
 				fire("ended");
 			});
 		} catch (_) {}
+		// Lock-screen / Control Center remote commands from iOS.
+		// Native handles play/pause/toggle/seek on the AVPlayer side; we
+		// fire synthetic events here so the in-app UI (play button,
+		// progress bar) stays in sync, and next/previous get routed back
+		// to the JS player logic.
+		try {
+			native.addListener("remoteCommand", function(e){
+				var cmd = e && e.command;
+				if (cmd === "play")  { state.paused = false; startPolling(); fire("play"); }
+				else if (cmd === "pause") { state.paused = true;  stopPolling(); fire("pause"); }
+				else if (cmd === "toggle") {
+					state.paused = !state.paused;
+					if (state.paused) { stopPolling(); fire("pause"); }
+					else { startPolling(); fire("play"); }
+				}
+				else if (cmd === "next") fire("remotenext");
+				else if (cmd === "previous") fire("remoteprevious");
+				else if (cmd === "seek" && typeof e.time === "number") {
+					state.currentTime = e.time;
+					fire("timeupdate");
+				}
+			});
+		} catch (_) {}
 	}
 
 	function startPolling(){
@@ -1462,6 +1485,25 @@ window.createAudioAdapter = function(htmlEl){
 		load: function(){
 			if (state.src) { var u = state.src; state.src = ""; adapter.src = u; }
 		},
+		// Push track metadata to iOS Now Playing (lock screen, Control
+		// Center, Dynamic Island, AirPods double-tap UI). Safe to call
+		// repeatedly; the plugin caches artwork by URL so it only
+		// downloads when the artwork changes.
+		setNowPlayingInfo: function(info){
+			if (!native.setNowPlayingInfo) return Promise.resolve();
+			return native.setNowPlayingInfo({
+				title: (info && info.title) || "",
+				artist: (info && info.artist) || "Lirien",
+				album: (info && info.album) || "Echoes of Lirien",
+				duration: (info && Number.isFinite(info.duration)) ? info.duration : (isFinite(state.duration) ? state.duration : 0),
+				artwork: (info && info.artwork) || ""
+			}).catch(function(){});
+		},
+		clearNowPlayingInfo: function(){
+			if (!native.clearNowPlayingInfo) return Promise.resolve();
+			return native.clearNowPlayingInfo().catch(function(){});
+		},
+		isNative: true,
 		addEventListener: ev.addEventListener.bind(ev),
 		removeEventListener: ev.removeEventListener.bind(ev),
 		dispatchEvent: ev.dispatchEvent.bind(ev),
@@ -1543,7 +1585,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260515-161950";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260515-182236";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -3190,23 +3232,46 @@ $progress.addEventListener("keydown", (ev)=>{
 		navigator.mediaSession.setActionHandler("nexttrack",    () => next());
 		navigator.mediaSession.setActionHandler("previoustrack",() => previous());
 	} catch (e) { /* not all browsers support every action */ }
+
+	// Native iOS app: the StreamingAudio plugin owns the lock-screen
+	// controls. It fires synthetic remote events on $audio so the in-
+	// app UI stays in sync and next/previous get routed back here.
+	if ($audio && $audio.isNative && typeof $audio.addEventListener === "function") {
+		$audio.addEventListener("remotenext", () => next());
+		$audio.addEventListener("remoteprevious", () => previous());
+	}
 })();
 
 function updateMediaSessionMeta(){
-	if (!("mediaSession" in navigator)) return;
 	if (activeIdx < 0) return;
 	const track = TRACKS[activeIdx];
-	try {
-		navigator.mediaSession.metadata = new MediaMetadata({
+	if ("mediaSession" in navigator) {
+		try {
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: track.title || "",
+				artist: "Chronicles of Lirien",
+				album: "The Spiral That Remembers",
+				artwork: [
+					{ src: "icon-192-v3.png",  sizes: "192x192", type: "image/png" },
+					{ src: "icon-512-v3.png",  sizes: "512x512", type: "image/png" }
+				]
+			});
+		} catch (e) { /* silent */ }
+	}
+	// Native iOS app: also push to the lock-screen / Control Center
+	// Now Playing widget via the StreamingAudio plugin. mediaSession
+	// alone doesn't bridge to AVPlayer-driven audio, so we mirror the
+	// metadata into MPNowPlayingInfoCenter explicitly.
+	if ($audio && $audio.setNowPlayingInfo) {
+		const artworkUrl = trackImageUrl(track);
+		$audio.setNowPlayingInfo({
 			title: track.title || "",
 			artist: "Chronicles of Lirien",
 			album: "The Spiral That Remembers",
-			artwork: [
-				{ src: "icon-192-v3.png",  sizes: "192x192", type: "image/png" },
-				{ src: "icon-512-v3.png",  sizes: "512x512", type: "image/png" }
-			]
+			duration: ($audio.duration && isFinite($audio.duration)) ? $audio.duration : 0,
+			artwork: artworkUrl ? new URL(artworkUrl, location.href).href : ""
 		});
-	} catch (e) { /* silent */ }
+	}
 }
 
 // keyboard (global). Arrow keys on the focused progress bar mean

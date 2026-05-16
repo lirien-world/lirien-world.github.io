@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260516-172207";
+const ASSET_VERSION = "20260516-193127";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -1125,7 +1125,7 @@ let allBgNames = [];
 		// the title, and resume from the autosave snapshot. Falls back
 		// to a fresh start if anything goes wrong.
 		onFirstUserGesture();
-		const saved = loadAutosave();
+		const saved = migratePublishedEndAutosave(loadAutosave());
 		if (!story || !saved) {
 			state = "idle";
 			dismissTitleScreen();
@@ -3220,6 +3220,69 @@ function loadAutosave() {
 	} catch (e) { return null; }
 }
 
+function isLegacyChapterSixPublishedEndSave(saved) {
+	if (!saved || typeof saved !== "object") return false;
+	const chapter = String(saved.chapter || "");
+	const bg = String(saved.bg || "");
+	const last = String(saved.lastChunk || "");
+	const inChapterSix = chapter.startsWith("Six ") || chapter.startsWith("Six —")
+		|| chapter.startsWith("Seis ") || chapter.startsWith("Seis —");
+	if (!inChapterSix) return false;
+	if (bg === "ch06_return_room_sleepless") return true;
+	return /waiting for morning|esperando la mañana/i.test(last);
+}
+
+function stateBeforeChapterTag(targetPrefix) {
+	if (!story || !targetPrefix) return null;
+	let originalState = null;
+	try { originalState = story.state.toJson(); }
+	catch (e) { return null; }
+	try {
+		story.ResetState();
+		let safety = 20000;
+		while (safety-- > 0) {
+			if (story.canContinue) {
+				const before = story.state.toJson();
+				story.Continue();
+				for (const raw of story.currentTags || []) {
+					const tag = String(raw).trim();
+					if (tag.startsWith("chapter:")) {
+						const chapter = tag.slice(8).trim();
+						if (chapter.startsWith(targetPrefix)) return before;
+					}
+				}
+				continue;
+			}
+			if (story.currentChoices && story.currentChoices.length > 0) {
+				story.ChooseChoiceIndex(0);
+				continue;
+			}
+			break;
+		}
+		return null;
+	} finally {
+		try { story.state.LoadJson(originalState); } catch (e) { /* ignore */ }
+	}
+}
+
+function migratePublishedEndAutosave(saved) {
+	if (!isLegacyChapterSixPublishedEndSave(saved)) return saved;
+	const lang = (document.documentElement && document.documentElement.lang) || "en";
+	const target = lang === "es" ? "Siete " : "Seven ";
+	const state = stateBeforeChapterTag(target);
+	if (!state) return saved;
+	const migrated = {
+		state,
+		bg: "",
+		music: "",
+		chapter: "",
+		atmosphere: "",
+		lastChunk: "",
+	};
+	try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(migrated)); } catch (e) { /* ignore */ }
+	return migrated;
+}
+
 function saveAutosave() {
 	if (!story) return;
 	try {
@@ -3303,7 +3366,7 @@ function updateReturnRecentVisibility() {
 }
 
 function returnToMostRecent() {
-	const saved = loadAutosave();
+	const saved = migratePublishedEndAutosave(loadAutosave());
 	if (!story || !saved) return;
 	if (window.lirienAnalytics) {
 		window.lirienAnalytics.track("chapter_jump", {

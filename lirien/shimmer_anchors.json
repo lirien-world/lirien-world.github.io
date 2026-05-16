@@ -747,6 +747,90 @@
     "x": 94.0,
     "y": 19.6
   },
+  "ch07_b01_refusal_admit_need": {
+    "x": 75.0,
+    "y": 20.5
+  },
+  "ch07_b02_refusal_ask_cost": {
+    "x": 34.5,
+    "y": 48.2
+  },
+  "ch07_b03_exit_route_watch_silence": {
+    "x": 79.5,
+    "y": 41.1
+  },
+  "ch07_brae_almost_recognizes": {
+    "x": 73.0,
+    "y": 20.5
+  },
+  "ch07_brae_name_decision": {
+    "x": 41.5,
+    "y": 33.0
+  },
+  "ch07_brae_refusal": {
+    "x": 43.5,
+    "y": 36.6
+  },
+  "ch07_brae_wall_hold": {
+    "x": 15.0,
+    "y": 27.7
+  },
+  "ch07_brae_workbench_reveal": {
+    "x": 96.5,
+    "y": 58.0
+  },
+  "ch07_breakfast_windowsill": {
+    "x": 84.0,
+    "y": 19.6
+  },
+  "ch07_compass_relaxed": {
+    "x": 41.0,
+    "y": 52.7
+  },
+  "ch07_deeper_district_entry": {
+    "x": 55.0,
+    "y": 55.4
+  },
+  "ch07_final_fog_gate": {
+    "x": 64.0,
+    "y": 37.5
+  },
+  "ch07_leaving_workbench": {
+    "x": 8.0,
+    "y": 22.3
+  },
+  "ch07_outer_streets_brae_ahead": {
+    "x": 77.0,
+    "y": 19.6
+  },
+  "ch07_room_morning_compass": {
+    "x": 73.5,
+    "y": 19.6
+  },
+  "ch07_swaying_lantern_dead_end": {
+    "x": 55.0,
+    "y": 32.1
+  },
+  "ch07_swept_doorway": {
+    "x": 9.5,
+    "y": 47.3
+  },
+  "ch07_thistle_key_line": {
+    "x": 42.5,
+    "y": 34.8
+  },
+  "ch07_unattached_stair_coat": {
+    "x": 51.5,
+    "y": 19.6
+  },
+  "ch07_velhara_napkin_brae": {
+    "x": 52.0,
+    "y": 58.0
+  },
+  "ch07_wrong_lane_warning": {
+    "x": 76.5,
+    "y": 41.1
+  },
   "glyph_in_air": {
     "x": 56.0,
     "y": 47.0

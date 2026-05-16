@@ -1720,7 +1720,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260515-204047";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260516-174537";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -3032,14 +3032,18 @@ function updateContentLabel(){
 	$contentValue.textContent = (window.lirienT && window.lirienT("echoes.content." + content)) || content;
 }
 
-// Resolve a track's caption in the current language. Track titles
-// stay English universally (they're proper-noun song titles like
-// "Ash Plains" / "Thistle's Theme" — translating would feel as
-// wrong as translating "Bohemian Rhapsody"). Captions DO translate
-// — they're descriptive subtitles ("Chapter Three — the threshold")
-// and the Spanish locale needs them in Spanish to feel coherent.
+// Resolve a track's title/caption in the current language, falling
+// back to English for older entries that do not have a localized field.
 function currentLang(){
 	return (document.documentElement && document.documentElement.lang) || "en";
+}
+function titleFor(track, lang){
+	if (!track) return "";
+	if (lang !== "en"){
+		const localized = track["title_" + lang];
+		if (localized) return localized;
+	}
+	return track.title || "";
 }
 function captionFor(track, lang){
 	if (!track) return "";
@@ -3051,8 +3055,8 @@ function captionFor(track, lang){
 }
 // Single source of truth for what the title/caption block shows.
 // When no track is active, render the i18n defaults; when one is,
-// render the track's title (always English) + captionFor() in the
-// current locale. Called on track change and on language switch.
+// render the localized title + caption in the current locale. Called
+// on track change and on language switch.
 function renderTrackInfo(){
 	const lang = currentLang();
 	if (activeIdx < 0){
@@ -3063,13 +3067,15 @@ function renderTrackInfo(){
 		return;
 	}
 	const t = TRACKS[activeIdx];
-	$trackTitle.textContent = t.title || "";
+	$trackTitle.textContent = titleFor(t, lang);
 	$trackCaption.textContent = captionFor(t, lang);
 }
 
 function applyCaptionForCurrent(){
 	if (activeIdx < 0) return;
-	$trackCaption.textContent = captionFor(TRACKS[activeIdx], currentLang());
+	const lang = currentLang();
+	$trackTitle.textContent = titleFor(TRACKS[activeIdx], lang);
+	$trackCaption.textContent = captionFor(TRACKS[activeIdx], lang);
 }
 
 // (Old previousIndex via history removed — deterministic queue
@@ -3128,8 +3134,9 @@ function loadTrack(idx, opts){
 	$trackInfo.classList.add("is-fading");
 	$spiralWrap.classList.add("is-changing");
 	setTimeout(()=>{
-		$trackTitle.textContent = track.title;
-		$trackCaption.textContent = captionFor(track, currentLang());
+		const lang = currentLang();
+		$trackTitle.textContent = titleFor(track, lang);
+		$trackCaption.textContent = captionFor(track, lang);
 		$trackInfo.classList.remove("is-fading");
 	}, 350);
 	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
@@ -3196,8 +3203,9 @@ function handleNativeAdvanced(){
 	$trackInfo.classList.add("is-fading");
 	$spiralWrap.classList.add("is-changing");
 	setTimeout(()=>{
-		$trackTitle.textContent = track.title;
-		$trackCaption.textContent = captionFor(track, currentLang());
+		const lang = currentLang();
+		$trackTitle.textContent = titleFor(track, lang);
+		$trackCaption.textContent = captionFor(track, lang);
 		$trackInfo.classList.remove("is-fading");
 	}, 350);
 	setTimeout(()=>$spiralWrap.classList.remove("is-changing"), 1000);
@@ -3583,7 +3591,7 @@ function updateMediaSessionMeta(){
 	if ("mediaSession" in navigator) {
 		try {
 			navigator.mediaSession.metadata = new MediaMetadata({
-				title: track.title || "",
+				title: titleFor(track, currentLang()),
 				artist: "Chronicles of Lirien",
 				album: "The Spiral That Remembers",
 				artwork: [
@@ -3600,7 +3608,7 @@ function updateMediaSessionMeta(){
 	if ($audio && $audio.setNowPlayingInfo) {
 		const artworkUrl = trackImageUrl(track);
 		$audio.setNowPlayingInfo({
-			title: track.title || "",
+			title: titleFor(track, currentLang()),
 			artist: "Chronicles of Lirien",
 			album: "The Spiral That Remembers",
 			duration: ($audio.duration && isFinite($audio.duration)) ? $audio.duration : 0,
@@ -3639,10 +3647,11 @@ function buildTracklist(){
 		btn.className = "track-row";
 		btn.dataset.idx = String(trackIdx);
 		const where = captionFor(t, currentLang());
+		const title = titleFor(t, currentLang());
 		btn.innerHTML = `
 			<span class="num">${String(queuePos+1).padStart(2,"0")}</span>
 			<span class="meta">
-				<span class="name">${escapeHtml(t.title)}</span>
+				<span class="name">${escapeHtml(title)}</span>
 				<span class="where">${escapeHtml(where)}</span>
 			</span>`;
 		btn.addEventListener("click", ()=>{
@@ -3951,8 +3960,9 @@ window.echoesRefreshDynamicLabels = function(){
 			// Repeat mode loops the active track; otherwise per-track
 			// loop only applies in minimal mode (seamless Lirien Remembers).
 			$audio.loop = (mode === "repeat") || (!!track.loop && content === "minimal");
-			$trackTitle.textContent = track.title;
-			$trackCaption.textContent = captionFor(track, currentLang());
+			const lang = currentLang();
+			$trackTitle.textContent = titleFor(track, lang);
+			$trackCaption.textContent = captionFor(track, lang);
 			updateActiveRow();
 			setBg(track.image);
 			restored = true;

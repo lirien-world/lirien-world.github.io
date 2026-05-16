@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260516-034811",
-  "generated_at": "2026-05-16T02:58:19Z",
-  "asset_count": 436,
-  "total_size": 783755318,
+  "manifest_version": "20260516-172207",
+  "generated_at": "2026-05-16T16:35:15Z",
+  "asset_count": 482,
+  "total_size": 865715142,
   "chapters": [
     {
       "number": 1,
@@ -27,6 +27,10 @@
     {
       "number": 6,
       "title": "Six \u2014 What the City Remembers"
+    },
+    {
+      "number": 7,
+      "title": "Seven \u2014 The Compass Points to Someone"
     }
   ],
   "assets": {
@@ -1526,6 +1530,174 @@
       "hash": "1df729f7b9",
       "size": 552430
     },
+    "atmosphere/ch07_b01_refusal_admit_need.png": {
+      "hash": "89429dee63",
+      "size": 2824736
+    },
+    "atmosphere/ch07_b01_refusal_admit_need.webp": {
+      "hash": "7da4db9033",
+      "size": 436596
+    },
+    "atmosphere/ch07_b02_refusal_ask_cost.png": {
+      "hash": "3b5249dd58",
+      "size": 2767266
+    },
+    "atmosphere/ch07_b02_refusal_ask_cost.webp": {
+      "hash": "283a72a777",
+      "size": 411184
+    },
+    "atmosphere/ch07_b03_exit_route_watch_silence.png": {
+      "hash": "f0c30eb71d",
+      "size": 3059568
+    },
+    "atmosphere/ch07_b03_exit_route_watch_silence.webp": {
+      "hash": "b85e6f55ca",
+      "size": 489928
+    },
+    "atmosphere/ch07_brae_almost_recognizes.png": {
+      "hash": "d4415f28ba",
+      "size": 2713085
+    },
+    "atmosphere/ch07_brae_almost_recognizes.webp": {
+      "hash": "33ae4fa9c3",
+      "size": 401216
+    },
+    "atmosphere/ch07_brae_name_decision.png": {
+      "hash": "d07fd05401",
+      "size": 2895856
+    },
+    "atmosphere/ch07_brae_name_decision.webp": {
+      "hash": "a143aea361",
+      "size": 472262
+    },
+    "atmosphere/ch07_brae_refusal.png": {
+      "hash": "e972c7b447",
+      "size": 2922683
+    },
+    "atmosphere/ch07_brae_refusal.webp": {
+      "hash": "0b9691f7dc",
+      "size": 476256
+    },
+    "atmosphere/ch07_brae_wall_hold.png": {
+      "hash": "2f307c7525",
+      "size": 2806777
+    },
+    "atmosphere/ch07_brae_wall_hold.webp": {
+      "hash": "8ad6b6daa0",
+      "size": 416634
+    },
+    "atmosphere/ch07_brae_workbench_reveal.png": {
+      "hash": "f067e7f21d",
+      "size": 2912241
+    },
+    "atmosphere/ch07_brae_workbench_reveal.webp": {
+      "hash": "ff52ee57f0",
+      "size": 464476
+    },
+    "atmosphere/ch07_breakfast_windowsill.png": {
+      "hash": "858636570a",
+      "size": 2659951
+    },
+    "atmosphere/ch07_breakfast_windowsill.webp": {
+      "hash": "81646f7624",
+      "size": 377340
+    },
+    "atmosphere/ch07_compass_relaxed.png": {
+      "hash": "6747e44fc2",
+      "size": 2823953
+    },
+    "atmosphere/ch07_compass_relaxed.webp": {
+      "hash": "b669bb63d1",
+      "size": 417160
+    },
+    "atmosphere/ch07_deeper_district_entry.png": {
+      "hash": "b54b5f26dc",
+      "size": 2469157
+    },
+    "atmosphere/ch07_deeper_district_entry.webp": {
+      "hash": "127c7d0caa",
+      "size": 285852
+    },
+    "atmosphere/ch07_final_fog_gate.png": {
+      "hash": "af8bdbfc6e",
+      "size": 2667432
+    },
+    "atmosphere/ch07_final_fog_gate.webp": {
+      "hash": "5e6822a6c7",
+      "size": 354014
+    },
+    "atmosphere/ch07_leaving_workbench.png": {
+      "hash": "8b86bbd24d",
+      "size": 2977771
+    },
+    "atmosphere/ch07_leaving_workbench.webp": {
+      "hash": "2ef007c0e4",
+      "size": 498340
+    },
+    "atmosphere/ch07_outer_streets_brae_ahead.png": {
+      "hash": "def8e3c1d9",
+      "size": 2982096
+    },
+    "atmosphere/ch07_outer_streets_brae_ahead.webp": {
+      "hash": "f3b57a2717",
+      "size": 489638
+    },
+    "atmosphere/ch07_room_morning_compass.png": {
+      "hash": "4ca6c3e9ef",
+      "size": 2736266
+    },
+    "atmosphere/ch07_room_morning_compass.webp": {
+      "hash": "08313e4be7",
+      "size": 396590
+    },
+    "atmosphere/ch07_swaying_lantern_dead_end.png": {
+      "hash": "c15d668993",
+      "size": 2519481
+    },
+    "atmosphere/ch07_swaying_lantern_dead_end.webp": {
+      "hash": "e460b57c31",
+      "size": 300014
+    },
+    "atmosphere/ch07_swept_doorway.png": {
+      "hash": "413ca9f391",
+      "size": 2613617
+    },
+    "atmosphere/ch07_swept_doorway.webp": {
+      "hash": "a0dab61a89",
+      "size": 350342
+    },
+    "atmosphere/ch07_thistle_key_line.png": {
+      "hash": "e1a6b47b48",
+      "size": 2844916
+    },
+    "atmosphere/ch07_thistle_key_line.webp": {
+      "hash": "1b03ca6c07",
+      "size": 439912
+    },
+    "atmosphere/ch07_unattached_stair_coat.png": {
+      "hash": "f5a2de8601",
+      "size": 2883008
+    },
+    "atmosphere/ch07_unattached_stair_coat.webp": {
+      "hash": "7dd069b943",
+      "size": 432394
+    },
+    "atmosphere/ch07_velhara_napkin_brae.png": {
+      "hash": "6a8580f5e3",
+      "size": 2937812
+    },
+    "atmosphere/ch07_velhara_napkin_brae.webp": {
+      "hash": "9e95bb35a2",
+      "size": 473468
+    },
+    "atmosphere/ch07_wrong_lane_warning.png": {
+      "hash": "4f8564f6df",
+      "size": 3007126
+    },
+    "atmosphere/ch07_wrong_lane_warning.webp": {
+      "hash": "2f2bc547b8",
+      "size": 480820
+    },
     "atmosphere/glyph_in_air.png": {
       "hash": "8b0745a949",
       "size": 1176208
@@ -1586,6 +1758,14 @@
       "hash": "f0629bd7e5",
       "size": 5546417
     },
+    "music/brae_almost_remembers.m4a": {
+      "hash": "e63e582f9f",
+      "size": 3549458
+    },
+    "music/brae_workbench.m4a": {
+      "hash": "cc1c06e69a",
+      "size": 2599844
+    },
     "music/city_memory_walk.m4a": {
       "hash": "39960ae884",
       "size": 3671434
@@ -1602,6 +1782,10 @@
       "hash": "606a236b2d",
       "size": 1549731
     },
+    "music/deeper_fog_district.m4a": {
+      "hash": "af242677ab",
+      "size": 3781775
+    },
     "music/dream_corridor.m4a": {
       "hash": "dbd7c4b69e",
       "size": 4142345
@@ -1609,6 +1793,10 @@
     "music/echo_eater_memory.m4a": {
       "hash": "46abad19d9",
       "size": 4145306
+    },
+    "music/fog_gate_release.m4a": {
+      "hash": "32edd2d8d0",
+      "size": 4078839
     },
     "music/footstep_deeper.m4a": {
       "hash": "f8a7c31139",
@@ -1763,16 +1951,16 @@
       "size": 3898837
     },
     "shimmer_anchors.json": {
-      "hash": "da2293fe21",
-      "size": 12260
+      "hash": "b526b31178",
+      "size": 13644
     },
     "story.json": {
-      "hash": "82b39bbd95",
-      "size": 174642
+      "hash": "41e5cc919d",
+      "size": 203054
     },
     "story_es.json": {
-      "hash": "be4e0d29fd",
-      "size": 186901
+      "hash": "fb1d679af2",
+      "size": 217779
     }
   }
 }

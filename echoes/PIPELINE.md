@@ -42,8 +42,10 @@ Hand-authored JSON array. Each entry:
                                  // ("../lirien/music/") unless it
                                  // starts with "../" (root-relative)
   "chapter": <number | "unused" | "minimal">,
-  "title":   "<display title>",
-  "caption": "<one-line caption shown under the title>",
+  "title":   "<English display title>",
+  "title_es":"<Spanish display title>",
+  "caption": "<English one-line caption shown under the title>",
+  "caption_es":"<Spanish one-line caption shown under the title>",
   "image":   "<basename>.png",   // resolved against ATMOS_BASE
                                  // ("../lirien/atmosphere/"); empty
                                  // string falls back to the wide
@@ -52,6 +54,11 @@ Hand-authored JSON array. Each entry:
                                  // minimal mode (see anchor)
 }
 ```
+
+`title_es` and `caption_es` are required for every track. The runtime
+uses the localized title and caption whenever the page language is
+Spanish, with English fallback only as a defensive guard for older or
+malformed entries.
 
 ### `chapter` field — the three values that matter
 
@@ -76,7 +83,9 @@ The entry:
 ```json
 {"file":"../lirien_theme.mp3", "chapter":"minimal",
  "title":"Lirien Remembers",
+ "title_es":"Lirien recuerda",
  "caption":"the theme song for Lirien",
+ "caption_es":"el tema musical de Lirien",
  "image":"",
  "loop":true}
 ```

@@ -1,14 +1,14 @@
 {
-  "manifest_version": "20260513-222641",
-  "generated_at": "2026-05-13T21:28:35Z",
-  "asset_count": 96,
-  "total_size": 211667766,
+  "manifest_version": "20260516-174537",
+  "generated_at": "2026-05-16T16:45:37Z",
+  "asset_count": 104,
+  "total_size": 227271546,
   "assets": {
     "/echoes/": {
-      "size": 146801
+      "size": 168852
     },
     "/echoes/assets_manifest.json": {
-      "size": 7301
+      "size": 7940
     },
     "/echoes/icon-192-v3.png": {
       "size": 47441
@@ -17,19 +17,19 @@
       "size": 336356
     },
     "/echoes/index.html": {
-      "size": 146801
+      "size": 168852
     },
     "/echoes/music_progression.json": {
-      "size": 4475
+      "size": 5865
     },
     "/echoes/spiral.png": {
       "size": 1557411
     },
     "/echoes/sw.js": {
-      "size": 8446
+      "size": 8458
     },
     "/echoes/tracks.json": {
-      "size": 14788
+      "size": 18255
     },
     "/lirien/atmosphere/ch01_aerin_awakens.webp": {
       "size": 273352
@@ -139,6 +139,18 @@
     "/lirien/atmosphere/ch05_mushroom_path.webp": {
       "size": 530886
     },
+    "/lirien/atmosphere/ch07_brae_workbench_reveal.webp": {
+      "size": 464476
+    },
+    "/lirien/atmosphere/ch07_deeper_district_entry.webp": {
+      "size": 285852
+    },
+    "/lirien/atmosphere/ch07_final_fog_gate.webp": {
+      "size": 354014
+    },
+    "/lirien/atmosphere/ch07_thistle_key_line.webp": {
+      "size": 439912
+    },
     "/lirien/music/approach_to_solrien.m4a": {
       "size": 3390637
     },
@@ -154,6 +166,12 @@
     "/lirien/music/ash_plains.m4a": {
       "size": 5546417
     },
+    "/lirien/music/brae_almost_remembers.m4a": {
+      "size": 3549458
+    },
+    "/lirien/music/brae_workbench.m4a": {
+      "size": 2599844
+    },
     "/lirien/music/city_memory_walk.m4a": {
       "size": 3671434
     },
@@ -166,11 +184,17 @@
     "/lirien/music/corrupted_areas.m4a": {
       "size": 1549731
     },
+    "/lirien/music/deeper_fog_district.m4a": {
+      "size": 3781775
+    },
     "/lirien/music/dream_corridor.m4a": {
       "size": 4142345
     },
     "/lirien/music/echo_eater_memory.m4a": {
       "size": 4145306
+    },
+    "/lirien/music/fog_gate_release.m4a": {
+      "size": 4078839
     },
     "/lirien/music/footstep_deeper.m4a": {
       "size": 3705216

@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260517-144406";
+const ASSET_VERSION = "20260519-110210";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -2382,7 +2382,23 @@ function ensureMusicPlayingForScene() {
 }
 
 document.addEventListener("visibilitychange", () => {
-	if (document.visibilityState === "visible") ensureMusicPlayingForScene();
+	if (document.visibilityState === "visible") {
+		ensureMusicPlayingForScene();
+		return;
+	}
+	// Hidden — pause atmosphere music so audio doesn't bleed into
+	// whatever the reader is doing when they switch apps or lock the
+	// phone. Lirien's music is meant to be in-session only; carrying
+	// it into the background ("they were doing other things and it
+	// kept playing") was Steve's report 2026-05-19. The iOS app drops
+	// UIBackgroundModes=audio as the structural guarantee, and this
+	// listener is the explicit JS-side pause so the user doesn't hear
+	// a tail before iOS suspends.
+	try {
+		if (activePlayer && activePlayer.el && !activePlayer.el.paused) {
+			activePlayer.el.pause();
+		}
+	} catch (e) { /* element in error state — ignore */ }
 });
 // pageshow fires when the page is restored from bfcache (iOS Safari
 // back-forward cache, and some standalone PWA resume paths).

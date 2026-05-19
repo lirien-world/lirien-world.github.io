@@ -1906,7 +1906,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260519-171411";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260519-172704";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -2741,23 +2741,45 @@ async function refreshOfflineState(){
 	renderOfflinePanel();
 }
 
+// Bridge JS breadcrumbs into native console (NSLog) via the
+// StreamingAudio plugin's logDebug method. WKWebView console.log
+// doesn't bubble to the device console by default; this does.
+function nativeLog(tag, message){
+	try {
+		const Cap = window.Capacitor;
+		if (Cap && Cap.Plugins && Cap.Plugins.StreamingAudio && Cap.Plugins.StreamingAudio.logDebug) {
+			Cap.Plugins.StreamingAudio.logDebug({tag: String(tag || "JS"), message: String(message)});
+		}
+	} catch (e) {}
+}
+
 // Refresh offline.connectionType from the Network plugin (or the
 // web's navigator.connection if no native plugin is around). Updates
 // the cached value so isOnWifi() / isDownloadAllowedNow() reflect
 // reality without re-asking the plugin every call site.
 async function refreshConnectionType(){
 	let type = null;
+	let source = "none";
+	let raw = "n/a";
 	try {
 		const Cap = window.Capacitor;
 		if (Cap && Cap.Plugins && Cap.Plugins.Network) {
 			const status = await Cap.Plugins.Network.getStatus();
+			raw = JSON.stringify(status);
 			type = status && status.connectionType ? status.connectionType : null;
+			source = "Cap.Network";
 		}
-	} catch (e) {}
+	} catch (e) {
+		nativeLog("net", "Cap.Network.getStatus threw: " + (e && e.message));
+	}
 	if (type === null && navigator.connection && navigator.connection.type) {
 		type = navigator.connection.type;
+		source = "navigator.connection";
 	}
 	offline.connectionType = type;
+	nativeLog("net", "refresh source=" + source + " type=" + String(type)
+		+ " raw=" + raw + " allowMobile=" + offline.allowMobile
+		+ " allowedNow=" + isDownloadAllowedNow());
 	return type;
 }
 
@@ -2766,17 +2788,26 @@ async function refreshConnectionType(){
 // cellular without the allow-mobile flag.
 (function wireNetworkListener(){
 	const Cap = window.Capacitor;
-	if (!Cap || !Cap.Plugins || !Cap.Plugins.Network) return;
+	if (!Cap || !Cap.Plugins || !Cap.Plugins.Network) {
+		nativeLog("net", "wireNetworkListener: Capacitor.Plugins.Network NOT present");
+		return;
+	}
 	try {
 		Cap.Plugins.Network.addListener("networkStatusChange", function(status){
 			const prev = offline.connectionType;
 			offline.connectionType = (status && status.connectionType) || null;
+			nativeLog("net", "networkStatusChange prev=" + String(prev)
+				+ " new=" + String(offline.connectionType)
+				+ " raw=" + JSON.stringify(status));
 			if (prev !== "wifi" && offline.connectionType === "wifi" && offline.enabled) {
 				maybeBackfillOfflineMusic("wifi-reconnect");
 			}
 			renderOfflinePanel();
 		});
-	} catch (e) {}
+		nativeLog("net", "wireNetworkListener: addListener OK");
+	} catch (e) {
+		nativeLog("net", "wireNetworkListener threw: " + (e && e.message));
+	}
 })();
 
 async function enableOfflineMusic(){

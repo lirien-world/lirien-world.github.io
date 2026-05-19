@@ -887,6 +887,62 @@
     "x": 9.0,
     "y": 29.5
   },
+  "ch09_b01_ashwood_morning_shelter": {
+    "x": 12.5,
+    "y": 19.6
+  },
+  "ch09_b02_brae_reads_valley_route": {
+    "x": 66.5,
+    "y": 19.6
+  },
+  "ch09_b03_road_favors_thistle": {
+    "x": 16.0,
+    "y": 27.7
+  },
+  "ch09_b04_settlement_valley_edge": {
+    "x": 64.0,
+    "y": 19.6
+  },
+  "ch09_b05_wall_without_reason": {
+    "x": 32.5,
+    "y": 19.6
+  },
+  "ch09_b06_bridge_carvings_forgotten": {
+    "x": 59.5,
+    "y": 21.4
+  },
+  "ch09_b07_door_symbol_dry_fountain": {
+    "x": 41.5,
+    "y": 19.6
+  },
+  "ch09_b08_shopkeeper_names_maren": {
+    "x": 73.0,
+    "y": 57.1
+  },
+  "ch09_b09_compass_pulse_maren": {
+    "x": 96.5,
+    "y": 40.2
+  },
+  "ch09_b10_afternoon_road_preferences": {
+    "x": 79.0,
+    "y": 36.6
+  },
+  "ch09_b11_thistle_stair_story": {
+    "x": 79.0,
+    "y": 24.1
+  },
+  "ch09_b12_compass_steady_with_three": {
+    "x": 87.0,
+    "y": 19.6
+  },
+  "ch09_b13_thistle_forest_before": {
+    "x": 85.0,
+    "y": 33.0
+  },
+  "ch09_b14_night_camp_noticing": {
+    "x": 49.0,
+    "y": 46.4
+  },
   "glyph_in_air": {
     "x": 56.0,
     "y": 47.0

@@ -870,6 +870,38 @@ body.is-playing .progress{
 	background:rgba(196,147,90,0.1);
 	border-color:rgba(196,147,90,0.72);
 }
+.offline-panel .offline-toggle{
+	all:unset;
+	cursor:pointer;
+	position:relative;
+	display:inline-block;
+	width:2.4rem;
+	height:1.25rem;
+	border:1px solid rgba(196,147,90,0.42);
+	border-radius:999px;
+	background:rgba(8,6,15,0.38);
+	transition:background 0.25s ease,border-color 0.25s ease;
+	-webkit-tap-highlight-color:transparent;
+}
+.offline-panel .offline-toggle::before{
+	content:"";
+	position:absolute;
+	top:1px;
+	left:1px;
+	width:1.05rem;
+	height:1.05rem;
+	border-radius:50%;
+	background:rgba(245,235,210,0.65);
+	transition:left 0.25s ease,background 0.25s ease;
+}
+.offline-panel .offline-toggle.is-on{
+	background:rgba(196,147,90,0.45);
+	border-color:rgba(196,147,90,0.72);
+}
+.offline-panel .offline-toggle.is-on::before{
+	left:calc(100% - 1.05rem - 1px);
+	background:var(--gold-bright);
+}
 .drawer-tracklist-header{
 	font-family:'Cormorant Garamond',serif;
 	font-size:var(--text-xs);
@@ -1336,6 +1368,42 @@ window.createAudioAdapter = function(htmlEl){
 		var base = clean.split("/").pop() || "track";
 		return "echoes-music/" + base;
 	}
+	// Walk the offline registry on launch and refresh every entry's
+	// stored URI against the current app data container. iOS rotates
+	// the container UUID on TestFlight upgrades (and occasionally
+	// otherwise), which makes every stored full file:// URI stale and
+	// causes the AVPlayer item to fail. The DOCUMENTS contents survive
+	// the rotation; we just need to re-resolve relative path → URI.
+	// Drop entries whose file is genuinely gone.
+	function rehydrateOfflineRegistry(){
+		if (!Filesystem) return Promise.resolve({refreshed: 0, dropped: 0});
+		var reg = loadOfflineRegistry();
+		var keys = Object.keys(reg);
+		if (!keys.length) return Promise.resolve({refreshed: 0, dropped: 0});
+		var refreshed = 0, dropped = 0;
+		var ops = keys.map(function(absUrl){
+			var fileName = offlineFileName(absUrl);
+			return Filesystem.stat({path: fileName, directory: "DATA"}).then(function(){
+				return Filesystem.getUri({path: fileName, directory: "DATA"});
+			}).then(function(r){
+				var freshUri = r && r.uri;
+				if (freshUri && freshUri !== reg[absUrl]){
+					reg[absUrl] = freshUri;
+					refreshed++;
+				}
+			}).catch(function(){
+				delete reg[absUrl];
+				dropped++;
+			});
+		});
+		return Promise.all(ops).then(function(){
+			saveOfflineRegistry(reg);
+			if (refreshed || dropped) {
+				console.log("[offline] registry rehydrate refreshed=" + refreshed + " dropped=" + dropped);
+			}
+			return {refreshed: refreshed, dropped: dropped};
+		});
+	}
 	function blobToBase64(blob){
 		return new Promise(function(resolve, reject){
 			var reader = new FileReader();
@@ -1413,6 +1481,32 @@ window.createAudioAdapter = function(htmlEl){
 				} catch (_) {}
 				state.error = {code: 4, message: (e && e.message) || "playback failed"};
 				fire("error");
+			});
+		} catch (_) {}
+	}
+
+	// fellBack from native = the file:// item failed and we swapped to
+	// the streaming HTTPS URL. The track plays fine via the network,
+	// but the offline cache for this track is now stale (the file may
+	// be gone, or the path simply isn't valid in this container any
+	// more). Drop the registry entry so we don't re-try the same dead
+	// path next time, and surface an event so the higher-level offline
+	// system can decide whether to backfill via download.
+	if (native.addListener) {
+		try {
+			native.addListener("fellBack", function(e){
+				if (!e || !e.assetId) return;
+				try {
+					var src = state.src || e.assetId.replace(/^echoes:/, "");
+					var abs = absoluteUrl(src);
+					var reg = loadOfflineRegistry();
+					if (reg[abs]) {
+						delete reg[abs];
+						saveOfflineRegistry(reg);
+					}
+					var detail = {assetId: e.assetId, streamingUrl: e.url || abs, sourceUrl: abs};
+					ev.dispatchEvent(new CustomEvent("fellBackToStreaming", {detail: detail}));
+				} catch (_) {}
 			});
 		} catch (_) {}
 	}
@@ -1725,10 +1819,16 @@ window.createAudioAdapter = function(htmlEl){
 			return native.clearNowPlayingInfo().catch(function(){});
 		},
 		isNative: true,
+		rehydrateOfflineRegistry: rehydrateOfflineRegistry,
 		addEventListener: ev.addEventListener.bind(ev),
 		removeEventListener: ev.removeEventListener.bind(ev),
 		dispatchEvent: ev.dispatchEvent.bind(ev),
 	};
+	// Refresh stale full-path URIs in the offline registry against the
+	// current app data container. Async — we don't block adapter
+	// construction; any track that tries to play before this completes
+	// will hit the native fallback path, which is OK.
+	rehydrateOfflineRegistry().catch(function(){});
 	return adapter;
 };
 </script>
@@ -1806,7 +1906,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260519-164348";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260519-171411";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -1923,6 +2023,10 @@ window.createAudioAdapter = function(htmlEl){
 		                                       es: "Algunos archivos necesitan volver a descargarse." },
 		"echoes.offline.unavailable":        { en: "Open once online to prepare offline music.",
 		                                       es: "Abre una vez con conexión para preparar la música sin conexión." },
+		"echoes.offline.allow-mobile":       { en: "Download over mobile data",
+		                                       es: "Descargar con datos móviles" },
+		"echoes.offline.waiting-wifi":       { en: "Waiting for Wi-Fi to finish syncing.",
+		                                       es: "Esperando Wi-Fi para terminar la sincronización." },
 		"echoes.drawer.foot":   { en: " pieces written for <em>The Spiral That Remembers</em>. They play in shuffled order, never repeating until each has been heard. Touch any title to step there directly.",
 		                          es: " piezas escritas para <em>La Espiral Que Recuerda</em>. Suenan en orden aleatorio, sin repetirse hasta que cada una se haya escuchado. Toca cualquier título para ir allí directamente." },
 	};
@@ -2338,8 +2442,13 @@ const HERO_BG_PATH = "../solrien_wide.webp";
 // Offline music
 // ─────────────────────────────────────────────────────────────────
 const OFFLINE_MODE_KEY = "echoes.offlineMode";
+// Separate from offlineMode: this gates whether background sync /
+// backfill is allowed to use cellular data. Default OFF — the user
+// has to opt in. On Wi-Fi, sync proceeds regardless of this flag.
+const OFFLINE_ALLOW_MOBILE_KEY = "echoes.offline.allowMobile";
 const offline = {
 	enabled: false,
+	allowMobile: false,
 	cacheState: null,
 	preloading: false,
 	done: 0,
@@ -2347,6 +2456,7 @@ const offline = {
 	doneBytes: 0,
 	totalBytes: 0,
 	channel: null,
+	connectionType: null,
 };
 
 function loadOfflineMode(){
@@ -2358,7 +2468,29 @@ function saveOfflineMode(value){
 	try { localStorage.setItem(OFFLINE_MODE_KEY, offline.enabled ? "true" : "false"); }
 	catch (e) { /* private mode */ }
 }
+function loadAllowMobile(){
+	try { return localStorage.getItem(OFFLINE_ALLOW_MOBILE_KEY) === "true"; }
+	catch (e) { return false; }
+}
+function saveAllowMobile(value){
+	offline.allowMobile = !!value;
+	try { localStorage.setItem(OFFLINE_ALLOW_MOBILE_KEY, offline.allowMobile ? "true" : "false"); }
+	catch (e) { /* private mode */ }
+}
 offline.enabled = loadOfflineMode();
+offline.allowMobile = loadAllowMobile();
+
+// True if we have a current connection-type reading and it's wifi.
+// If we don't know (no plugin / navigator.connection), assume wifi —
+// the user is more often on wifi than cellular at app open.
+function isOnWifi(){
+	if (offline.connectionType === "wifi") return true;
+	if (offline.connectionType === null) return true;
+	return false;
+}
+function isDownloadAllowedNow(){
+	return isOnWifi() || offline.allowMobile;
+}
 
 function offlineItemUrl(url){
 	return new URL(url, location.href).href;
@@ -2486,7 +2618,12 @@ function renderOfflinePanel(){
 		     +    `<button class="offline-btn offline-btn--ghost" data-offline-action="cancel">${escapeHtml(t("echoes.offline.cancel"))}</button>`
 		     + `</div>`;
 	} else if (offline.enabled) {
-		html += `<p class="offline-intro">${escapeHtml(allGood ? t("echoes.offline.ready") : t("echoes.offline.needs-sync"))}</p>`;
+		const waitingForWifi = !allGood && !isDownloadAllowedNow();
+		let intro;
+		if (allGood) intro = t("echoes.offline.ready");
+		else if (waitingForWifi) intro = t("echoes.offline.waiting-wifi");
+		else intro = t("echoes.offline.needs-sync");
+		html += `<p class="offline-intro">${escapeHtml(intro)}</p>`;
 		if (storageNeeded) {
 			html += `<div class="offline-line">`
 			     +    `<span class="lbl">${escapeHtml(t("echoes.offline.storage"))}</span>`
@@ -2497,8 +2634,16 @@ function renderOfflinePanel(){
 		     +    `<span class="lbl">${escapeHtml(t("echoes.offline.cached"))}</span>`
 		     +    `<span class="val ${allGood ? "ok" : "warn"}">${cached} / ${items.length}</span>`
 		     + `</div>`;
+		const mobileLabel = t("echoes.offline.allow-mobile");
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${escapeHtml(mobileLabel)}</span>`
+		     +    `<button class="offline-toggle ${offline.allowMobile ? "is-on" : ""}"`
+		     +         ` data-offline-action="toggle-mobile"`
+		     +         ` role="switch" aria-checked="${offline.allowMobile}"`
+		     +         ` aria-label="${escapeHtml(mobileLabel)}"></button>`
+		     + `</div>`;
 		html += `<div class="offline-actions">`;
-		if (!allGood) {
+		if (!allGood && isDownloadAllowedNow()) {
 			html += `<button class="offline-btn" data-offline-action="resync">${escapeHtml(t("echoes.offline.resync"))}</button>`;
 		}
 		html += `<button class="offline-btn offline-btn--ghost" data-offline-action="disable">${escapeHtml(t("echoes.offline.disable"))}</button>`;
@@ -2596,39 +2741,71 @@ async function refreshOfflineState(){
 	renderOfflinePanel();
 }
 
-// Confirms with the user before kicking off a large download on
-// a metered connection. Returns true if the download should proceed.
-// The 25 MB threshold matches the soft limit Apple uses for App
-// Store cellular downloads — a deliberate echo, so the UX feels
-// consistent with system prompts users already know.
-async function confirmLargeCellularDownload(sizeBytes){
-	const THRESHOLD = 25 * 1024 * 1024;
-	if (!sizeBytes || sizeBytes < THRESHOLD) return true;
-	let onWifi = null;
+// Refresh offline.connectionType from the Network plugin (or the
+// web's navigator.connection if no native plugin is around). Updates
+// the cached value so isOnWifi() / isDownloadAllowedNow() reflect
+// reality without re-asking the plugin every call site.
+async function refreshConnectionType(){
+	let type = null;
 	try {
 		const Cap = window.Capacitor;
 		if (Cap && Cap.Plugins && Cap.Plugins.Network) {
 			const status = await Cap.Plugins.Network.getStatus();
-			onWifi = status.connectionType === "wifi";
+			type = status && status.connectionType ? status.connectionType : null;
 		}
 	} catch (e) {}
-	if (onWifi === null && navigator.connection && navigator.connection.type) {
-		onWifi = navigator.connection.type === "wifi";
+	if (type === null && navigator.connection && navigator.connection.type) {
+		type = navigator.connection.type;
 	}
-	if (onWifi === true) return true;
-	const mb = Math.round(sizeBytes / 1024 / 1024);
-	return window.confirm(
-		"This will download about " + mb + " MB of music and artwork. You're not on Wi-Fi — continue anyway?"
-	);
+	offline.connectionType = type;
+	return type;
 }
 
+// Listen for connection-type changes. When the user transitions to
+// Wi-Fi, drain any pending sync work that was deferred for being on
+// cellular without the allow-mobile flag.
+(function wireNetworkListener(){
+	const Cap = window.Capacitor;
+	if (!Cap || !Cap.Plugins || !Cap.Plugins.Network) return;
+	try {
+		Cap.Plugins.Network.addListener("networkStatusChange", function(status){
+			const prev = offline.connectionType;
+			offline.connectionType = (status && status.connectionType) || null;
+			if (prev !== "wifi" && offline.connectionType === "wifi" && offline.enabled) {
+				maybeBackfillOfflineMusic("wifi-reconnect");
+			}
+			renderOfflinePanel();
+		});
+	} catch (e) {}
+})();
+
 async function enableOfflineMusic(){
-	const need = offlineTotalBytes();
-	if (!(await confirmLargeCellularDownload(need))) return;
 	saveOfflineMode(true);
 	if (navigator.storage && navigator.storage.persist) {
 		try { await navigator.storage.persist(); } catch (e) {}
 	}
+	await refreshConnectionType();
+	if (isDownloadAllowedNow()) {
+		startOfflinePreload();
+	} else {
+		// Cellular without allow-mobile: defer the bulk download until
+		// Wi-Fi appears. The user can also flip the toggle to start
+		// immediately. Render so they see "waiting for Wi-Fi".
+		renderOfflinePanel();
+	}
+}
+
+// Called on app launch (offline.enabled === true) and on Wi-Fi
+// reconnect. If the cache has missing audio entries and downloads
+// are allowed under the current connection, kick off a sync. No-ops
+// if a sync is already running or there's nothing missing.
+async function maybeBackfillOfflineMusic(reason){
+	if (!offline.enabled || offline.preloading) return;
+	await refreshConnectionType();
+	if (!isDownloadAllowedNow()) return;
+	await refreshOfflineState();
+	if (missingOfflineCount() <= 0) return;
+	console.log("[offline] backfill triggered (" + reason + ") missing=" + missingOfflineCount());
 	startOfflinePreload();
 }
 
@@ -2731,16 +2908,25 @@ function bindOfflinePanel(){
 		const action = btn.dataset.offlineAction;
 		if (action === "enable") enableOfflineMusic();
 		else if (action === "disable") disableOfflineMusic();
-		else if (action === "resync") startOfflinePreload();
+		else if (action === "resync") {
+			if (isDownloadAllowedNow()) startOfflinePreload();
+			else renderOfflinePanel();
+		}
 		else if (action === "cancel") cancelOfflinePreload();
+		else if (action === "toggle-mobile") {
+			saveAllowMobile(!offline.allowMobile);
+			renderOfflinePanel();
+			if (offline.allowMobile && offline.enabled) maybeBackfillOfflineMusic("toggle-mobile");
+		}
 	});
 	renderOfflinePanel();
 }
 
 async function bootOfflineIntegrityCheck(){
 	if (!offline.enabled) return;
+	await refreshConnectionType();
 	await refreshOfflineState();
-	if (missingOfflineCount() > 0 && navigator.onLine) startOfflinePreload();
+	if (missingOfflineCount() > 0) maybeBackfillOfflineMusic("launch");
 }
 
 function detectReachedChapter(){
@@ -4061,6 +4247,28 @@ window.echoesRefreshDynamicLabels = function(){
 	bindOfflinePanel();
 	refreshOfflineState();
 	bootOfflineIntegrityCheck();
+
+	// When the native plugin tells JS it had to fall back to streaming
+	// (file:// item failed, HTTPS swapped in), opportunistically
+	// re-download the track for next time — but only if offline mode
+	// is enabled AND downloads are allowed under the current
+	// connection. Single-track download, not the bulk preload — keeps
+	// the round-trip small and avoids racing with other playback.
+	if ($audio && typeof $audio.addEventListener === "function") {
+		$audio.addEventListener("fellBackToStreaming", function(ev){
+			if (!offline.enabled) return;
+			const sourceUrl = ev && ev.detail && ev.detail.sourceUrl;
+			if (!sourceUrl) return;
+			if (typeof $audio.downloadForOffline !== "function") return;
+			refreshConnectionType().then(function(){
+				if (!isDownloadAllowedNow()) return;
+				console.log("[offline] silent backfill", sourceUrl);
+				$audio.downloadForOffline(sourceUrl).then(function(){
+					refreshOfflineState();
+				}).catch(function(){ /* best effort */ });
+			});
+		});
+	}
 
 	// Soft-restore the previously-active track on reload / PWA reopen.
 	// Source of truth is activeIdx (just restored from localStorage,

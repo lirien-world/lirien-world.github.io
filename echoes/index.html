@@ -1688,6 +1688,24 @@ window.createAudioAdapter = function(htmlEl){
 			if (!native.clearNextAsset) return Promise.resolve();
 			return native.clearNextAsset().catch(function(){});
 		},
+		// Pre-cache a track without changing the auto-advance pointer.
+		// Used to warm up the previous track so lock-screen "back" can
+		// activate from cache instead of going through a cold
+		// preload→fallback cycle in background. Distinct from
+		// setNextAsset, which also marks the track as the auto-advance
+		// target on end-of-current.
+		preloadAsset: function(url){
+			if (!native.preload || !url) return Promise.resolve();
+			var resolved = resolveForNative(url);
+			var isUrl = /^https?:\/\//i.test(resolved);
+			var abs = absoluteUrl(url);
+			return native.preload({
+				assetId: idOf(url),
+				assetPath: resolved,
+				isUrl: isUrl,
+				fallbackPath: (resolved !== abs) ? abs : null
+			}).catch(function(){});
+		},
 		// Push track metadata to iOS Now Playing (lock screen, Control
 		// Center, Dynamic Island, AirPods double-tap UI). Safe to call
 		// repeatedly; the plugin caches artwork by URL so it only
@@ -1788,7 +1806,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260519-162540";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260519-164348";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -2988,6 +3006,22 @@ function peekNextIndex(){
 	return queue[peekQ];
 }
 
+// Mirror of peekNextIndex for the previous track — used to warm the
+// native cache so lock-screen "back" can activate from cache instead
+// of going through a cold preload cycle in background.
+function peekPreviousIndex(){
+	if (mode === "sequential" || mode === "repeat"){
+		const visible = visibleIndices();
+		if (!visible.length) return null;
+		const pos = visible.indexOf(activeIdx);
+		if (pos === -1) return visible[visible.length - 1];
+		return visible[(pos - 1 + visible.length) % visible.length];
+	}
+	if (!queue.length) return null;
+	const peekQ = (queueIdx - 1 + queue.length) % queue.length;
+	return queue[peekQ];
+}
+
 function nextIndex(){
 	if (mode === "sequential" || mode === "repeat"){
 		// Repeat mode handles auto-loop via $audio.loop=true, so this
@@ -3246,11 +3280,25 @@ function registerUpcomingNativeAsset(){
 	// the user-initiated skip falls into the "asset not preloaded"
 	// race (since loadAsset's preload races with adapter.play()).
 	const nextIdx = peekNextIndex();
-	if (nextIdx == null) { $audio.clearNextAsset && $audio.clearNextAsset(); return; }
-	const nextTrack = TRACKS[nextIdx];
-	if (!nextTrack) return;
-	pendingNativeNextIdx = nextIdx;
-	$audio.setNextAsset(trackAudioUrl(nextTrack));
+	if (nextIdx == null) { $audio.clearNextAsset && $audio.clearNextAsset(); }
+	else {
+		const nextTrack = TRACKS[nextIdx];
+		if (nextTrack){
+			pendingNativeNextIdx = nextIdx;
+			$audio.setNextAsset(trackAudioUrl(nextTrack));
+		}
+	}
+	// Also warm the previous track so lock-screen "back" doesn't pay
+	// the cold preload+activate latency in background. Distinct from
+	// setNextAsset — this only seeds items[] in the plugin; it does
+	// NOT change the auto-advance pointer on end-of-current.
+	if ($audio.preloadAsset){
+		const prevIdx = peekPreviousIndex();
+		if (prevIdx != null && prevIdx !== nextIdx && prevIdx !== activeIdx){
+			const prevTrack = TRACKS[prevIdx];
+			if (prevTrack) $audio.preloadAsset(trackAudioUrl(prevTrack));
+		}
+	}
 }
 
 // When the native plugin auto-advances on track-end, it tells us via
@@ -3380,15 +3428,20 @@ function next(){ loadTrack(nextIndex(), {play:!$audio.paused}); }
 // the queue.
 const PREVIOUS_RESTART_THRESHOLD_S = 3;
 function previous(){
-	if ($audio.currentTime > PREVIOUS_RESTART_THRESHOLD_S){
+	const at = Number.isFinite($audio.currentTime) ? $audio.currentTime : 0;
+	const paused = !!$audio.paused;
+	console.log("[prev] enter currentTime=" + at.toFixed(2) + " paused=" + paused + " activeIdx=" + activeIdx + " queueIdx=" + queueIdx + " mode=" + mode);
+	if (at > PREVIOUS_RESTART_THRESHOLD_S){
+		console.log("[prev] smart-restart current track");
 		$audio.currentTime = 0;
 		// Drive the bar fill immediately — paused timeupdate is lazy.
 		$progressFill.style.width = "0%";
 		return;
 	}
 	const idx = previousQueueIndex();
+	console.log("[prev] resolved prevIdx=" + idx);
 	if (idx == null){ $audio.currentTime = 0; return; }
-	loadTrack(idx, {play:!$audio.paused});
+	loadTrack(idx, {play:!paused});
 }
 
 // ─────────────────────────────────────────────────────────────────

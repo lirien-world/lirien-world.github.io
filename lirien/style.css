@@ -1629,6 +1629,38 @@ body.story-started .chrome-btn {
 	background: rgba(196, 147, 90, 0.10);
 	border-color: rgba(196, 147, 90, 0.85);
 }
+.offline-panel .offline-toggle {
+	all: unset;
+	cursor: pointer;
+	position: relative;
+	display: inline-block;
+	width: 2.4rem;
+	height: 1.25rem;
+	border: 1px solid rgba(196, 147, 90, 0.42);
+	border-radius: 999px;
+	background: rgba(8, 6, 15, 0.38);
+	transition: background 0.25s ease, border-color 0.25s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+.offline-panel .offline-toggle::before {
+	content: "";
+	position: absolute;
+	top: 1px;
+	left: 1px;
+	width: 1.05rem;
+	height: 1.05rem;
+	border-radius: 50%;
+	background: rgba(245, 235, 210, 0.65);
+	transition: left 0.25s ease, background 0.25s ease;
+}
+.offline-panel .offline-toggle.is-on {
+	background: rgba(196, 147, 90, 0.45);
+	border-color: rgba(196, 147, 90, 0.72);
+}
+.offline-panel .offline-toggle.is-on::before {
+	left: calc(100% - 1.05rem - 1px);
+	background: var(--gold-bright);
+}
 .offline-panel .offline-btn--ghost {
 	color: rgba(245, 235, 210, 0.65);
 	border-color: rgba(245, 235, 210, 0.25);

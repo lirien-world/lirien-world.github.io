@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260519-110210";
+const ASSET_VERSION = "20260519-175630";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -184,27 +184,107 @@ function pathExt(path) {
 	return i >= 0 ? path.slice(i + 1).toLowerCase() : "";
 }
 
-// Cellular-warning gate for enabling offline mode. Returns true
-// when the download should proceed; false when the user declined.
-async function confirmLargeCellularDownload(sizeBytes) {
-	const THRESHOLD = 25 * 1024 * 1024;
-	if (!sizeBytes || sizeBytes < THRESHOLD) return true;
-	let onWifi = null;
+// ─────────────────────────────────────────────────────────────────
+// Connection-aware download gate
+// ─────────────────────────────────────────────────────────────────
+//
+// offline.enabled = user wants their catalog available offline
+// offline.allowMobile = user explicitly permits downloading over
+//   cellular (default OFF). When wifi is connected, downloads always
+//   proceed regardless of this flag. When cellular and allowMobile
+//   is false, the gate is closed — sync defers until wifi reconnects.
+//
+// Replaces the legacy confirmLargeCellularDownload prompt that
+// surfaced every time the user enabled offline mode. The new model
+// matches what Echoes ships in v1.1.
+const OFFLINE_ALLOW_MOBILE_KEY = "lirien.offline.allowMobile";
+function loadAllowMobile(){
+	try { return localStorage.getItem(OFFLINE_ALLOW_MOBILE_KEY) === "true"; }
+	catch (e) { return false; }
+}
+function saveAllowMobile(value){
+	offline.allowMobile = !!value;
+	try { localStorage.setItem(OFFLINE_ALLOW_MOBILE_KEY, offline.allowMobile ? "true" : "false"); }
+	catch (e) {}
+}
+offline.allowMobile = loadAllowMobile();
+offline.connectionType = null;
+
+function isOnWifi(){
+	if (offline.connectionType === "wifi") return true;
+	if (offline.connectionType === null) return true;
+	return false;
+}
+function isDownloadAllowedNow(){
+	return isOnWifi() || offline.allowMobile;
+}
+
+async function refreshConnectionType(){
+	let type = null;
+	let source = "none";
+	let raw = "n/a";
 	try {
 		const Cap = window.Capacitor;
 		if (Cap && Cap.Plugins && Cap.Plugins.Network) {
 			const status = await Cap.Plugins.Network.getStatus();
-			onWifi = status.connectionType === "wifi";
+			raw = JSON.stringify(status);
+			type = status && status.connectionType ? status.connectionType : null;
+			source = "Cap.Network";
 		}
-	} catch (e) {}
-	if (onWifi === null && navigator.connection && navigator.connection.type) {
-		onWifi = navigator.connection.type === "wifi";
+	} catch (e) {
+		console.log("[net] Cap.Network.getStatus threw:", e && e.message);
 	}
-	if (onWifi === true) return true;
-	const mb = Math.round(sizeBytes / 1024 / 1024);
-	return window.confirm(
-		"Downloading the whole catalog will use about " + mb + " MB. You're not on Wi-Fi — continue anyway?"
-	);
+	if (type === null && navigator.connection && navigator.connection.type) {
+		type = navigator.connection.type;
+		source = "navigator.connection";
+	}
+	offline.connectionType = type;
+	console.log("[net] refresh source=" + source + " type=" + String(type)
+		+ " raw=" + raw + " allowMobile=" + offline.allowMobile
+		+ " allowedNow=" + isDownloadAllowedNow());
+	return type;
+}
+
+(function wireNetworkListener(){
+	const Cap = window.Capacitor;
+	if (!Cap || !Cap.Plugins || !Cap.Plugins.Network) {
+		console.log("[net] wireNetworkListener: Capacitor.Plugins.Network NOT present");
+		return;
+	}
+	try {
+		Cap.Plugins.Network.addListener("networkStatusChange", function(status){
+			const prev = offline.connectionType;
+			offline.connectionType = (status && status.connectionType) || null;
+			console.log("[net] networkStatusChange prev=" + String(prev)
+				+ " new=" + String(offline.connectionType)
+				+ " raw=" + JSON.stringify(status));
+			if (prev !== "wifi" && offline.connectionType === "wifi" && settings.offlineMode) {
+				maybeBackfillOffline("wifi-reconnect");
+			}
+			renderOfflinePanel();
+		});
+		console.log("[net] wireNetworkListener: addListener OK");
+	} catch (e) {
+		console.log("[net] wireNetworkListener threw:", e && e.message);
+	}
+})();
+
+// Called from bootIntegrityCheck (on launch) and the Wi-Fi reconnect
+// listener. Resyncs missing assets only if downloads are allowed
+// under the current connection. No-op if sync is already running.
+async function maybeBackfillOffline(reason){
+	if (!settings.offlineMode || offline.preloading) return;
+	await refreshConnectionType();
+	if (!isDownloadAllowedNow()) {
+		console.log("[offline] backfill (" + reason + ") deferred — allowedNow=false");
+		return;
+	}
+	const state = await fetchCacheState();
+	if (state) offline.cacheState = state;
+	const missing = missingForCurrentQuality();
+	if (missing <= 0) return;
+	console.log("[offline] backfill triggered (" + reason + ") missing=" + missing);
+	startPreload();
 }
 
 // Total bytes that would be downloaded if offline mode were enabled
@@ -304,14 +384,26 @@ function renderOfflinePanel() {
 		     + `</div>`;
 	} else if (settings.offlineMode) {
 		const allGood = missing === 0;
-		const intro = allGood ? t("lirien.offline.ready") : t("lirien.offline.needs-sync");
+		const waitingForWifi = !allGood && !isDownloadAllowedNow();
+		let intro;
+		if (allGood) intro = t("lirien.offline.ready");
+		else if (waitingForWifi) intro = t("lirien.offline.waiting-wifi");
+		else intro = t("lirien.offline.needs-sync");
 		html += `<p class="offline-intro">${esc(intro)}</p>`;
 		html += `<div class="offline-line">`
 		     +    `<span class="lbl">${esc(t("lirien.offline.cached"))}</span>`
 		     +    `<span class="val ${allGood ? "ok" : "warn"}">${esc(fmtMB(cached))} / ${esc(fmtMB(need))}</span>`
 		     + `</div>`;
+		const mobileLabel = t("lirien.offline.allow-mobile");
+		html += `<div class="offline-line">`
+		     +    `<span class="lbl">${esc(mobileLabel)}</span>`
+		     +    `<button class="offline-toggle ${offline.allowMobile ? "is-on" : ""}"`
+		     +         ` data-offline-action="toggle-mobile"`
+		     +         ` role="switch" aria-checked="${offline.allowMobile}"`
+		     +         ` aria-label="${esc(mobileLabel)}"></button>`
+		     + `</div>`;
 		html += `<div class="offline-actions">`;
-		if (!allGood) {
+		if (!allGood && isDownloadAllowedNow()) {
 			html += `<button class="offline-btn" data-offline-action="resync">${esc(t("lirien.offline.resync"))}</button>`;
 		}
 		html += `<button class="offline-btn offline-btn--ghost" data-offline-action="disable">${esc(t("lirien.offline.disable"))}</button>`;
@@ -346,8 +438,16 @@ function bindOfflineMode() {
 		const action = btn.dataset.offlineAction;
 		if (action === "enable")  enableOfflineMode();
 		else if (action === "disable") disableOfflineMode();
-		else if (action === "resync")  startPreload();
+		else if (action === "resync")  {
+			if (isDownloadAllowedNow()) startPreload();
+			else renderOfflinePanel();
+		}
 		else if (action === "cancel")  cancelPreload();
+		else if (action === "toggle-mobile") {
+			saveAllowMobile(!offline.allowMobile);
+			renderOfflinePanel();
+			if (offline.allowMobile && settings.offlineMode) maybeBackfillOffline("toggle-mobile");
+		}
 	});
 	// Initial render so the panel isn't empty when the section is opened.
 	refreshOfflineState();
@@ -403,13 +503,6 @@ async function enableOfflineMode() {
 		}
 	}
 
-	// On a metered connection, confirm before pulling the catalog —
-	// at standard quality this is ~200 MB and at high quality far
-	// more. iOS Capacitor reads connection type via @capacitor/network;
-	// browsers fall back to navigator.connection (when supported);
-	// if neither is available we treat as cellular and warn anyway.
-	if (!(await confirmLargeCellularDownload(need))) return;
-
 	// Ask the browser to mark our storage persistent — best-effort.
 	// On Chrome this is often granted silently for installed PWAs.
 	// On Safari it tends to be a no-op, but we still try.
@@ -422,7 +515,17 @@ async function enableOfflineMode() {
 	if (window.lirienAnalytics) {
 		window.lirienAnalytics.track("offline_enabled", { quality: settings.imageQuality, need_mb: Math.round(need / 1048576) });
 	}
-	startPreload();
+	// Connection-aware: only start the bulk preload if downloads are
+	// allowed under the current connection. On cellular with the
+	// allow-mobile toggle off, the panel will show "Waiting for Wi-Fi"
+	// and the wifi-reconnect listener will drain when the user is
+	// back on Wi-Fi (or they flip the toggle to authorize cellular).
+	await refreshConnectionType();
+	if (isDownloadAllowedNow()) {
+		startPreload();
+	} else {
+		renderOfflinePanel();
+	}
 }
 
 async function disableOfflineMode() {
@@ -494,8 +597,9 @@ function cancelPreload() {
 
 // Boot-time integrity check: if the user has previously enabled
 // offline mode, see what's actually cached vs what the manifest
-// says. If gaps exist and we're online, silently re-sync. The
-// settings panel will surface the truthful state when next opened.
+// says. If gaps exist AND the connection allows downloading, silently
+// re-sync. On cellular with allow-mobile off, the resync defers
+// until the wifi-reconnect listener fires.
 async function bootIntegrityCheck() {
 	if (!settings.offlineMode) return;
 	if (!ASSET_MANIFEST) return;  // manifest fetch failed; defer
@@ -503,15 +607,12 @@ async function bootIntegrityCheck() {
 	// usually immediate.
 	const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
 	if (!sw) return;
+	await refreshConnectionType();
 	const state = await fetchCacheState();
 	if (!state) return;
 	offline.cacheState = state;
 	const missing = missingForCurrentQuality();
-	if (missing > 0 && navigator.onLine) {
-		// Silent resync — don't pop UI, just start the preload. If the
-		// user opens the panel they'll see "Downloading…" naturally.
-		startPreload();
-	}
+	if (missing > 0) maybeBackfillOffline("launch");
 }
 
 // ----- DOM refs -----

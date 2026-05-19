@@ -18,7 +18,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css?v=20260519-110210">
+	<link rel="stylesheet" href="style.css?v=20260519-175630">
 </head>
 <body>
 	<script>
@@ -282,7 +282,7 @@
 	// BUILD_VERSION via tools/bump_pwa_version.sh lirien on each
 	// /lirien/ deploy that needs to propagate to existing PWAs.
 	(function pwaFreshnessCheck(){
-		const BUILD_VERSION = "20260519-110210";
+		const BUILD_VERSION = "20260519-175630";
 		const POLL_INTERVAL_MS = 90_000;        // every 1.5 min
 		const INTERACTION_RATE_LIMIT_MS = 60_000; // tap-driven check no more than 1×/min
 		let inFlight = false;
@@ -431,6 +431,8 @@
 			"lirien.offline.cancel":         { en: "Cancel",                                                es: "Cancelar" },
 			"lirien.offline.ready":          { en: "Available offline.",                                    es: "Disponible sin conexión." },
 			"lirien.offline.needs-sync":     { en: "Some assets need to be re-downloaded.",                 es: "Algunos archivos necesitan volver a descargarse." },
+			"lirien.offline.allow-mobile":   { en: "Download over mobile data",                             es: "Descargar con datos móviles" },
+			"lirien.offline.waiting-wifi":   { en: "Waiting for Wi-Fi to finish syncing.",                  es: "Esperando Wi-Fi para terminar la sincronización." },
 			"lirien.offline.resync":         { en: "Re-sync now",                                           es: "Volver a sincronizar" },
 			"lirien.offline.no-space":       { en: "Not enough space on this device.",                      es: "No hay espacio suficiente en este dispositivo." },
 			"lirien.offline.try-standard":   { en: "Switching to Standard image quality would fit. Switch and continue?",
@@ -642,8 +644,8 @@
 		});
 	})();
 	</script>
-	<script src="analytics.js?v=20260519-110210"></script>
-	<script src="ink.js?v=20260519-110210"></script>
-	<script src="main.js?v=20260519-110210"></script>
+	<script src="analytics.js?v=20260519-175630"></script>
+	<script src="ink.js?v=20260519-175630"></script>
+	<script src="main.js?v=20260519-175630"></script>
 </body>
 </html>

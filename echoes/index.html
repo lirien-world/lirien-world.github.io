@@ -1453,6 +1453,21 @@ window.createAudioAdapter = function(htmlEl){
 					fire("timeupdate");
 				}
 			}).catch(function(){});
+			// AVPlayerItem metadata isn't always ready when loadAsset
+			// first asks for duration, so JS's state.duration can be
+			// 0/NaN even while audio plays fine. Re-poll until it
+			// becomes a real number, then fire durationchange so the
+			// timeupdate handler stops bailing on falsy duration and
+			// the in-app progress bar starts advancing.
+			if (!isFinite(state.duration) || state.duration <= 0) {
+				native.getDuration({assetId: state.assetId}).then(function(r){
+					if (r && typeof r.duration === "number" && r.duration > 0 && r.duration !== state.duration) {
+						state.duration = r.duration;
+						fire("durationchange");
+						fire("timeupdate");
+					}
+				}).catch(function(){});
+			}
 		}, 200);
 	}
 	function stopPolling(){
@@ -1720,7 +1735,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260516-174537";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260519-100443";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;

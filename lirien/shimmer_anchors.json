@@ -40,11 +40,11 @@
     "y": 42.0
   },
   "ch01_aerin_awakens": {
-    "x": 24.5,
-    "y": 21.4
+    "x": 68.5,
+    "y": 22.3
   },
   "ch01_aerin_glyph_awakened": {
-    "x": 54.0,
+    "x": 53.5,
     "y": 19.6
   },
   "ch01_aerin_hand_with_glyph_v2": {
@@ -52,11 +52,11 @@
     "y": 28.6
   },
   "ch01_approach_to_solrien": {
-    "x": 72.5,
-    "y": 38.4
+    "x": 73.0,
+    "y": 36.6
   },
   "ch01_approaching_ring": {
-    "x": 65.0,
+    "x": 64.5,
     "y": 19.6
   },
   "ch01_ash_hollow_panorama": {
@@ -68,8 +68,8 @@
     "y": 29.5
   },
   "ch01_displacement": {
-    "x": 96.5,
-    "y": 30.4
+    "x": 85.5,
+    "y": 41.1
   },
   "ch01_displacement_aftermath": {
     "x": 77.5,
@@ -80,8 +80,8 @@
     "y": 58.0
   },
   "ch01_fallen_tree_touch": {
-    "x": 19.0,
-    "y": 33.9
+    "x": 24.5,
+    "y": 33.0
   },
   "ch01_footprints_glimmer": {
     "x": 66.5,
@@ -92,15 +92,15 @@
     "y": 34.8
   },
   "ch01_handle_door_recognition": {
-    "x": 77.0,
-    "y": 40.2
+    "x": 81.0,
+    "y": 33.0
   },
   "ch01_hands_inventory": {
-    "x": 84.5,
-    "y": 39.3
+    "x": 77.0,
+    "y": 36.6
   },
   "ch01_hollow_acknowledged": {
-    "x": 50.5,
+    "x": 50.0,
     "y": 26.8
   },
   "ch01_parchment_six_words": {
@@ -112,24 +112,24 @@
     "y": 56.2
   },
   "ch01_reading_parchment": {
-    "x": 50.5,
-    "y": 26.8
+    "x": 52.5,
+    "y": 30.4
   },
   "ch01_spiral_door_almost_touch": {
-    "x": 37.0,
-    "y": 35.7
+    "x": 19.5,
+    "y": 58.0
   },
   "ch01_standing_in_hollow": {
-    "x": 54.5,
-    "y": 39.3
+    "x": 54.0,
+    "y": 42.0
   },
   "ch01_waking": {
     "x": 85.0,
-    "y": 24.1
+    "y": 25.0
   },
   "ch01_waking_after_dream": {
-    "x": 75.0,
-    "y": 22.3
+    "x": 85.5,
+    "y": 33.0
   },
   "ch01_walking_examining_hands": {
     "x": 69.5,
@@ -160,15 +160,15 @@
     "y": 25.0
   },
   "ch02_archive_plinth_wisdom": {
-    "x": 50.5,
-    "y": 52.7
+    "x": 50.0,
+    "y": 54.5
   },
   "ch02_archive_stops_reaching": {
     "x": 42.5,
     "y": 36.6
   },
   "ch02_archive_we_remember_you": {
-    "x": 53.0,
+    "x": 52.0,
     "y": 58.0
   },
   "ch02_bridge_threads": {
@@ -188,12 +188,12 @@
     "y": 25.0
   },
   "ch02_hills_reveal_gap": {
-    "x": 72.0,
+    "x": 76.0,
     "y": 25.9
   },
   "ch02_leaving_archive": {
-    "x": 77.0,
-    "y": 30.4
+    "x": 78.0,
+    "y": 28.6
   },
   "ch02_map_room_alone": {
     "x": 17.0,
@@ -204,15 +204,15 @@
     "y": 27.7
   },
   "ch02_plaza_of_motes": {
-    "x": 73.5,
-    "y": 19.6
+    "x": 69.5,
+    "y": 39.3
   },
   "ch02_pool_arrival": {
-    "x": 53.5,
+    "x": 54.0,
     "y": 58.0
   },
   "ch02_pool_memory_flash": {
-    "x": 51.0,
+    "x": 51.5,
     "y": 50.0
   },
   "ch02_pool_name": {
@@ -220,15 +220,15 @@
     "y": 58.0
   },
   "ch02_stump_spiral": {
-    "x": 74.0,
-    "y": 25.0
+    "x": 76.5,
+    "y": 24.1
   },
   "ch02_threshold_inside": {
     "x": 50.0,
     "y": 24.1
   },
   "ch02_threshold_stones": {
-    "x": 91.0,
+    "x": 90.0,
     "y": 25.9
   },
   "ch02_walk_in_approach": {
@@ -236,20 +236,20 @@
     "y": 22.3
   },
   "ch02_walking_solrien_streets": {
-    "x": 21.5,
+    "x": 20.5,
     "y": 21.4
   },
   "ch02_walking_with_elian": {
-    "x": 95.0,
-    "y": 30.4
+    "x": 90.0,
+    "y": 19.6
   },
   "ch02_wall_of_glyphs": {
-    "x": 28.5,
+    "x": 28.0,
     "y": 19.6
   },
   "ch02_wall_recognition_close": {
-    "x": 75.0,
-    "y": 42.9
+    "x": 77.0,
+    "y": 42.0
   },
   "ch03_archive_aftermath": {
     "x": 56.5,
@@ -260,12 +260,12 @@
     "y": 23.2
   },
   "ch03_archive_restoration_mistake": {
-    "x": 11.0,
+    "x": 11.5,
     "y": 28.6
   },
   "ch03_breathing_streets": {
-    "x": 67.5,
-    "y": 44.6
+    "x": 68.0,
+    "y": 49.1
   },
   "ch03_evening_with_shard": {
     "x": 92.0,
@@ -284,12 +284,12 @@
     "y": 26.8
   },
   "ch03_mirror_agency": {
-    "x": 45.5,
-    "y": 42.0
+    "x": 25.5,
+    "y": 21.4
   },
   "ch03_mirror_duty": {
-    "x": 22.5,
-    "y": 19.6
+    "x": 73.0,
+    "y": 30.4
   },
   "ch03_mirror_joy": {
     "x": 39.5,
@@ -348,12 +348,12 @@
     "y": 19.6
   },
   "ch03_thistle_ask": {
-    "x": 89.0,
-    "y": 21.4
+    "x": 91.0,
+    "y": 28.6
   },
   "ch03_thistle_joke": {
-    "x": 69.5,
-    "y": 32.1
+    "x": 72.0,
+    "y": 57.1
   },
   "ch03_thistle_rest": {
     "x": 95.0,
@@ -380,11 +380,11 @@
     "y": 20.5
   },
   "ch03_waking_with_thistle": {
-    "x": 92.0,
+    "x": 91.5,
     "y": 29.5
   },
   "ch03_ysolde_first_appearance": {
-    "x": 59.5,
+    "x": 60.5,
     "y": 19.6
   },
   "ch04_archive_morning_elian": {
@@ -408,8 +408,8 @@
     "y": 19.6
   },
   "ch04_dream_older_aerin": {
-    "x": 43.0,
-    "y": 20.5
+    "x": 43.5,
+    "y": 19.6
   },
   "ch04_dream_statue_crack": {
     "x": 49.5,
@@ -445,11 +445,11 @@
   },
   "ch04_practice_ask_thistle": {
     "x": 82.0,
-    "y": 40.2
+    "y": 41.1
   },
   "ch04_practice_feel_courtyard": {
-    "x": 80.0,
-    "y": 38.4
+    "x": 85.5,
+    "y": 35.7
   },
   "ch04_practice_try_again": {
     "x": 78.5,
@@ -472,7 +472,7 @@
     "y": 58.0
   },
   "ch04_skyglass_birds": {
-    "x": 53.0,
+    "x": 55.0,
     "y": 47.3
   },
   "ch04_solrien_paths_suggest": {
@@ -500,11 +500,11 @@
     "y": 20.5
   },
   "ch05_absent_river_arch": {
-    "x": 64.0,
-    "y": 19.6
+    "x": 69.5,
+    "y": 23.2
   },
   "ch05_b01_ink_faded": {
-    "x": 17.0,
+    "x": 65.5,
     "y": 19.6
   },
   "ch05_b02_wrong_road": {
@@ -512,7 +512,7 @@
     "y": 19.6
   },
   "ch05_b03_paradox_milestone": {
-    "x": 56.0,
+    "x": 45.0,
     "y": 19.6
   },
   "ch05_b04_thistle_history": {
@@ -521,7 +521,7 @@
   },
   "ch05_b05_after_overshoot": {
     "x": 90.5,
-    "y": 33.9
+    "y": 34.8
   },
   "ch05_b06_city_doorways": {
     "x": 16.5,
@@ -548,7 +548,7 @@
     "y": 19.6
   },
   "ch05_i01_spiral_gate_release": {
-    "x": 53.0,
+    "x": 52.0,
     "y": 19.6
   },
   "ch05_i02_compass_inert": {
@@ -556,8 +556,8 @@
     "y": 25.0
   },
   "ch05_i03_whistled_memory": {
-    "x": 86.0,
-    "y": 30.4
+    "x": 88.5,
+    "y": 29.5
   },
   "ch05_i03b_tree_shadow_keeps_pace": {
     "x": 84.5,
@@ -568,16 +568,16 @@
     "y": 19.6
   },
   "ch05_i05_compass_steady_lunch": {
-    "x": 74.5,
-    "y": 26.8
+    "x": 73.5,
+    "y": 20.5
   },
   "ch05_i06_interested_stars": {
     "x": 49.0,
     "y": 19.6
   },
   "ch05_i07_thistle_name_memory": {
-    "x": 5.0,
-    "y": 19.6
+    "x": 72.5,
+    "y": 47.3
   },
   "ch05_i08_mushroom_contact": {
     "x": 50.0,
@@ -596,15 +596,15 @@
     "y": 44.6
   },
   "ch05_leaving_solrien": {
-    "x": 77.5,
-    "y": 32.1
+    "x": 84.5,
+    "y": 33.0
   },
   "ch05_mushroom_path": {
-    "x": 10.0,
-    "y": 25.9
+    "x": 12.5,
+    "y": 33.0
   },
   "ch05_paradox_milestone": {
-    "x": 21.5,
+    "x": 22.0,
     "y": 19.6
   },
   "ch05_tone_anchor_overshoot": {
@@ -616,12 +616,12 @@
     "y": 19.6
   },
   "ch05_white_leaf_camp": {
-    "x": 73.5,
-    "y": 20.5
+    "x": 72.0,
+    "y": 19.6
   },
   "ch05_wrong_road_grove": {
-    "x": 77.0,
-    "y": 33.0
+    "x": 84.5,
+    "y": 19.6
   },
   "ch06_accommodating_doorway": {
     "x": 86.5,
@@ -660,15 +660,15 @@
     "y": 33.0
   },
   "ch06_compass_ready": {
-    "x": 74.5,
-    "y": 19.6
+    "x": 69.5,
+    "y": 20.5
   },
   "ch06_courtyard_remembers": {
-    "x": 60.5,
-    "y": 24.1
+    "x": 84.0,
+    "y": 58.0
   },
   "ch06_house_aftermemory": {
-    "x": 90.5,
+    "x": 96.5,
     "y": 32.1
   },
   "ch06_i01_fog_stopped_sulking": {
@@ -696,7 +696,7 @@
     "y": 19.6
   },
   "ch06_older_name_flash": {
-    "x": 80.0,
+    "x": 81.5,
     "y": 20.5
   },
   "ch06_paradox_doorframe": {
@@ -749,7 +749,7 @@
   },
   "ch07_b01_refusal_admit_need": {
     "x": 75.0,
-    "y": 20.5
+    "y": 19.6
   },
   "ch07_b02_refusal_ask_cost": {
     "x": 34.5,
@@ -764,23 +764,23 @@
     "y": 20.5
   },
   "ch07_brae_name_decision": {
-    "x": 41.5,
-    "y": 33.0
+    "x": 43.5,
+    "y": 33.9
   },
   "ch07_brae_refusal": {
     "x": 43.5,
-    "y": 36.6
+    "y": 37.5
   },
   "ch07_brae_wall_hold": {
-    "x": 15.0,
-    "y": 27.7
+    "x": 86.5,
+    "y": 26.8
   },
   "ch07_brae_workbench_reveal": {
-    "x": 96.5,
-    "y": 58.0
+    "x": 74.5,
+    "y": 20.5
   },
   "ch07_breakfast_windowsill": {
-    "x": 84.0,
+    "x": 83.5,
     "y": 19.6
   },
   "ch07_compass_relaxed": {
@@ -788,16 +788,16 @@
     "y": 52.7
   },
   "ch07_deeper_district_entry": {
-    "x": 55.0,
-    "y": 55.4
+    "x": 64.5,
+    "y": 43.8
   },
   "ch07_final_fog_gate": {
-    "x": 64.0,
+    "x": 65.0,
     "y": 37.5
   },
   "ch07_leaving_workbench": {
-    "x": 8.0,
-    "y": 22.3
+    "x": 60.5,
+    "y": 50.9
   },
   "ch07_outer_streets_brae_ahead": {
     "x": 77.0,
@@ -824,12 +824,68 @@
     "y": 19.6
   },
   "ch07_velhara_napkin_brae": {
-    "x": 52.0,
+    "x": 53.5,
     "y": 58.0
   },
   "ch07_wrong_lane_warning": {
-    "x": 76.5,
-    "y": 41.1
+    "x": 83.5,
+    "y": 45.5
+  },
+  "ch08_b01_outer_streets_brae_leads": {
+    "x": 12.5,
+    "y": 42.0
+  },
+  "ch08_b02_invitation_room_table": {
+    "x": 15.5,
+    "y": 25.9
+  },
+  "ch08_b03_plain_exit_arch": {
+    "x": 82.5,
+    "y": 46.4
+  },
+  "ch08_b04_look_back_promise": {
+    "x": 23.5,
+    "y": 20.5
+  },
+  "ch08_b05_road_color_returns": {
+    "x": 36.0,
+    "y": 19.6
+  },
+  "ch08_b06_napkin_brae_reads": {
+    "x": 38.0,
+    "y": 19.6
+  },
+  "ch08_b07_thistle_snacks": {
+    "x": 28.0,
+    "y": 19.6
+  },
+  "ch08_b08_memory_conversation": {
+    "x": 19.5,
+    "y": 19.6
+  },
+  "ch08_b09_road_marker_correction": {
+    "x": 50.0,
+    "y": 46.4
+  },
+  "ch08_b10_brambles_nickname": {
+    "x": 87.5,
+    "y": 19.6
+  },
+  "ch08_b11_city_gone_horizon": {
+    "x": 34.0,
+    "y": 27.7
+  },
+  "ch08_b12_compass_three_close": {
+    "x": 51.5,
+    "y": 34.8
+  },
+  "ch08_b13_ashwood_rise": {
+    "x": 56.5,
+    "y": 19.6
+  },
+  "ch08_b14_shelter_east_dip": {
+    "x": 9.0,
+    "y": 29.5
   },
   "glyph_in_air": {
     "x": 56.0,

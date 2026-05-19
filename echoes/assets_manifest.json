@@ -1,14 +1,14 @@
 {
-  "manifest_version": "20260516-174537",
-  "generated_at": "2026-05-16T16:45:37Z",
-  "asset_count": 104,
-  "total_size": 227271546,
+  "manifest_version": "20260519-213549",
+  "generated_at": "2026-05-19T20:35:50Z",
+  "asset_count": 112,
+  "total_size": 241381232,
   "assets": {
     "/echoes/": {
-      "size": 168852
+      "size": 185616
     },
     "/echoes/assets_manifest.json": {
-      "size": 7940
+      "size": 8616
     },
     "/echoes/icon-192-v3.png": {
       "size": 47441
@@ -17,10 +17,10 @@
       "size": 336356
     },
     "/echoes/index.html": {
-      "size": 168852
+      "size": 185616
     },
     "/echoes/music_progression.json": {
-      "size": 5865
+      "size": 6628
     },
     "/echoes/spiral.png": {
       "size": 1557411
@@ -29,22 +29,22 @@
       "size": 8458
     },
     "/echoes/tracks.json": {
-      "size": 18255
+      "size": 19798
     },
     "/lirien/atmosphere/ch01_aerin_awakens.webp": {
-      "size": 273352
+      "size": 404748
     },
     "/lirien/atmosphere/ch01_aerin_glyph_awakened.webp": {
-      "size": 488518
+      "size": 467680
     },
     "/lirien/atmosphere/ch01_approach_to_solrien.webp": {
-      "size": 208988
+      "size": 360658
     },
     "/lirien/atmosphere/ch01_ash_hollow_panorama.webp": {
       "size": 168804
     },
     "/lirien/atmosphere/ch01_displacement.webp": {
-      "size": 255282
+      "size": 338828
     },
     "/lirien/atmosphere/ch01_dream_corridor.webp": {
       "size": 287194
@@ -68,7 +68,7 @@
       "size": 411026
     },
     "/lirien/atmosphere/ch03_thistle_joke.webp": {
-      "size": 251972
+      "size": 306764
     },
     "/lirien/atmosphere/ch03_thistle_rest.webp": {
       "size": 221626
@@ -80,10 +80,10 @@
       "size": 360588
     },
     "/lirien/atmosphere/ch03_waking_with_thistle.webp": {
-      "size": 447196
+      "size": 433876
     },
     "/lirien/atmosphere/ch03_ysolde_first_appearance.webp": {
-      "size": 473606
+      "size": 469972
     },
     "/lirien/atmosphere/ch04_coherence_accident.webp": {
       "size": 700980
@@ -122,10 +122,10 @@
       "size": 316920
     },
     "/lirien/atmosphere/ch05_i05_compass_steady_lunch.webp": {
-      "size": 489586
+      "size": 446898
     },
     "/lirien/atmosphere/ch05_i06_interested_stars.webp": {
-      "size": 397498
+      "size": 387382
     },
     "/lirien/atmosphere/ch05_i09_three_flashes.webp": {
       "size": 256668
@@ -134,22 +134,34 @@
       "size": 400862
     },
     "/lirien/atmosphere/ch05_leaving_solrien.webp": {
-      "size": 412124
+      "size": 516450
     },
     "/lirien/atmosphere/ch05_mushroom_path.webp": {
-      "size": 530886
+      "size": 599750
     },
     "/lirien/atmosphere/ch07_brae_workbench_reveal.webp": {
-      "size": 464476
+      "size": 418144
     },
     "/lirien/atmosphere/ch07_deeper_district_entry.webp": {
-      "size": 285852
+      "size": 314982
     },
     "/lirien/atmosphere/ch07_final_fog_gate.webp": {
-      "size": 354014
+      "size": 399804
     },
     "/lirien/atmosphere/ch07_thistle_key_line.webp": {
       "size": 439912
+    },
+    "/lirien/atmosphere/ch08_b02_invitation_room_table.webp": {
+      "size": 473180
+    },
+    "/lirien/atmosphere/ch08_b03_plain_exit_arch.webp": {
+      "size": 492900
+    },
+    "/lirien/atmosphere/ch08_b06_napkin_brae_reads.webp": {
+      "size": 429384
+    },
+    "/lirien/atmosphere/ch08_b13_ashwood_rise.webp": {
+      "size": 377380
     },
     "/lirien/music/approach_to_solrien.m4a": {
       "size": 3390637
@@ -171,6 +183,18 @@
     },
     "/lirien/music/brae_workbench.m4a": {
       "size": 2599844
+    },
+    "/lirien/music/ch08_m01_last_invitation.m4a": {
+      "size": 3040111
+    },
+    "/lirien/music/ch08_m02_breath_after_city.m4a": {
+      "size": 3021719
+    },
+    "/lirien/music/ch08_m03_practical_promises.m4a": {
+      "size": 1942060
+    },
+    "/lirien/music/ch08_m04_ashwood_waits.m4a": {
+      "size": 3763856
     },
     "/lirien/music/city_memory_walk.m4a": {
       "size": 3671434

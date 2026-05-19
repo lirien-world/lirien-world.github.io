@@ -1906,7 +1906,7 @@ window.createAudioAdapter = function(htmlEl){
 // each /echoes/ deploy that needs to propagate to existing PWAs.
 // ─────────────────────────────────────────────────────────────────
 (function pwaFreshnessCheck(){
-	const BUILD_VERSION = "20260519-174156";  // bump on echoes/ deploys
+	const BUILD_VERSION = "20260519-174950";  // bump on echoes/ deploys
 	window.ECHOES_BUILD_VERSION = BUILD_VERSION;
 	const POLL_INTERVAL_MS = 90_000;
 	const INTERACTION_RATE_LIMIT_MS = 60_000;
@@ -3144,9 +3144,8 @@ function parseUrlParams(){
 		return {
 			mode: params.get("mode"),
 			song: params.get("song"),
-			dropOffline: params.get("dropOffline"),
 		};
-	} catch (e) { return { mode: null, song: null, dropOffline: null }; }
+	} catch (e) { return { mode: null, song: null }; }
 }
 
 function trackSlug(track){
@@ -4194,7 +4193,11 @@ window.echoesRefreshDynamicLabels = function(){
 // Debug helpers for testing the offline + backfill machinery without
 // blowing away the entire on-disk cache. Calls all log through the
 // nativeLog bridge so events show up in the device --console.
-window.__echoesDebug = {
+//
+// Gated behind a localStorage flag so the surface isn't reachable
+// by accident in a shipping build. Set localStorage.echoesDebug = "1"
+// from Safari Web Inspector to re-enable for a session.
+if (localStorage.getItem("echoes.debug") === "1") window.__echoesDebug = {
 	// Drop a single offline file by filename substring (e.g. "thistle_1").
 	// Removes the actual file on disk + registry entry, then refreshes
 	// the offline panel. Next time the matching track plays, it has to
@@ -4316,17 +4319,6 @@ window.__echoesDebug = {
 	if (urlParams.song){
 		urlSongIdx = findTrackBySlug(urlParams.song);
 		if (urlSongIdx !== -1) activeIdx = urlSongIdx;
-	}
-	// ?dropOffline=<filename-substring> — debug helper. After paint,
-	// removes the matching offline file + registry entry so the next
-	// play of that track exercises the fallback + silent-backfill
-	// path. Visible in the device --console via the nativeLog bridge.
-	if (urlParams.dropOffline){
-		setTimeout(function(){
-			if (window.__echoesDebug && typeof window.__echoesDebug.dropOne === "function"){
-				window.__echoesDebug.dropOne(urlParams.dropOffline);
-			}
-		}, 500);
 	}
 
 	updateModeLabel();

@@ -30,7 +30,7 @@
 //   fetch        → cache-first for asset URLs; passthrough for HTML
 //   message      → handle purge / cache-state / preload commands
 
-const CACHE_NAME = "lirien-jukebox-20260519-221021";
+const CACHE_NAME = "lirien-jukebox-20260520-094342";
 const SHELL_URLS = [
 	"/echoes/",
 	"/echoes/index.html",

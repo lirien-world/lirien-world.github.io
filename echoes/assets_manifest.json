@@ -1,14 +1,14 @@
 {
-  "manifest_version": "20260519-221021",
-  "generated_at": "2026-05-19T21:10:22Z",
+  "manifest_version": "20260520-094342",
+  "generated_at": "2026-05-20T08:43:44Z",
   "asset_count": 122,
-  "total_size": 260756700,
+  "total_size": 269082162,
   "assets": {
     "/echoes/": {
       "size": 185616
     },
     "/echoes/assets_manifest.json": {
-      "size": 9488
+      "size": 9489
     },
     "/echoes/icon-192-v3.png": {
       "size": 47441
@@ -194,7 +194,7 @@
       "size": 5546417
     },
     "/lirien/music/brae_almost_remembers.m4a": {
-      "size": 3549458
+      "size": 11874919
     },
     "/lirien/music/brae_workbench.m4a": {
       "size": 2599844

@@ -34,7 +34,7 @@ const MUSIC_DIR = "music/";
 // entry. ASSET_VERSION is kept only as a fallback hash for assets
 // that aren't in the manifest yet (race during boot, missing entry,
 // etc.) — its presence ensures we never emit a hashless URL.
-const ASSET_VERSION = "20260520-142020";
+const ASSET_VERSION = "20260521-103141";
 
 // Lookup table populated by loadAssetManifest() before any bg/music
 // request fires. Maps "atmosphere/foo.png" → "abc1234567" (10-char
@@ -3383,6 +3383,8 @@ function stateBeforeChapterTag(targetPrefix) {
 }
 
 function migratePublishedEndAutosave(saved) {
+	const generic = migrateTerminalPublishedEndAutosave(saved);
+	if (generic !== saved) return generic;
 	if (!isLegacyChapterSixPublishedEndSave(saved)) return saved;
 	const lang = (document.documentElement && document.documentElement.lang) || "en";
 	const target = lang === "es" ? "Siete " : "Seven ";
@@ -3397,6 +3399,77 @@ function migratePublishedEndAutosave(saved) {
 		lastChunk: "",
 	};
 	try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(migrated)); } catch (e) { /* ignore */ }
+	return migrated;
+}
+
+const CHAPTER_ORDINALS_EN = [
+	"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+	"Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen",
+	"Eighteen", "Nineteen", "Twenty"
+];
+const CHAPTER_ORDINALS_ES = [
+	"Uno", "Dos", "Tres", "Cuatro", "Cinco", "Seis", "Siete", "Ocho", "Nueve", "Diez",
+	"Once", "Doce", "Trece", "Catorce", "Quince", "Dieciséis", "Diecisiete",
+	"Dieciocho", "Diecinueve", "Veinte"
+];
+
+function chapterIndexFromSpec(spec) {
+	const chapter = String(spec || "").trim();
+	for (let i = 0; i < CHAPTER_ORDINALS_EN.length; i++) {
+		const en = CHAPTER_ORDINALS_EN[i];
+		const es = CHAPTER_ORDINALS_ES[i];
+		if (chapter === en || chapter.startsWith(en + " ") || chapter.startsWith(en + " —")) return i;
+		if (chapter === es || chapter.startsWith(es + " ") || chapter.startsWith(es + " —")) return i;
+	}
+	return -1;
+}
+
+function isTerminalInkState(stateJson) {
+	if (!story || !stateJson) return false;
+	let originalState = null;
+	try { originalState = story.state.toJson(); }
+	catch (e) { return false; }
+	try {
+		story.state.LoadJson(stateJson);
+		const choices = story.currentChoices || [];
+		return !story.canContinue && choices.length === 0;
+	} catch (e) {
+		return false;
+	} finally {
+		try { story.state.LoadJson(originalState); } catch (e) { /* ignore */ }
+	}
+}
+
+function migrateTerminalPublishedEndAutosave(saved) {
+	if (!saved || typeof saved !== "object" || !saved.state) return saved;
+	if (!ASSET_MANIFEST || !Array.isArray(ASSET_MANIFEST.chapters)) return saved;
+	if (!isTerminalInkState(saved.state)) return saved;
+
+	const idx = chapterIndexFromSpec(saved.chapter);
+	if (idx < 0) return saved;
+	if (idx + 1 >= ASSET_MANIFEST.chapters.length) return saved;
+
+	const lang = (document.documentElement && document.documentElement.lang) || "en";
+	const ordinals = lang === "es" ? CHAPTER_ORDINALS_ES : CHAPTER_ORDINALS_EN;
+	const target = ordinals[idx + 1] ? ordinals[idx + 1] + " " : "";
+	const state = stateBeforeChapterTag(target);
+	if (!state) return saved;
+
+	const migrated = {
+		state,
+		bg: "",
+		music: "",
+		chapter: "",
+		atmosphere: "",
+		lastChunk: "",
+	};
+	try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(migrated)); } catch (e) { /* ignore */ }
+	if (window.lirienAnalytics) {
+		window.lirienAnalytics.track("autosave_end_migrated", {
+			from_chapter: saved.chapter || null,
+			to_chapter: ASSET_MANIFEST.chapters[idx + 1].title || null,
+		});
+	}
 	return migrated;
 }
 

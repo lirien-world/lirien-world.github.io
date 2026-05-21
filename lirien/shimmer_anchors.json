@@ -943,6 +943,62 @@
     "x": 49.0,
     "y": 46.4
   },
+  "ch10_b01_ashwood_morning_after": {
+    "x": 53.0,
+    "y": 19.6
+  },
+  "ch10_b02_mill_settlement_song": {
+    "x": 60.0,
+    "y": 19.6
+  },
+  "ch10_b03_mill_carvings_forgotten": {
+    "x": 51.5,
+    "y": 42.0
+  },
+  "ch10_b04_bench_softening_mistake": {
+    "x": 16.5,
+    "y": 19.6
+  },
+  "ch10_b05_memory_market_silence": {
+    "x": 26.0,
+    "y": 21.4
+  },
+  "ch10_b06_brae_finds_maren_lead": {
+    "x": 71.0,
+    "y": 20.5
+  },
+  "ch10_b07_fire_lesson_smoke": {
+    "x": 34.0,
+    "y": 23.2
+  },
+  "ch10_b08_fire_overcorrect_eyebrows": {
+    "x": 49.0,
+    "y": 58.0
+  },
+  "ch10_b09_unvisited_game_room": {
+    "x": 5.5,
+    "y": 19.6
+  },
+  "ch10_b10_long_wall_dry_well": {
+    "x": 67.0,
+    "y": 24.1
+  },
+  "ch10_b11_thistle_well_presence": {
+    "x": 28.5,
+    "y": 21.4
+  },
+  "ch10_b12_holding_glyph_cornerstone": {
+    "x": 3.0,
+    "y": 24.1
+  },
+  "ch10_b13_vendor_message_hills": {
+    "x": 51.5,
+    "y": 49.1
+  },
+  "ch10_b14_road_to_maren_hills": {
+    "x": 96.5,
+    "y": 19.6
+  },
   "glyph_in_air": {
     "x": 56.0,
     "y": 47.0

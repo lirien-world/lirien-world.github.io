@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260520-094342",
-  "generated_at": "2026-05-20T08:43:44Z",
-  "asset_count": 547,
-  "total_size": 1009150992,
+  "manifest_version": "20260520-142020",
+  "generated_at": "2026-05-20T13:20:21Z",
+  "asset_count": 580,
+  "total_size": 1071683948,
   "chapters": [
     {
       "number": 1,
@@ -39,6 +39,10 @@
     {
       "number": 9,
       "title": "Nine \u2014 The Road Has Opinions"
+    },
+    {
+      "number": 10,
+      "title": "Ten \u2014 The City That Forgot Its Name"
     }
   ],
   "assets": {
@@ -1930,6 +1934,118 @@
       "hash": "1de3edb106",
       "size": 452210
     },
+    "atmosphere/ch10_b01_ashwood_morning_after.png": {
+      "hash": "015652307f",
+      "size": 2914727
+    },
+    "atmosphere/ch10_b01_ashwood_morning_after.webp": {
+      "hash": "b4afccb1c8",
+      "size": 485300
+    },
+    "atmosphere/ch10_b02_mill_settlement_song.png": {
+      "hash": "bf888b7791",
+      "size": 3104284
+    },
+    "atmosphere/ch10_b02_mill_settlement_song.webp": {
+      "hash": "8715dd4604",
+      "size": 561266
+    },
+    "atmosphere/ch10_b03_mill_carvings_forgotten.png": {
+      "hash": "319759edaa",
+      "size": 3012597
+    },
+    "atmosphere/ch10_b03_mill_carvings_forgotten.webp": {
+      "hash": "89c5dd178c",
+      "size": 507996
+    },
+    "atmosphere/ch10_b04_bench_softening_mistake.png": {
+      "hash": "ab2f1c2d05",
+      "size": 2711235
+    },
+    "atmosphere/ch10_b04_bench_softening_mistake.webp": {
+      "hash": "aaf760d7d1",
+      "size": 399764
+    },
+    "atmosphere/ch10_b05_memory_market_silence.png": {
+      "hash": "7609081328",
+      "size": 2655550
+    },
+    "atmosphere/ch10_b05_memory_market_silence.webp": {
+      "hash": "93a9740524",
+      "size": 388398
+    },
+    "atmosphere/ch10_b06_brae_finds_maren_lead.png": {
+      "hash": "54400545a6",
+      "size": 2686258
+    },
+    "atmosphere/ch10_b06_brae_finds_maren_lead.webp": {
+      "hash": "4fab668a44",
+      "size": 391146
+    },
+    "atmosphere/ch10_b07_fire_lesson_smoke.png": {
+      "hash": "b84dc1d23f",
+      "size": 2826162
+    },
+    "atmosphere/ch10_b07_fire_lesson_smoke.webp": {
+      "hash": "fc1450241b",
+      "size": 443398
+    },
+    "atmosphere/ch10_b08_fire_overcorrect_eyebrows.png": {
+      "hash": "611950caad",
+      "size": 2923636
+    },
+    "atmosphere/ch10_b08_fire_overcorrect_eyebrows.webp": {
+      "hash": "b38bd148a3",
+      "size": 498360
+    },
+    "atmosphere/ch10_b09_unvisited_game_room.png": {
+      "hash": "ac7d06cf6d",
+      "size": 2491912
+    },
+    "atmosphere/ch10_b09_unvisited_game_room.webp": {
+      "hash": "09525e0f03",
+      "size": 352818
+    },
+    "atmosphere/ch10_b10_long_wall_dry_well.png": {
+      "hash": "a7442ef508",
+      "size": 2816215
+    },
+    "atmosphere/ch10_b10_long_wall_dry_well.webp": {
+      "hash": "5964ec5f80",
+      "size": 451220
+    },
+    "atmosphere/ch10_b11_thistle_well_presence.png": {
+      "hash": "77e21d307c",
+      "size": 2555988
+    },
+    "atmosphere/ch10_b11_thistle_well_presence.webp": {
+      "hash": "52804cd7b0",
+      "size": 359450
+    },
+    "atmosphere/ch10_b12_holding_glyph_cornerstone.png": {
+      "hash": "2d7de07d55",
+      "size": 2643791
+    },
+    "atmosphere/ch10_b12_holding_glyph_cornerstone.webp": {
+      "hash": "d1afb15cb1",
+      "size": 379010
+    },
+    "atmosphere/ch10_b13_vendor_message_hills.png": {
+      "hash": "480896bdff",
+      "size": 2725652
+    },
+    "atmosphere/ch10_b13_vendor_message_hills.webp": {
+      "hash": "486b7b3033",
+      "size": 416478
+    },
+    "atmosphere/ch10_b14_road_to_maren_hills.png": {
+      "hash": "c29d00cc2e",
+      "size": 2881369
+    },
+    "atmosphere/ch10_b14_road_to_maren_hills.webp": {
+      "hash": "e1a39a0e43",
+      "size": 492306
+    },
     "atmosphere/glyph_in_air.png": {
       "hash": "8b0745a949",
       "size": 1176208
@@ -2033,6 +2149,26 @@
     "music/ch09_m05_old_stories_night.m4a": {
       "hash": "08984ac9b1",
       "size": 3330708
+    },
+    "music/ch10_m01_morning_after_watchfulness.m4a": {
+      "hash": "89698a9762",
+      "size": 3225563
+    },
+    "music/ch10_m02_city_without_name.m4a": {
+      "hash": "157e9d8641",
+      "size": 5231415
+    },
+    "music/ch10_m03_softening_misfire.m4a": {
+      "hash": "983af436cd",
+      "size": 3449351
+    },
+    "music/ch10_m04_fire_adjacent.m4a": {
+      "hash": "541ba0fb43",
+      "size": 2361150
+    },
+    "music/ch10_m05_presence_and_hills.m4a": {
+      "hash": "4eadae9a56",
+      "size": 3128079
     },
     "music/city_memory_walk.m4a": {
       "hash": "39960ae884",
@@ -2219,16 +2355,16 @@
       "size": 3898837
     },
     "shimmer_anchors.json": {
-      "hash": "0309e8f1e0",
-      "size": 15627
+      "hash": "6c26433a6c",
+      "size": 16632
     },
     "story.json": {
-      "hash": "0f8f200605",
-      "size": 247926
+      "hash": "c673c4cacf",
+      "size": 277310
     },
     "story_es.json": {
-      "hash": "dd91985231",
-      "size": 265151
+      "hash": "69808141d5",
+      "size": 295874
     }
   }
 }

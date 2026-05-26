@@ -1,14 +1,14 @@
 {
-  "manifest_version": "20260520-142122",
-  "generated_at": "2026-05-20T13:21:22Z",
-  "asset_count": 132,
-  "total_size": 288779213,
+  "manifest_version": "20260526-235521",
+  "generated_at": "2026-05-26T22:55:22Z",
+  "asset_count": 142,
+  "total_size": 308708567,
   "assets": {
     "/echoes/": {
       "size": 185616
     },
     "/echoes/assets_manifest.json": {
-      "size": 10373
+      "size": 11236
     },
     "/echoes/icon-192-v3.png": {
       "size": 47441
@@ -20,7 +20,7 @@
       "size": 185616
     },
     "/echoes/music_progression.json": {
-      "size": 8461
+      "size": 9203
     },
     "/echoes/spiral.png": {
       "size": 1557411
@@ -29,7 +29,7 @@
       "size": 8458
     },
     "/echoes/tracks.json": {
-      "size": 24008
+      "size": 26247
     },
     "/lirien/atmosphere/ch01_aerin_awakens.webp": {
       "size": 404748
@@ -193,6 +193,21 @@
     "/lirien/atmosphere/ch10_b09_unvisited_game_room.webp": {
       "size": 352818
     },
+    "/lirien/atmosphere/ch11_b01_path_to_hill_house.webp": {
+      "size": 487924
+    },
+    "/lirien/atmosphere/ch11_b03_maren_doorway_read.webp": {
+      "size": 411066
+    },
+    "/lirien/atmosphere/ch11_b05_brae_at_maren_workbench.webp": {
+      "size": 350088
+    },
+    "/lirien/atmosphere/ch11_b07a_names_inventory.webp": {
+      "size": 445802
+    },
+    "/lirien/atmosphere/ch11_b08_fourth_place_setting.webp": {
+      "size": 472478
+    },
     "/lirien/music/approach_to_solrien.m4a": {
       "size": 3390637
     },
@@ -255,6 +270,21 @@
     },
     "/lirien/music/ch10_m05_presence_and_hills.m4a": {
       "size": 3128079
+    },
+    "/lirien/music/ch11_m01_hill_house_approach.m4a": {
+      "size": 3091685
+    },
+    "/lirien/music/ch11_m02_maren_reads_the_room.m4a": {
+      "size": 3916213
+    },
+    "/lirien/music/ch11_m03_useful_work.m4a": {
+      "size": 3641843
+    },
+    "/lirien/music/ch11_m03b_household_inventory.m4a": {
+      "size": 3310200
+    },
+    "/lirien/music/ch11_m04_fourth_place.m4a": {
+      "size": 3798211
     },
     "/lirien/music/city_memory_walk.m4a": {
       "size": 3671434

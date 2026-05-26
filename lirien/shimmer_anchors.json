@@ -999,6 +999,94 @@
     "x": 96.5,
     "y": 19.6
   },
+  "ch11_b01_path_to_hill_house": {
+    "x": 96.5,
+    "y": 19.6
+  },
+  "ch11_b02_maren_house_exterior": {
+    "x": 96.5,
+    "y": 26.8
+  },
+  "ch11_b03_maren_doorway_read": {
+    "x": 96.5,
+    "y": 19.6
+  },
+  "ch11_b04_house_interior_not_a_cat": {
+    "x": 3.0,
+    "y": 22.3
+  },
+  "ch11_b04b_not_a_cat_best_chair": {
+    "x": 62.0,
+    "y": 46.4
+  },
+  "ch11_b04c_collar_compass_pulse": {
+    "x": 14.5,
+    "y": 41.1
+  },
+  "ch11_b04d_thistle_notcat_diplomacy": {
+    "x": 39.0,
+    "y": 33.0
+  },
+  "ch11_b05_brae_at_maren_workbench": {
+    "x": 80.0,
+    "y": 19.6
+  },
+  "ch11_b05b_brae_work_settles_room": {
+    "x": 3.0,
+    "y": 19.6
+  },
+  "ch11_b06_thistle_food_theft": {
+    "x": 5.0,
+    "y": 19.6
+  },
+  "ch11_b06b_pattern_beginning_cups": {
+    "x": 4.0,
+    "y": 19.6
+  },
+  "ch11_b07a_names_inventory": {
+    "x": 4.0,
+    "y": 19.6
+  },
+  "ch11_b07b_brae_watched_back": {
+    "x": 34.5,
+    "y": 56.2
+  },
+  "ch11_b07c_fountain_message": {
+    "x": 5.0,
+    "y": 19.6
+  },
+  "ch11_b07d_scorched_pilgrims": {
+    "x": 51.5,
+    "y": 28.6
+  },
+  "ch11_b07e_repaired_bracket_good": {
+    "x": 3.0,
+    "y": 19.6
+  },
+  "ch11_b08_fourth_place_setting": {
+    "x": 42.5,
+    "y": 31.2
+  },
+  "ch11_b08b_no_one_asks": {
+    "x": 60.5,
+    "y": 36.6
+  },
+  "ch11_b08c_compass_patient_spoon": {
+    "x": 63.0,
+    "y": 19.6
+  },
+  "ch11_b09_after_dinner_fire": {
+    "x": 66.0,
+    "y": 21.4
+  },
+  "ch11_b09b_fourth_bowl_returned": {
+    "x": 36.0,
+    "y": 41.1
+  },
+  "ch11_b09c_four_for_long_time": {
+    "x": 59.5,
+    "y": 28.6
+  },
   "glyph_in_air": {
     "x": 56.0,
     "y": 47.0

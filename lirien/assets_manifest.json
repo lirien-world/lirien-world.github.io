@@ -1,8 +1,8 @@
 {
-  "manifest_version": "20260520-142020",
-  "generated_at": "2026-05-20T13:20:21Z",
-  "asset_count": 580,
-  "total_size": 1071683948,
+  "manifest_version": "20260526-235513",
+  "generated_at": "2026-05-26T22:55:14Z",
+  "asset_count": 629,
+  "total_size": 1159923210,
   "chapters": [
     {
       "number": 1,
@@ -43,6 +43,10 @@
     {
       "number": 10,
       "title": "Ten \u2014 The City That Forgot Its Name"
+    },
+    {
+      "number": 11,
+      "title": "Eleven \u2014 The Woman in the Hills"
     }
   ],
   "assets": {
@@ -2046,6 +2050,182 @@
       "hash": "e1a39a0e43",
       "size": 492306
     },
+    "atmosphere/ch11_b01_path_to_hill_house.png": {
+      "hash": "bf25cb137e",
+      "size": 2866022
+    },
+    "atmosphere/ch11_b01_path_to_hill_house.webp": {
+      "hash": "ac621a61a0",
+      "size": 487924
+    },
+    "atmosphere/ch11_b02_maren_house_exterior.png": {
+      "hash": "d80f28990b",
+      "size": 2832622
+    },
+    "atmosphere/ch11_b02_maren_house_exterior.webp": {
+      "hash": "f804ecfb80",
+      "size": 456686
+    },
+    "atmosphere/ch11_b03_maren_doorway_read.png": {
+      "hash": "bc8cc7d3aa",
+      "size": 2775799
+    },
+    "atmosphere/ch11_b03_maren_doorway_read.webp": {
+      "hash": "3e85d0d563",
+      "size": 411066
+    },
+    "atmosphere/ch11_b04_house_interior_not_a_cat.png": {
+      "hash": "7c60e1c941",
+      "size": 2880247
+    },
+    "atmosphere/ch11_b04_house_interior_not_a_cat.webp": {
+      "hash": "969cf7ddd0",
+      "size": 464080
+    },
+    "atmosphere/ch11_b04b_not_a_cat_best_chair.png": {
+      "hash": "98b2891691",
+      "size": 2523295
+    },
+    "atmosphere/ch11_b04b_not_a_cat_best_chair.webp": {
+      "hash": "9d34815015",
+      "size": 331270
+    },
+    "atmosphere/ch11_b04c_collar_compass_pulse.png": {
+      "hash": "6dffe6e35a",
+      "size": 2382925
+    },
+    "atmosphere/ch11_b04c_collar_compass_pulse.webp": {
+      "hash": "1a6d151861",
+      "size": 294004
+    },
+    "atmosphere/ch11_b04d_thistle_notcat_diplomacy.png": {
+      "hash": "edd9300375",
+      "size": 2488479
+    },
+    "atmosphere/ch11_b04d_thistle_notcat_diplomacy.webp": {
+      "hash": "23ded9db68",
+      "size": 334044
+    },
+    "atmosphere/ch11_b05_brae_at_maren_workbench.png": {
+      "hash": "c582688b48",
+      "size": 2535246
+    },
+    "atmosphere/ch11_b05_brae_at_maren_workbench.webp": {
+      "hash": "f58a5e9b76",
+      "size": 350088
+    },
+    "atmosphere/ch11_b05b_brae_work_settles_room.png": {
+      "hash": "da88b103f9",
+      "size": 2877302
+    },
+    "atmosphere/ch11_b05b_brae_work_settles_room.webp": {
+      "hash": "569ddc31f1",
+      "size": 480504
+    },
+    "atmosphere/ch11_b06_thistle_food_theft.png": {
+      "hash": "d745fb0c98",
+      "size": 2616590
+    },
+    "atmosphere/ch11_b06_thistle_food_theft.webp": {
+      "hash": "c46e01f5f9",
+      "size": 375152
+    },
+    "atmosphere/ch11_b06b_pattern_beginning_cups.png": {
+      "hash": "a5db0709a0",
+      "size": 2643201
+    },
+    "atmosphere/ch11_b06b_pattern_beginning_cups.webp": {
+      "hash": "189c17fb3e",
+      "size": 398256
+    },
+    "atmosphere/ch11_b07a_names_inventory.png": {
+      "hash": "08471f60fc",
+      "size": 2788338
+    },
+    "atmosphere/ch11_b07a_names_inventory.webp": {
+      "hash": "6811112445",
+      "size": 445802
+    },
+    "atmosphere/ch11_b07b_brae_watched_back.png": {
+      "hash": "379f9a4fdd",
+      "size": 2748975
+    },
+    "atmosphere/ch11_b07b_brae_watched_back.webp": {
+      "hash": "2b0e19f994",
+      "size": 438256
+    },
+    "atmosphere/ch11_b07c_fountain_message.png": {
+      "hash": "9054e26baf",
+      "size": 2919294
+    },
+    "atmosphere/ch11_b07c_fountain_message.webp": {
+      "hash": "54bc0a2a97",
+      "size": 489464
+    },
+    "atmosphere/ch11_b07d_scorched_pilgrims.png": {
+      "hash": "bbe90a31f3",
+      "size": 2915675
+    },
+    "atmosphere/ch11_b07d_scorched_pilgrims.webp": {
+      "hash": "38f85f508a",
+      "size": 478558
+    },
+    "atmosphere/ch11_b07e_repaired_bracket_good.png": {
+      "hash": "d6b2a87344",
+      "size": 2918310
+    },
+    "atmosphere/ch11_b07e_repaired_bracket_good.webp": {
+      "hash": "94d8f985e8",
+      "size": 495356
+    },
+    "atmosphere/ch11_b08_fourth_place_setting.png": {
+      "hash": "1cdf40c3e2",
+      "size": 2922910
+    },
+    "atmosphere/ch11_b08_fourth_place_setting.webp": {
+      "hash": "5b6eeba1a5",
+      "size": 472478
+    },
+    "atmosphere/ch11_b08b_no_one_asks.png": {
+      "hash": "7144dc9545",
+      "size": 3068502
+    },
+    "atmosphere/ch11_b08b_no_one_asks.webp": {
+      "hash": "30071633dc",
+      "size": 458692
+    },
+    "atmosphere/ch11_b08c_compass_patient_spoon.png": {
+      "hash": "155cd36455",
+      "size": 2933558
+    },
+    "atmosphere/ch11_b08c_compass_patient_spoon.webp": {
+      "hash": "6570028b05",
+      "size": 477010
+    },
+    "atmosphere/ch11_b09_after_dinner_fire.png": {
+      "hash": "bd0b7c3985",
+      "size": 2694495
+    },
+    "atmosphere/ch11_b09_after_dinner_fire.webp": {
+      "hash": "b12be7761e",
+      "size": 398634
+    },
+    "atmosphere/ch11_b09b_fourth_bowl_returned.png": {
+      "hash": "b06d28cf4a",
+      "size": 2806842
+    },
+    "atmosphere/ch11_b09b_fourth_bowl_returned.webp": {
+      "hash": "4b92f5bd08",
+      "size": 437900
+    },
+    "atmosphere/ch11_b09c_four_for_long_time.png": {
+      "hash": "a9c2db8961",
+      "size": 2861224
+    },
+    "atmosphere/ch11_b09c_four_for_long_time.webp": {
+      "hash": "b6837ce3cb",
+      "size": 447006
+    },
     "atmosphere/glyph_in_air.png": {
       "hash": "8b0745a949",
       "size": 1176208
@@ -2169,6 +2349,26 @@
     "music/ch10_m05_presence_and_hills.m4a": {
       "hash": "4eadae9a56",
       "size": 3128079
+    },
+    "music/ch11_m01_hill_house_approach.m4a": {
+      "hash": "0055cf015e",
+      "size": 3091685
+    },
+    "music/ch11_m02_maren_reads_the_room.m4a": {
+      "hash": "f41449756f",
+      "size": 3916213
+    },
+    "music/ch11_m03_useful_work.m4a": {
+      "hash": "8aa46b6eeb",
+      "size": 3641843
+    },
+    "music/ch11_m03b_household_inventory.m4a": {
+      "hash": "0ec65d49bb",
+      "size": 3310200
+    },
+    "music/ch11_m04_fourth_place.m4a": {
+      "hash": "23b4793877",
+      "size": 3798211
     },
     "music/city_memory_walk.m4a": {
       "hash": "39960ae884",
@@ -2355,16 +2555,16 @@
       "size": 3898837
     },
     "shimmer_anchors.json": {
-      "hash": "6c26433a6c",
-      "size": 16632
+      "hash": "48b5d2b334",
+      "size": 18183
     },
     "story.json": {
-      "hash": "c673c4cacf",
-      "size": 277310
+      "hash": "812b703179",
+      "size": 305189
     },
     "story_es.json": {
-      "hash": "69808141d5",
-      "size": 295874
+      "hash": "449fd0f39a",
+      "size": 325473
     }
   }
 }
